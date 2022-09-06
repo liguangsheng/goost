@@ -1,7 +1,7 @@
 package shutdown
 
 import (
-	"github.com/golang/glog"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -22,7 +22,7 @@ func C() {
 		signal.Notify(shutdownC, syscall.SIGTERM, syscall.SIGINT)
 	})
 	<-shutdownC
-	glog.Info("shutdown: receive a interrupt signal, exit")
+	log.Println("shutdown: receive a interrupt signal, exit")
 	Cleanup()
 	os.Exit(0)
 }
@@ -35,11 +35,10 @@ func Add(f func()) {
 
 func Cleanup() {
 	cleanupOnce.Do(func() {
-		glog.Infof("shutdown: performing %d cleanups", len(fns))
+		log.Printf("shutdown: performing %d cleanups\n", len(fns))
 		for _, f := range fns {
 			f()
 		}
-		glog.Infof("shutdown: all Cleanup done.")
-		glog.Flush()
+		log.Println("shutdown: all Cleanup done.")
 	})
 }
