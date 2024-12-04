@@ -1,4 +1,4 @@
-# go-lru
+# lru
 
 Go lru cache implement, faster, less alloc.
 
@@ -26,8 +26,8 @@ Benchmark_golanglru_lru_Set-8   	 3000000	       349 ns/op	      90 B/op	       
 Benchmark_golanglru_lru_Get-8   	10000000	       121 ns/op	      19 B/op	       1 allocs/op
 Benchmark_golanglru_arc_Set-8   	 1000000	      1056 ns/op	     223 B/op	       4 allocs/op
 Benchmark_golanglru_arc_Get-8   	 3000000	       404 ns/op	      55 B/op	       2 allocs/op
-Benchmark_golru_Set-8           	20000000	        79.4 ns/op	      11 B/op	       1 allocs/op
-Benchmark_golru_Get-8           	30000000	        40.5 ns/op	       0 B/op	       0 allocs/op
-Benchmark_golru_UnsafeSet-8     	20000000	        71.5 ns/op	      11 B/op	       1 allocs/op
-Benchmark_golru_UnsafeGet-8     	30000000	        34.8 ns/op	       0 B/op	       0 allocs/op
+Benchmark_goostlru_Set-8           	20000000	        79.4 ns/op	      11 B/op	       1 allocs/op
+Benchmark_goostlru_Get-8           	30000000	        40.5 ns/op	       0 B/op	       0 allocs/op
+Benchmark_goostlru_UnsafeSet-8     	20000000	        71.5 ns/op	      11 B/op	       1 allocs/op
+Benchmark_goostlru_UnsafeGet-8     	30000000	        34.8 ns/op	       0 B/op	       0 allocs/op
 ```

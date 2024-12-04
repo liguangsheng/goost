@@ -1,7 +1,7 @@
 package benchmark
 
 import (
-	golru "github.com/liguangsheng/go-lru"
+	golru "github.com/liguangsheng/goost/lru"
 	"testing"
 )
 
@@ -32,7 +32,7 @@ func value(i int) interface{} {
 	return values[i%len(values)]
 }
 
-func Benchmark_golru_Set(b *testing.B) {
+func Benchmark_goostlru_Set(b *testing.B) {
 	c := golru.New().Cap(size).Safe(true).Build()
 	for i := 0; i < b.N; i++ {
 		c.Set(key(i), value(i))
@@ -40,7 +40,7 @@ func Benchmark_golru_Set(b *testing.B) {
 
 }
 
-func Benchmark_golru_Get(b *testing.B) {
+func Benchmark_goostlru_Get(b *testing.B) {
 	c := golru.New().Cap(size).Safe(true).Build()
 	for i := 0; i < size; i++ {
 		if i%2 == 0 {
@@ -56,7 +56,7 @@ func Benchmark_golru_Get(b *testing.B) {
 	}
 }
 
-func Benchmark_golru_UnsafeSet(b *testing.B) {
+func Benchmark_goostlru_UnsafeSet(b *testing.B) {
 	c := golru.New().Cap(size).Safe(false).Build()
 	for i := 0; i < b.N; i++ {
 		c.Set(key(i), value(i))
@@ -64,7 +64,7 @@ func Benchmark_golru_UnsafeSet(b *testing.B) {
 
 }
 
-func Benchmark_golru_UnsafeGet(b *testing.B) {
+func Benchmark_goostlru_UnsafeGet(b *testing.B) {
 	c := golru.New().Cap(size).Safe(false).Build()
 	for i := 0; i < size; i++ {
 		if i%2 == 0 {
