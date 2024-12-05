@@ -8,47 +8,56 @@ import (
 	"unsafe"
 )
 
-type Sequence = *sequence
+var g Sequence
 
-type sequence struct {
-	letters string
-	mask    int64
-	src     rand.Source
-	bits    uint
-	max     uint
-	mu      sync.Locker
+func String(n uint, charsets string) string {
+	return g.Next(n, charsets)
 }
 
-func NewSequence(letters string) *sequence {
-	s := &sequence{
-		letters: letters,
-		src:     rand.NewSource(time.Now().UnixNano()),
+// Charsets
+const (
+	Uppercase         = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	Lowercase         = "abcdefghijklmnopqrstuvwxyz"
+	Alphabetic        = Uppercase + Lowercase
+	Numeric           = "0123456789"
+	Alphanumeric      = Alphabetic + Numeric
+	HumanAlphanumeric = "23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ" // without 1iIlLo0
+	Symbols           = "`" + `~!@#$%^&*()-_+={}[]|\;:"<>,./?`
+	Hex               = Numeric + "abcdef"
+)
+
+type Sequence struct {
+	src rand.Source
+	mu  sync.Mutex
+}
+
+func (s *Sequence) Next(n uint, charsets string) string {
+	if s.src == nil {
+		s.src = rand.NewSource(time.Now().UnixNano())
 	}
-	s.bits = uint(bits.Len(uint(len(letters))))
-	s.mask = 1<<s.bits - 1
-	s.max = 63 / s.bits
-	s.mu = &sync.Mutex{}
-	return s
-}
 
-func (s *sequence) Next(n uint) string {
+	// charsets = repeatToNextPowerOfTwo(charsets)
+
+	bits := uint(bits.Len(uint(len(charsets))))
+	mask := int64(1<<bits - 1)
+	max := 63 / bits
 	b := make([]byte, n)
-	cache, remain := s.rand(), s.max
-	for i := int(n - 1); i >= 0; {
+
+	for i, cache, remain := int(n-1), s.rand(), max; i >= 0; {
 		if remain == 0 {
-			cache, remain = s.rand(), s.max
+			cache, remain = s.rand(), max
 		}
-		if idx := int(cache & s.mask); idx < len(s.letters) {
-			b[i] = s.letters[idx]
+		if idx := int(cache & mask); idx < len(charsets) {
+			b[i] = charsets[idx]
 			i--
 		}
-		cache >>= s.bits
+		cache >>= bits
 		remain--
 	}
 	return *(*string)(unsafe.Pointer(&b))
 }
 
-func (s *sequence) rand() int64 {
+func (s *Sequence) rand() int64 {
 	s.mu.Lock()
 	r := s.src.Int63()
 	s.mu.Unlock()
