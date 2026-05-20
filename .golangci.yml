@@ -1,13 +1,12 @@
+version: "2"
+
 run:
   timeout: 5m
-  tests: true
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
-    - gofmt
-    - goimports
     - govet
     - ineffassign
     - misspell
@@ -15,19 +14,17 @@ linters:
     - staticcheck
     - unconvert
     - unused
-
-linters-settings:
-  revive:
+  settings:
+    govet:
+      enable:
+        - shadow
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+  exclusions:
     rules:
-      - name: exported
-        disabled: true
-  govet:
-    enable:
-      - shadow
-
-issues:
-  exclude-rules:
-    # unsafe package conversions are intentional in bytesconv.
-    - path: bytesconv/
-      linters:
-        - gosec
+      # unsafe package conversions are intentional in bytesconv.
+      - path: bytesconv/
+        linters:
+          - gosec

@@ -56,7 +56,7 @@ func Test_RaceConstructorOnce(t *testing.T) {
 		return 1
 	})
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

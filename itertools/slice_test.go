@@ -13,7 +13,7 @@ func Test_SafeSlice(t *testing.T) {
 	assert.Equal(t, []int{}, SafeSlice(a, 10, 20))
 	assert.Equal(t, []int{}, SafeSlice(a, 2, 2))
 	var nilSlice []int
-	assert.Nil(t, SafeSlice[int](nilSlice, 0, 1))
+	assert.Nil(t, SafeSlice(nilSlice, 0, 1))
 }
 
 func Test_Difference(t *testing.T) {

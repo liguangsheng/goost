@@ -9,7 +9,7 @@ import (
 
 const size = 1000 * 1000
 
-var values = []interface{}{
+var values = []any{
 	"0123456789",
 	"0123456789abcdefghijklmnopqrstuvwxyz",
 	`longtextlongtextlongtextlongtextlongtextlongtextlongtextlongtextlongtextlongtext
@@ -30,26 +30,26 @@ func key(i int) string {
 	return strconv.Itoa(i)
 }
 
-func value(i int) interface{} {
+func value(i int) any {
 	return values[i%len(values)]
 }
 
 func Benchmark_goostlru_Set(b *testing.B) {
-	c := golru.New[string, interface{}]().Cap(size).Safe(true).Build()
-	for i := 0; i < b.N; i++ {
+	c := golru.New[string, any]().Cap(size).Safe(true).Build()
+	for i := range b.N {
 		c.Set(key(i), value(i))
 	}
 }
 
 func Benchmark_goostlru_Get(b *testing.B) {
-	c := golru.New[string, interface{}]().Cap(size).Safe(true).Build()
-	for i := 0; i < size; i++ {
+	c := golru.New[string, any]().Cap(size).Safe(true).Build()
+	for i := range size {
 		if i%2 == 0 {
 			c.Set(key(i), value(i))
 		}
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		v, ok := c.Get(key(i))
 		if ok {
 			_ = v
@@ -58,21 +58,21 @@ func Benchmark_goostlru_Get(b *testing.B) {
 }
 
 func Benchmark_goostlru_UnsafeSet(b *testing.B) {
-	c := golru.New[string, interface{}]().Cap(size).Safe(false).Build()
-	for i := 0; i < b.N; i++ {
+	c := golru.New[string, any]().Cap(size).Safe(false).Build()
+	for i := range b.N {
 		c.Set(key(i), value(i))
 	}
 }
 
 func Benchmark_goostlru_UnsafeGet(b *testing.B) {
-	c := golru.New[string, interface{}]().Cap(size).Safe(false).Build()
-	for i := 0; i < size; i++ {
+	c := golru.New[string, any]().Cap(size).Safe(false).Build()
+	for i := range size {
 		if i%2 == 0 {
 			c.Set(key(i), value(i))
 		}
 	}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for i := range b.N {
 		v, ok := c.Get(key(i))
 		if ok {
 			_ = v

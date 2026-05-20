@@ -62,6 +62,27 @@ func Test_WaitOnSignal(t *testing.T) {
 	assert.EqualValues(t, 1, ran.Load())
 }
 
+func Test_HookTimeout(t *testing.T) {
+	m := NewManager()
+	m.SetLogger(nil)
+
+	var finished atomic.Int64
+	m.Add(func() {
+		time.Sleep(100 * time.Millisecond)
+		finished.Add(1)
+	}, WithTimeout(20*time.Millisecond), WithName("slow"))
+
+	var after atomic.Int64
+	m.Add(func() { after.Add(1) })
+
+	start := time.Now()
+	m.Cleanup()
+	elapsed := time.Since(start)
+
+	assert.Less(t, elapsed, 80*time.Millisecond, "Cleanup should abandon slow hook")
+	assert.EqualValues(t, 1, after.Load(), "subsequent hooks still run")
+}
+
 func Test_WaitOnContextCancel(t *testing.T) {
 	m := NewManager(syscall.SIGUSR2)
 	m.SetLogger(nil)

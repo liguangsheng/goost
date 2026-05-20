@@ -8,9 +8,8 @@ package pool
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 // ErrScheduleTimeout is returned when ScheduleTimeout cannot schedule the
@@ -20,13 +19,32 @@ var ErrScheduleTimeout = errors.New("schedule error: timed out")
 // ErrPoolClosed is returned by Schedule and ScheduleTimeout after Close.
 var ErrPoolClosed = errors.New("pool: closed")
 
+// PanicHandler is called when a task panics. It runs on the worker's
+// goroutine; do not block.
+type PanicHandler func(panicVal any)
+
 // Pool is a bounded goroutine pool.
 type Pool struct {
-	sem    chan struct{}
-	work   chan func()
-	closed chan struct{}
-	wg     sync.WaitGroup
-	once   sync.Once
+	sem      chan struct{}
+	work     chan func()
+	closed   chan struct{}
+	wg       sync.WaitGroup
+	once     sync.Once
+	onPanic  atomic.Pointer[PanicHandler]
+}
+
+// Option configures a Pool at construction time.
+type Option func(*Pool)
+
+// WithPanicHandler installs a callback to run after a task panics. If not
+// set, panics are silently recovered so workers stay alive.
+func WithPanicHandler(fn PanicHandler) Option {
+	return func(p *Pool) {
+		if fn == nil {
+			return
+		}
+		p.onPanic.Store(&fn)
+	}
 }
 
 // NewPool returns a pool with the given dimensions.
@@ -34,7 +52,7 @@ type Pool struct {
 //   - queue: queue depth for buffered tasks (0 = synchronous handoff).
 //   - spawn: workers to start eagerly. Must be > 0 when queue > 0 so the
 //     queue can be drained.
-func NewPool(size, queue, spawn int) (*Pool, error) {
+func NewPool(size, queue, spawn int, opts ...Option) (*Pool, error) {
 	if size <= 0 {
 		return nil, errors.New("pool: size must be > 0")
 	}
@@ -52,7 +70,10 @@ func NewPool(size, queue, spawn int) (*Pool, error) {
 		work:   make(chan func(), queue),
 		closed: make(chan struct{}),
 	}
-	for i := 0; i < spawn; i++ {
+	for _, opt := range opts {
+		opt(p)
+	}
+	for range spawn {
 		p.sem <- struct{}{}
 		p.wg.Add(1)
 		go p.worker(func() {})
@@ -111,16 +132,18 @@ func (p *Pool) worker(task func()) {
 		p.wg.Done()
 	}()
 
-	safeRun(task)
+	p.safeRun(task)
 	for task := range p.work {
-		safeRun(task)
+		p.safeRun(task)
 	}
 }
 
-func safeRun(task func()) {
+func (p *Pool) safeRun(task func()) {
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("pool: worker recovered from panic", zap.Any("panic", r))
+			if h := p.onPanic.Load(); h != nil {
+				(*h)(r)
+			}
 		}
 	}()
 	task()

@@ -30,7 +30,7 @@ func Test_StringDistribution(t *testing.T) {
 
 func Test_Race(t *testing.T) {
 	var wg sync.WaitGroup
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
@@ -41,7 +41,7 @@ func Test_Race(t *testing.T) {
 }
 
 func Benchmark_String(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = String(16, HumanAlphanumeric)
 	}
 }

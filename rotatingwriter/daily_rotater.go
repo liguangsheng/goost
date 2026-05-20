@@ -1,4 +1,4 @@
-package rotating_writer
+package rotatingwriter
 
 import (
 	"io"
@@ -32,7 +32,7 @@ func (r *DailyRotater) Writer() io.Writer {
 	return r.file
 }
 
-func (r *DailyRotater) ShouldRollover(current time.Time) bool {
+func (r *DailyRotater) ShouldRollover(current time.Time, _ int) bool {
 	return r.file == nil || current.Unix() > r.rolloverAt
 }
 

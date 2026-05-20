@@ -1,4 +1,6 @@
-package rotating_writer
+// Package rotatingwriter provides an io.Writer that rotates its backing
+// file according to a Rotater strategy (e.g. daily, size-based).
+package rotatingwriter
 
 import (
 	"io"
@@ -10,7 +12,7 @@ import (
 // Rotater decides when to rotate and exposes the current writer.
 type Rotater interface {
 	Writer() io.Writer
-	ShouldRollover(time.Time) bool
+	ShouldRollover(time.Time, int) bool // n = bytes about to be written
 	DoRollover(time.Time) error
 }
 
@@ -29,7 +31,7 @@ func (w *RotatingWriter) Write(p []byte) (int, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	now := time.Now()
-	if w.rotater.ShouldRollover(now) {
+	if w.rotater.ShouldRollover(now, len(p)) {
 		if err := w.rotater.DoRollover(now); err != nil {
 			return 0, err
 		}
@@ -44,4 +46,15 @@ func NewDailyRotatingWriter(dir, format string, maxBackup int) (*RotatingWriter,
 		return nil, err
 	}
 	return NewRotatingWriter(NewDailyRotater(dir, format, maxBackup)), nil
+}
+
+// NewSizeRotatingWriter is a convenience constructor for size-based rotation.
+// Each rollover creates a new file named base.N (N increments) up to
+// maxBackup, oldest deleted. If gzip is true, rolled files are gzipped.
+func NewSizeRotatingWriter(base string, maxBytes int64, maxBackup int, gzip bool) (*RotatingWriter, error) {
+	r, err := NewSizeRotater(base, maxBytes, maxBackup, gzip)
+	if err != nil {
+		return nil, err
+	}
+	return NewRotatingWriter(r), nil
 }

@@ -23,7 +23,7 @@ func Test_LRU(t *testing.T) {
 	_, ok = c.Get("hello")
 	assert.False(t, ok)
 
-	for i := 0; i < 100000; i++ {
+	for i := range 100000 {
 		s := strconv.Itoa(i)
 		c.Set(s, s)
 	}
@@ -88,7 +88,7 @@ func Test_LRUClear(t *testing.T) {
 func Test_LRURace(t *testing.T) {
 	c := newTestLRU()
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(2)
 		go func() {
 			defer wg.Done()

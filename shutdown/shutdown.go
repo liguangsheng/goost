@@ -12,12 +12,34 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 )
+
+type hook struct {
+	name    string
+	fn      func()
+	timeout time.Duration
+}
+
+// HookOption configures a single shutdown hook.
+type HookOption func(*hook)
+
+// WithTimeout causes the hook to run in a goroutine and be abandoned (with a
+// log line) if it does not return within d. The shutdown sequence still
+// proceeds to subsequent hooks.
+func WithTimeout(d time.Duration) HookOption {
+	return func(h *hook) { h.timeout = d }
+}
+
+// WithName attaches a label to the hook for use in log messages.
+func WithName(name string) HookOption {
+	return func(h *hook) { h.name = name }
+}
 
 // Manager collects shutdown hooks and runs them when triggered.
 type Manager struct {
 	mu       sync.Mutex
-	hooks    []func()
+	hooks    []hook
 	signals  []os.Signal
 	logger   func(format string, args ...any)
 	cleanup  sync.Once
@@ -47,9 +69,13 @@ func (m *Manager) SetLogger(fn func(format string, args ...any)) {
 }
 
 // Add registers fn to run during Cleanup. Hooks execute in registration order.
-func (m *Manager) Add(fn func()) {
+func (m *Manager) Add(fn func(), opts ...HookOption) {
+	h := hook{fn: fn}
+	for _, opt := range opts {
+		opt(&h)
+	}
 	m.mu.Lock()
-	m.hooks = append(m.hooks, fn)
+	m.hooks = append(m.hooks, h)
 	m.mu.Unlock()
 }
 
@@ -85,17 +111,41 @@ func (m *Manager) Cleanup() {
 		m.mu.Unlock()
 
 		logger("shutdown: performing %d cleanups", len(hooks))
-		for i, fn := range hooks {
-			m.safeRun(i, fn, logger)
+		for i, h := range hooks {
+			m.runHook(i, h, logger)
 		}
 		logger("shutdown: all cleanups done")
 	})
 }
 
-func (m *Manager) safeRun(idx int, fn func(), logger func(string, ...any)) {
+func (m *Manager) runHook(idx int, h hook, logger func(string, ...any)) {
+	label := h.name
+	if label == "" {
+		label = "hook"
+	}
+
+	if h.timeout <= 0 {
+		m.safeRun(idx, label, h.fn, logger)
+		return
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		m.safeRun(idx, label, h.fn, logger)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(h.timeout):
+		logger("shutdown: %s[%d] exceeded timeout %s; abandoning", label, idx, h.timeout)
+	}
+}
+
+func (m *Manager) safeRun(idx int, label string, fn func(), logger func(string, ...any)) {
 	defer func() {
 		if r := recover(); r != nil {
-			logger("shutdown: hook %d panicked: %v", idx, r)
+			logger("shutdown: %s[%d] panicked: %v", label, idx, r)
 		}
 	}()
 	fn()
@@ -104,7 +154,7 @@ func (m *Manager) safeRun(idx int, fn func(), logger func(string, ...any)) {
 var defaultManager = NewManager()
 
 // Add appends fn to the default manager's hooks.
-func Add(fn func()) { defaultManager.Add(fn) }
+func Add(fn func(), opts ...HookOption) { defaultManager.Add(fn, opts...) }
 
 // Cleanup runs the default manager's hooks. Safe to call multiple times.
 func Cleanup() { defaultManager.Cleanup() }

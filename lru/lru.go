@@ -14,7 +14,7 @@ type EvictHook[K comparable, V any] func(K, V)
 type entry[K comparable, V any] struct {
 	key       K
 	value     V
-	expiredAt time.Time
+	expireNs  int64 // 0 means no expiration
 }
 
 // Cache is a generic LRU cache. The zero value is not usable; build one with New.
@@ -39,21 +39,21 @@ func newCache[K comparable, V any](maxEntries int, lock sync.Locker, hook EvictH
 // Set inserts or updates the value for key without expiration.
 func (c *Cache[K, V]) Set(key K, value V) {
 	c.lock.Lock()
-	c.set(key, value, time.Time{})
+	c.set(key, value, 0)
 	c.lock.Unlock()
 }
 
 // SetWithExpire inserts or updates the value for key with an absolute expiration.
 func (c *Cache[K, V]) SetWithExpire(key K, value V, expiredAt time.Time) {
 	c.lock.Lock()
-	c.set(key, value, expiredAt)
+	c.set(key, value, expiredAt.UnixNano())
 	c.lock.Unlock()
 }
 
 // SetWithDuration inserts or updates the value for key with a relative expiration.
 func (c *Cache[K, V]) SetWithDuration(key K, value V, d time.Duration) {
 	c.lock.Lock()
-	c.set(key, value, time.Now().Add(d))
+	c.set(key, value, time.Now().Add(d).UnixNano())
 	c.lock.Unlock()
 }
 
@@ -69,7 +69,7 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 		return zero, false
 	}
 	ent := ele.Value.(*entry[K, V])
-	if !ent.expiredAt.IsZero() && ent.expiredAt.Before(time.Now()) {
+	if ent.expireNs > 0 && ent.expireNs <= time.Now().UnixNano() {
 		c.removeElement(ele)
 		var zero V
 		return zero, false
@@ -89,7 +89,7 @@ func (c *Cache[K, V]) Peek(key K) (V, bool) {
 		return zero, false
 	}
 	ent := ele.Value.(*entry[K, V])
-	if !ent.expiredAt.IsZero() && ent.expiredAt.Before(time.Now()) {
+	if ent.expireNs > 0 && ent.expireNs <= time.Now().UnixNano() {
 		c.removeElement(ele)
 		var zero V
 		return zero, false
@@ -122,16 +122,16 @@ func (c *Cache[K, V]) Clear() {
 	c.lock.Unlock()
 }
 
-func (c *Cache[K, V]) set(key K, value V, expiredAt time.Time) {
+func (c *Cache[K, V]) set(key K, value V, expireNs int64) {
 	if ele, ok := c.access[key]; ok {
 		ent := ele.Value.(*entry[K, V])
 		ent.value = value
-		ent.expiredAt = expiredAt
+		ent.expireNs = expireNs
 		c.ll.MoveToFront(ele)
 		return
 	}
 
-	ent := &entry[K, V]{key: key, value: value, expiredAt: expiredAt}
+	ent := &entry[K, V]{key: key, value: value, expireNs: expireNs}
 	c.access[key] = c.ll.PushFront(ent)
 
 	if c.maxEntries > 0 && c.ll.Len() > c.maxEntries {

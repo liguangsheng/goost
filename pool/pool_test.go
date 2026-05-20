@@ -26,7 +26,7 @@ func Test_Schedule(t *testing.T) {
 
 	var n atomic.Int64
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		wg.Add(1)
 		assert.NoError(t, p.Schedule(func() {
 			defer wg.Done()
@@ -53,7 +53,10 @@ func Test_ScheduleTimeout(t *testing.T) {
 }
 
 func Test_PanicRecover(t *testing.T) {
-	p, err := NewPool(2, 0, 0)
+	var got atomic.Value
+	p, err := NewPool(2, 0, 0, WithPanicHandler(func(r any) {
+		got.Store(r)
+	}))
 	assert.NoError(t, err)
 	defer p.Close()
 
@@ -62,6 +65,10 @@ func Test_PanicRecover(t *testing.T) {
 	// The pool must remain usable after a panicking task.
 	assert.NoError(t, p.Schedule(func() { close(done) }))
 	<-done
+
+	// Allow the panic handler to land.
+	time.Sleep(20 * time.Millisecond)
+	assert.Equal(t, "boom", got.Load())
 }
 
 func Test_Close(t *testing.T) {

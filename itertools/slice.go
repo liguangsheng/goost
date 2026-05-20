@@ -1,6 +1,8 @@
 // Package itertools collects small, generic helpers for slice manipulation.
 package itertools
 
+import "slices"
+
 // SafeSlice returns arr[begin:end] clamped to the slice bounds. begin is
 // clamped to [0, len(arr)] and end to [begin, len(arr)]. A nil input
 // returns nil; an empty result returns an empty (non-nil) slice.
@@ -103,13 +105,9 @@ func Uniq[T comparable](collection []T) []T {
 }
 
 // Contains reports whether collection has at least one element equal to v.
+// Thin wrapper over slices.Contains for parity with the rest of this package.
 func Contains[T comparable](collection []T, v T) bool {
-	for _, item := range collection {
-		if item == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(collection, v)
 }
 
 // Chunk splits collection into chunks of at most size elements. size must be > 0.
@@ -119,10 +117,7 @@ func Chunk[T any](collection []T, size int) [][]T {
 	}
 	out := make([][]T, 0, (len(collection)+size-1)/size)
 	for i := 0; i < len(collection); i += size {
-		end := i + size
-		if end > len(collection) {
-			end = len(collection)
-		}
+		end := min(i+size, len(collection))
 		out = append(out, collection[i:end])
 	}
 	return out

@@ -32,11 +32,11 @@ func Test_RoundTrip(t *testing.T) {
 	assert.Equal(t, s, Bytes2String(String2Bytes(s)))
 }
 
-func unused(a ...interface{}) {}
+func unused(a ...any) {}
 
 func BenchmarkString2Bytes1(b *testing.B) {
 	s := "hello, world"
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		bs := String2Bytes(s)
 		unused(bs)
 	}
@@ -44,7 +44,7 @@ func BenchmarkString2Bytes1(b *testing.B) {
 
 func BenchmarkString2Bytes2(b *testing.B) {
 	s := "hello, world"
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		bs := []byte(s)
 		unused(bs)
 	}
@@ -52,7 +52,7 @@ func BenchmarkString2Bytes2(b *testing.B) {
 
 func BenchmarkBytes2String1(b *testing.B) {
 	bs := []byte("hello, world")
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		s := Bytes2String(bs)
 		unused(s)
 	}
@@ -60,7 +60,7 @@ func BenchmarkBytes2String1(b *testing.B) {
 
 func BenchmarkBytes2String2(b *testing.B) {
 	bs := []byte("hello, world")
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		s := string(bs)
 		unused(s)
 	}
