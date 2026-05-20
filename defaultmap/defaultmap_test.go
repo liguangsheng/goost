@@ -8,6 +8,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_GetOrInitReportsLoaded(t *testing.T) {
+	m := Make(func(k string) int { return len(k) })
+	v, loaded := m.GetOrInit("hi")
+	assert.Equal(t, 2, v)
+	assert.False(t, loaded)
+	v, loaded = m.GetOrInit("hi")
+	assert.Equal(t, 2, v)
+	assert.True(t, loaded)
+}
+
+func Test_LoadOrStore(t *testing.T) {
+	m := Make(func(k string) int { panic("must not call constructor") })
+	v, loaded := m.LoadOrStore("k", 5)
+	assert.Equal(t, 5, v)
+	assert.False(t, loaded)
+	v, loaded = m.LoadOrStore("k", 6)
+	assert.Equal(t, 5, v)
+	assert.True(t, loaded)
+}
+
 func Test_GetConstructs(t *testing.T) {
 	var calls atomic.Int64
 	m := Make(func(k string) int {

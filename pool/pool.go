@@ -23,14 +23,28 @@ var ErrPoolClosed = errors.New("pool: closed")
 // goroutine; do not block.
 type PanicHandler func(panicVal any)
 
+// Stats captures live pool metrics.
+type Stats struct {
+	Workers   int   // currently spawned workers
+	InFlight  int   // tasks currently executing
+	Queued    int   // tasks waiting in the buffer
+	Completed int64 // tasks that finished (including panicked)
+	Panics    int64 // tasks that panicked
+}
+
 // Pool is a bounded goroutine pool.
 type Pool struct {
-	sem      chan struct{}
-	work     chan func()
-	closed   chan struct{}
-	wg       sync.WaitGroup
-	once     sync.Once
-	onPanic  atomic.Pointer[PanicHandler]
+	sem     chan struct{}
+	work    chan func()
+	closed  chan struct{}
+	wg      sync.WaitGroup
+	once    sync.Once
+	onPanic atomic.Pointer[PanicHandler]
+
+	workers   atomic.Int64
+	inFlight  atomic.Int64
+	completed atomic.Int64
+	panics    atomic.Int64
 }
 
 // Option configures a Pool at construction time.
@@ -76,7 +90,8 @@ func NewPool(size, queue, spawn int, opts ...Option) (*Pool, error) {
 	for range spawn {
 		p.sem <- struct{}{}
 		p.wg.Add(1)
-		go p.worker(func() {})
+		p.workers.Add(1)
+		go p.worker(nil)
 	}
 	return p, nil
 }
@@ -111,6 +126,7 @@ func (p *Pool) schedule(task func(), timeout <-chan time.Time) error {
 		return nil
 	case p.sem <- struct{}{}:
 		p.wg.Add(1)
+		p.workers.Add(1)
 		go p.worker(task)
 		return nil
 	}
@@ -126,21 +142,39 @@ func (p *Pool) Close() {
 	p.wg.Wait()
 }
 
+// Stats returns a snapshot of pool metrics. Cheap to call.
+func (p *Pool) Stats() Stats {
+	return Stats{
+		Workers:   int(p.workers.Load()),
+		InFlight:  int(p.inFlight.Load()),
+		Queued:    len(p.work),
+		Completed: p.completed.Load(),
+		Panics:    p.panics.Load(),
+	}
+}
+
 func (p *Pool) worker(task func()) {
 	defer func() {
 		<-p.sem
+		p.workers.Add(-1)
 		p.wg.Done()
 	}()
 
-	p.safeRun(task)
+	if task != nil {
+		p.safeRun(task)
+	}
 	for task := range p.work {
 		p.safeRun(task)
 	}
 }
 
 func (p *Pool) safeRun(task func()) {
+	p.inFlight.Add(1)
 	defer func() {
+		p.inFlight.Add(-1)
+		p.completed.Add(1)
 		if r := recover(); r != nil {
+			p.panics.Add(1)
 			if h := p.onPanic.Load(); h != nil {
 				(*h)(r)
 			}

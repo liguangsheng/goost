@@ -24,21 +24,41 @@ func Make[K comparable, V any](constructor func(K) V) *Map[K, V] {
 
 // Get returns the value for key, constructing and storing it if absent.
 func (m *Map[K, V]) Get(key K) V {
+	v, _ := m.GetOrInit(key)
+	return v
+}
+
+// GetOrInit returns the value for key. If the key was absent, the
+// constructor is called, the value is stored, and loaded is false.
+// If the key was already present, loaded is true.
+func (m *Map[K, V]) GetOrInit(key K) (value V, loaded bool) {
 	m.lock.RLock()
-	val, ok := m.data[key]
+	v, ok := m.data[key]
 	m.lock.RUnlock()
 	if ok {
-		return val
+		return v, true
 	}
 
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	if v, ok := m.data[key]; ok {
-		return v
+	if got, ok := m.data[key]; ok {
+		return got, true
 	}
-	val = m.constructor(key)
-	m.data[key] = val
-	return val
+	v = m.constructor(key)
+	m.data[key] = v
+	return v, false
+}
+
+// LoadOrStore is the sync.Map-style entry point that stores value only
+// if the key was absent. The constructor is NOT invoked.
+func (m *Map[K, V]) LoadOrStore(key K, value V) (actual V, loaded bool) {
+	m.lock.Lock()
+	defer m.lock.Unlock()
+	if v, ok := m.data[key]; ok {
+		return v, true
+	}
+	m.data[key] = value
+	return value, false
 }
 
 // Set replaces the value for key.

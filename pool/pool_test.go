@@ -79,3 +79,44 @@ func Test_Close(t *testing.T) {
 	err = p.Schedule(func() {})
 	assert.True(t, errors.Is(err, ErrPoolClosed))
 }
+
+func Test_Stats(t *testing.T) {
+	p, err := NewPool(2, 4, 1)
+	assert.NoError(t, err)
+	defer p.Close()
+
+	var wg sync.WaitGroup
+	for range 5 {
+		wg.Add(1)
+		assert.NoError(t, p.Schedule(func() {
+			defer wg.Done()
+			time.Sleep(10 * time.Millisecond)
+		}))
+	}
+	wg.Wait()
+
+	s := p.Stats()
+	assert.EqualValues(t, 5, s.Completed)
+	assert.EqualValues(t, 0, s.InFlight)
+	assert.EqualValues(t, 0, s.Panics)
+	assert.GreaterOrEqual(t, s.Workers, 1)
+}
+
+func Test_StatsCountsPanics(t *testing.T) {
+	p, err := NewPool(2, 0, 0, WithPanicHandler(func(any) {}))
+	assert.NoError(t, err)
+	defer p.Close()
+
+	var wg sync.WaitGroup
+	for range 3 {
+		wg.Add(1)
+		assert.NoError(t, p.Schedule(func() {
+			defer wg.Done()
+			panic("boom")
+		}))
+	}
+	wg.Wait()
+
+	s := p.Stats()
+	assert.EqualValues(t, 3, s.Panics)
+}

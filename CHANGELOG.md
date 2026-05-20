@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **`lru`** — `Keys()` and `Range(fn)` on both `Cache` and `ShardedCache`,
+  skipping expired entries; iteration is MRU-first per shard.
+- **`defaultmap`** — `GetOrInit` returns `(V, loaded bool)`; `LoadOrStore`
+  for `sync.Map`-style insertion without calling the constructor.
+- **`zapctx`** — `PayloadGinMiddleware` logs request/response bodies, status
+  and latency, with `WithMaxBody`, `WithSampling`, `WithSkipper` options.
+- **`pool`** — `Stats()` exposes workers, in-flight, queued, completed and
+  panic counts via cheap atomics.
+- **`slogctx`** — new package: `log/slog` counterpart to `zapctx`, including
+  `OtelTraceInject`.
+- **`errors`** — new package: lightweight stack-trace wrapping with
+  `errors.Is`/`As`/`%w` compatibility.
+- **`taskgroup`** — new package: `errgroup` plus concurrency limit and
+  panic recovery.
+
 ## [v0.1.0] — 2026-05-20
 
 First tagged release. Two waves of internal cleanup are bundled into a

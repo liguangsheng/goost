@@ -122,6 +122,43 @@ func (c *Cache[K, V]) Clear() {
 	c.lock.Unlock()
 }
 
+// Keys returns a snapshot of all live (non-expired) keys in
+// most-recently-used order. The slice is owned by the caller.
+func (c *Cache[K, V]) Keys() []K {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	now := time.Now().UnixNano()
+	out := make([]K, 0, c.ll.Len())
+	for ele := c.ll.Front(); ele != nil; ele = ele.Next() {
+		ent := ele.Value.(*entry[K, V])
+		if ent.expireNs > 0 && ent.expireNs <= now {
+			continue
+		}
+		out = append(out, ent.key)
+	}
+	return out
+}
+
+// Range calls fn for every live entry in most-recently-used order.
+// Returning false stops iteration. fn must not call back into the Cache
+// or it will deadlock.
+func (c *Cache[K, V]) Range(fn func(K, V) bool) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	now := time.Now().UnixNano()
+	for ele := c.ll.Front(); ele != nil; ele = ele.Next() {
+		ent := ele.Value.(*entry[K, V])
+		if ent.expireNs > 0 && ent.expireNs <= now {
+			continue
+		}
+		if !fn(ent.key, ent.value) {
+			return
+		}
+	}
+}
+
 func (c *Cache[K, V]) set(key K, value V, expireNs int64) {
 	if ele, ok := c.access[key]; ok {
 		ent := ele.Value.(*entry[K, V])

@@ -71,6 +71,35 @@ func (c *ShardedCache[K, V]) Clear() {
 	}
 }
 
+// Keys returns a snapshot of all live keys across all shards. Order is
+// shard-by-shard MRU-first; not a global ordering.
+func (c *ShardedCache[K, V]) Keys() []K {
+	out := make([]K, 0)
+	for _, s := range c.shards {
+		out = append(out, s.Keys()...)
+	}
+	return out
+}
+
+// Range calls fn for every live entry across all shards. Returning false
+// stops iteration. Each shard's lock is held only while iterating that
+// shard, so concurrent writes to other shards proceed normally.
+func (c *ShardedCache[K, V]) Range(fn func(K, V) bool) {
+	for _, s := range c.shards {
+		cont := true
+		s.Range(func(k K, v V) bool {
+			if !fn(k, v) {
+				cont = false
+				return false
+			}
+			return true
+		})
+		if !cont {
+			return
+		}
+	}
+}
+
 // nextPow2 returns the smallest power of two >= n.
 func nextPow2(n int) int {
 	if n <= 1 {
