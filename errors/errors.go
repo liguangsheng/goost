@@ -5,6 +5,9 @@
 // an additional capture point. The result is still compatible with
 // errors.Is / errors.As / errors.Unwrap from the standard library and
 // formats nicely with %+v to show frames.
+//
+// Recover (in recover.go) turns a deferred recover() into a
+// PanicError written to a named-return error.
 package errors
 
 import (

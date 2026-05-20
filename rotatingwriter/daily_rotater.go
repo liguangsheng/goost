@@ -15,6 +15,7 @@ type DailyRotater struct {
 	dir       string
 	format    string
 	maxBackup int
+	maxAge    time.Duration
 
 	file       *os.File
 	rolloverAt int64
@@ -26,6 +27,17 @@ func NewDailyRotater(dir, format string, maxBackup int) *DailyRotater {
 		format:    format,
 		maxBackup: maxBackup,
 	}
+}
+
+// WithMaxAge configures the rotater to delete dated files older than d
+// (as encoded in the filename, not by mtime) at each rollover. Pass
+// zero to disable age-based cleanup; this is the default.
+//
+// Combines additively with maxBackup: a file is deleted if EITHER
+// limit is exceeded.
+func (r *DailyRotater) WithMaxAge(d time.Duration) *DailyRotater {
+	r.maxAge = d
+	return r
 }
 
 func (r *DailyRotater) Writer() io.Writer {
@@ -48,38 +60,55 @@ func (r *DailyRotater) DoRollover(current time.Time) error {
 	r.file = file
 	r.rolloverAt = r.nextRolloverAt(current)
 
-	if r.maxBackup > 0 {
-		r.deleteExpiredFiles()
+	if r.maxBackup > 0 || r.maxAge > 0 {
+		r.deleteExpiredFiles(current)
 	}
 	return nil
 }
 
-func (r *DailyRotater) deleteExpiredFiles() {
+func (r *DailyRotater) deleteExpiredFiles(current time.Time) {
 	entries, err := os.ReadDir(r.dir)
 	if err != nil {
 		return
 	}
 
-	var matched []os.DirEntry
+	type matchedEntry struct {
+		path string
+		date time.Time
+	}
+	var matched []matchedEntry
 	for _, e := range entries {
 		if e.IsDir() {
 			continue
 		}
-		if _, err := time.Parse(r.format, e.Name()); err != nil {
+		d, err := time.Parse(r.format, e.Name())
+		if err != nil {
 			continue
 		}
-		matched = append(matched, e)
+		matched = append(matched, matchedEntry{
+			path: filepath.Join(r.dir, e.Name()),
+			date: d,
+		})
 	}
 
 	sort.Slice(matched, func(i, j int) bool {
-		a, _ := time.Parse(r.format, matched[i].Name())
-		b, _ := time.Parse(r.format, matched[j].Name())
-		return a.After(b)
+		return matched[i].date.After(matched[j].date)
 	})
 
+	currentPath := r.filename(current)
 	for i, e := range matched {
-		if i >= r.maxBackup {
-			_ = os.Remove(filepath.Join(r.dir, e.Name()))
+		if e.path == currentPath {
+			continue // never delete the file we just opened
+		}
+		drop := false
+		if r.maxBackup > 0 && i >= r.maxBackup {
+			drop = true
+		}
+		if r.maxAge > 0 && current.Sub(e.date) > r.maxAge {
+			drop = true
+		}
+		if drop {
+			_ = os.Remove(e.path)
 		}
 	}
 }

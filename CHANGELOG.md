@@ -7,6 +7,38 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **`batcher`** — new package: DataLoader-style coalescing of concurrent
+  per-key `Load(ctx, key)` calls into a single batch `loadFn` invocation,
+  with `MaxBatch` / `MaxWait`, panic-to-error, `ErrNotFound` for keys
+  missing from the batch result, and `Stats()` for tuning.
+- **`keyedmutex`** — new package: per-key mutex with `Lock` / `TryLock` /
+  `LockContext` / `WithLock` / `Len`. Slots are allocated lazily and
+  freed once no goroutine holds or waits on the key, so a churn of
+  many one-shot keys does not grow the internal map.
+- **`clock`** — `Clock` interface gained `AfterFunc(d, fn) Timer` and
+  `NewTicker(d) Ticker`; both are mockable. Mock now drives tickers
+  deterministically (one tick per period boundary crossed during
+  `Advance`/`Set`; missed ticks drop, matching `time.Ticker`).
+- **`fanout`** — new package: in-process broadcaster delivering each
+  `Publish(v)` to every current `Sub`. Drop-on-full backpressure (slow
+  subscribers never block publishers), per-sub `Drops()` counter,
+  aggregate `Stats()`.
+- **`errors`** — `Recover(*error)` turns a deferred `recover()` into
+  a `*PanicError`. PanicError preserves the panic value and a
+  `debug.Stack()` snapshot; `%+v` prints both. If the named-return
+  error is already non-nil, the PanicError is joined via
+  `errors.Join`.
+- **`rotatingwriter`** — both `DailyRotater` and `SizeRotater` now
+  support `WithMaxAge(d)`. A backup is deleted at rollover if either
+  count (`maxBackup`) or age limit would be exceeded. Daily uses the
+  date encoded in the filename; size uses mtime.
+- **`priorityqueue`** — new package: generic min/max heap over
+  `container/heap`. `New(less)` instead of implementing five methods.
+  `Push` / `Pop` / `Peek` / `Len` / `Clear` / `Drain`.
+- **`debounce`** — new package: `Debouncer[T any]` coalesces a burst
+  of `Trigger(v)` calls into a single emit on `C()` after a quiet
+  window. Latest-wins on slow consumers; injectable `clock.Clock`
+  makes it test-deterministic.
 - **`lru`** — `Keys()` and `Range(fn)` on both `Cache` and `ShardedCache`,
   skipping expired entries; iteration is MRU-first per shard.
 - **`defaultmap`** — `GetOrInit` returns `(V, loaded bool)`; `LoadOrStore`
@@ -54,6 +86,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `concurrent`, `cache`) demonstrating package combinations.
 - CI now runs `staticcheck` and `gosec` jobs in addition to
   `golangci-lint`.
+
+### Removed
+
+- **`singleflight`** — package removed. It was a thin generic wrapper
+  around `golang.org/x/sync/singleflight` with no real added value;
+  depend on `x/sync/singleflight` directly. The `examples/cache`
+  program now imports it directly. For coalescing requests for
+  *different* keys (which singleflight does not do), see the new
+  [`batcher`](./batcher) package.
 
 ## [v0.1.0] — 2026-05-20
 

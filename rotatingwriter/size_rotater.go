@@ -20,10 +20,22 @@ type SizeRotater struct {
 	base      string
 	maxBytes  int64
 	maxBackup int
+	maxAge    time.Duration
 	gzipBak   bool
 
 	file *os.File
 	size int64
+}
+
+// WithMaxAge configures the rotater to delete backup files whose
+// mtime is older than d at each rollover. Pass zero to disable
+// age-based cleanup; this is the default.
+//
+// Combines additively with maxBackup: a backup is removed if EITHER
+// limit is exceeded.
+func (r *SizeRotater) WithMaxAge(d time.Duration) *SizeRotater {
+	r.maxAge = d
+	return r
 }
 
 // NewSizeRotater returns a SizeRotater. maxBytes must be > 0.
@@ -48,10 +60,10 @@ func (r *SizeRotater) ShouldRollover(_ time.Time, n int) bool {
 	return r.file == nil || r.size+int64(n) > r.maxBytes
 }
 
-func (r *SizeRotater) DoRollover(_ time.Time) error {
+func (r *SizeRotater) DoRollover(now time.Time) error {
 	if r.file != nil {
 		_ = r.file.Close()
-		if err := r.shiftBackups(); err != nil {
+		if err := r.shiftBackups(now); err != nil {
 			return err
 		}
 		r.file = nil
@@ -65,10 +77,14 @@ func (r *SizeRotater) DoRollover(_ time.Time) error {
 	return nil
 }
 
-func (r *SizeRotater) shiftBackups() error {
+func (r *SizeRotater) shiftBackups(now time.Time) error {
 	ext := ""
 	if r.gzipBak {
 		ext = ".gz"
+	}
+
+	if r.maxAge > 0 {
+		r.removeExpiredBackups(now, ext)
 	}
 
 	// Remove oldest if at limit.
@@ -125,6 +141,34 @@ func (r *SizeRotater) shiftBackups() error {
 		}
 	}
 	return nil
+}
+
+// removeExpiredBackups deletes backups whose mtime is older than maxAge.
+func (r *SizeRotater) removeExpiredBackups(now time.Time, ext string) {
+	dir := filepath.Dir(r.base)
+	prefix := filepath.Base(r.base) + "."
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		name := e.Name()
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+		idxStr := strings.TrimPrefix(name, prefix)
+		idxStr = strings.TrimSuffix(idxStr, ext)
+		if _, err := strconv.Atoi(idxStr); err != nil {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil {
+			continue
+		}
+		if now.Sub(info.ModTime()) > r.maxAge {
+			_ = os.Remove(filepath.Join(dir, name))
+		}
+	}
 }
 
 func gzipFile(src, dst string) error {

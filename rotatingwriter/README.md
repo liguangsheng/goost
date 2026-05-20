@@ -21,6 +21,23 @@ log.New(w, "", log.LstdFlags).Println("hello")
 Rotated files are named `app.log.1`, `app.log.2`, ... When `gzip=true`,
 the suffix becomes `app.log.1.gz`.
 
+## Age-based retention
+
+Both rotaters support `WithMaxAge(d)` on top of the count limit. A
+backup is deleted at rollover time if **either** limit would be
+exceeded:
+
+```go
+// Daily: keep the 30 newest dated files, AND drop anything older
+// than 90 days.
+r := rotatingwriter.NewDailyRotater("logs", "2006-01-02.log", 30).
+    WithMaxAge(90 * 24 * time.Hour)
+w := rotatingwriter.NewRotatingWriter(r)
+```
+
+Daily-rotater age is taken from the date encoded in the filename;
+size-rotater age comes from the file's mtime.
+
 ## Custom strategies
 
 Implement `Rotater` to plug in any policy:
