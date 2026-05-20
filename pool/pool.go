@@ -110,6 +110,19 @@ func (p *Pool) ScheduleTimeout(timeout time.Duration, task func()) error {
 	return p.schedule(task, timer.C)
 }
 
+// ScheduleN schedules tasks sequentially and stops on the first
+// scheduling error (e.g. pool closed). It returns the number of tasks
+// that were accepted.
+func (p *Pool) ScheduleN(tasks []func()) (n int, err error) {
+	for _, t := range tasks {
+		if err = p.Schedule(t); err != nil {
+			return n, err
+		}
+		n++
+	}
+	return n, nil
+}
+
 func (p *Pool) schedule(task func(), timeout <-chan time.Time) error {
 	select {
 	case <-p.closed:

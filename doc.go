@@ -7,13 +7,17 @@
 //   - bytesconv:       allocation-free string/[]byte conversion (read-only)
 //   - caseconv:        camel/snake/kebab/pascal case split & join
 //   - circuitbreaker:  three-state breaker (closed / open / half-open)
+//   - clock:           Clock abstraction with Real and Mock for tests
 //   - defaultmap:      concurrent map that lazy-constructs missing values
+//   - env:             struct-tag configuration loader from environment vars
 //   - errors:          stack-tracing wrap on top of stdlib errors
+//   - httpx:           *http.Client with retry / ratelimit / circuit breaker
 //   - itertools:       generic slice helpers (Map/Filter/Reduce/...)
 //   - lru:             generic LRU cache; optional TTL; sharded variant
 //   - pool:            bounded goroutine pool with panic handler & Stats
 //   - random:          random strings; SecureString uses crypto/rand
 //   - ratelimit:       token bucket and leaky bucket limiters
+//   - redact:          string masking helpers for log lines
 //   - rotatingwriter:  io.Writer with daily or size-based rotation
 //   - shutdown:        signal-driven graceful shutdown coordinator
 //   - singleflight:    generic wrapper around x/sync/singleflight

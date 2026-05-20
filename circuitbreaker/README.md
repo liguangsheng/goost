@@ -33,4 +33,11 @@ if errors.Is(err, circuitbreaker.ErrOpen) {
 - `IsFailure` lets you exclude expected errors like `context.Canceled`
   from the failure count.
 - `OnStateChange` fires on every transition for metrics/logging.
-- `Now` overrides the clock for deterministic tests.
+- `Now` overrides the clock for deterministic tests; pair with
+  [`clock.Mock`](../clock):
+
+```go
+m := clock.NewMock(time.Unix(0, 0))
+b := circuitbreaker.New(circuitbreaker.Config{Now: m.Now, ...})
+m.Advance(time.Minute) // moves cooldown forward
+```

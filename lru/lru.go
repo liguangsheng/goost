@@ -114,6 +114,20 @@ func (c *Cache[K, V]) Size() int {
 	return n
 }
 
+// Resize changes the maximum number of entries. If shrinking, the
+// least-recently-used entries are evicted (firing EvictHook) until the
+// cache fits. n=0 disables capacity-based eviction entirely.
+func (c *Cache[K, V]) Resize(n int) {
+	c.lock.Lock()
+	c.maxEntries = n
+	if n > 0 {
+		for c.ll.Len() > n {
+			c.removeOldest()
+		}
+	}
+	c.lock.Unlock()
+}
+
 // Clear removes all entries.
 func (c *Cache[K, V]) Clear() {
 	c.lock.Lock()

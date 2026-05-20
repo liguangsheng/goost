@@ -1,0 +1,29 @@
+# httpx
+
+`*http.Client` assembled from goost building blocks: retry with backoff,
+optional rate limiting, optional circuit breaker.
+
+```go
+c := httpx.New(httpx.Options{
+    Timeout: 5 * time.Second,
+    Retry: &httpx.RetryPolicy{
+        MaxAttempts: 3,
+        Backoff: &backoff.Backoff{
+            Initial: 100 * time.Millisecond,
+            Max:     2 * time.Second,
+            Jitter:  0.2,
+        },
+    },
+    Limiter: ratelimit.NewBucket(50, 100),       // 50 req/s, burst 100
+    Breaker: circuitbreaker.New(circuitbreaker.Config{
+        FailureThreshold: 5,
+        CooldownPeriod:   30 * time.Second,
+    }),
+})
+
+resp, err := c.Get("https://api.example.com/users")
+```
+
+The default retry policy retries on transport errors, HTTP 429, and any
+5xx. Override with `RetryPolicy.RetryOn`. Bodies passed to `Post` are
+buffered so they can be replayed on retry.

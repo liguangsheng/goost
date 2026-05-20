@@ -16,11 +16,15 @@ go get github.com/liguangsheng/goost
 | [`bytesconv`](./bytesconv) | Allocation-free `string`/`[]byte` conversion (read-only). |
 | [`caseconv`](./caseconv) | Camel/snake/kebab/pascal case split & join helpers. |
 | [`circuitbreaker`](./circuitbreaker) | Three-state breaker (closed/open/half-open) for downstream call protection. |
+| [`clock`](./clock) | `Clock` abstraction with `Real` and `Mock` for deterministic time tests. |
 | [`defaultmap`](./defaultmap) | Concurrent map that lazy-constructs values for missing keys. |
-| [`errors`](./errors) | `errors` with stack traces; `errors.Is`/`As`/`%w` compatible. |
+| [`env`](./env) | Struct-tag configuration loader from environment variables. |
+| [`errors`](./errors) | `errors` with stack traces; `Join`; `errors.Is`/`As`/`%w` compatible. |
+| [`httpx`](./httpx) | `*http.Client` with retry + ratelimit + circuit breaker. |
 | [`itertools`](./itertools) | Generic slice helpers: `Map`, `Filter`, `Reduce`, `Chunk`, etc. |
-| [`lru`](./lru) | Generic LRU cache with optional per-entry expiration; sharded variant; `Keys`/`Range`. |
+| [`lru`](./lru) | Generic LRU cache with optional per-entry expiration; sharded variant; `Keys`/`Range`/`Resize`. |
 | [`pool`](./pool) | Bounded goroutine pool with optional queue, panic handler, and `Stats`. |
+| [`redact`](./redact) | String masking for logs (`Email`/`Phone`/`Token`/`Mask`). |
 | [`random`](./random) | Concurrency-safe random string generator; `SecureString` via `crypto/rand`. |
 | [`ratelimit`](./ratelimit) | Token bucket and leaky bucket rate limiters. |
 | [`rotatingwriter`](./rotatingwriter) | `io.Writer` that rotates the backing file (daily or size-based, optional gzip). |

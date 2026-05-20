@@ -33,6 +33,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `Allow` / `Wait(ctx)` and injectable clock.
 - **`circuitbreaker`** — new package: closed / open / half-open state
   machine with configurable thresholds, cooldown, and `OnStateChange`.
+- **`clock`** — new package: `Clock` interface with `Real` and `Mock`
+  (`Advance` / `Set`); `Mock.Now` plugs into existing modules' `SetClock`.
+- **`httpx`** — new package: `*http.Client` factory combining `backoff`
+  retry, `ratelimit`, and `circuitbreaker`; request bodies are buffered
+  so they survive retries.
+- **`env`** — new package: struct-tag based configuration loader
+  (`default=`, `required`) over `os.Getenv` (or a custom map).
+- **`redact`** — new package: log-friendly string masking (`Mask`,
+  `Email`, `Phone`, `Token`) plus `ZapString` / `SlogString` field helpers.
+- **`lru`** — `Resize(n)` changes capacity at runtime, evicting LRU
+  entries on shrink.
+- **`pool`** — `ScheduleN([]task)` schedules a batch.
+- **`taskgroup`** — `Results[T]` collects successful return values from
+  concurrent tasks alongside the first error.
+- **`errors`** — `Join(errs...)` wraps `stderrors.Join` with a stack;
+  `JoinFormatPlusV` prints every joined error on its own line.
 - Root `doc.go` summarizes the module's packages.
 - `examples/` directory: three runnable programs (`httpserver`,
   `concurrent`, `cache`) demonstrating package combinations.

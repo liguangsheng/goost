@@ -80,6 +80,39 @@ func Test_Close(t *testing.T) {
 	assert.True(t, errors.Is(err, ErrPoolClosed))
 }
 
+func Test_ScheduleN(t *testing.T) {
+	p, err := NewPool(4, 0, 0)
+	assert.NoError(t, err)
+	defer p.Close()
+
+	var n atomic.Int64
+	var wg sync.WaitGroup
+	tasks := make([]func(), 10)
+	for i := range tasks {
+		wg.Add(1)
+		tasks[i] = func() {
+			defer wg.Done()
+			n.Add(1)
+		}
+		_ = i
+	}
+	got, err := p.ScheduleN(tasks)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, got)
+	wg.Wait()
+	assert.EqualValues(t, 10, n.Load())
+}
+
+func Test_ScheduleNOnClosed(t *testing.T) {
+	p, err := NewPool(2, 0, 0)
+	assert.NoError(t, err)
+	p.Close()
+	tasks := []func(){func() {}, func() {}, func() {}}
+	got, err := p.ScheduleN(tasks)
+	assert.Error(t, err)
+	assert.Equal(t, 0, got)
+}
+
 func Test_Stats(t *testing.T) {
 	p, err := NewPool(2, 4, 1)
 	assert.NoError(t, err)

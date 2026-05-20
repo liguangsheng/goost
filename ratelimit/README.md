@@ -36,4 +36,13 @@ if err := l.Wait(ctx); err == nil {
 ```
 
 Both limiters expose `SetClock(fn func() time.Time)` for deterministic
-tests.
+tests. Pair them with [`clock.Mock`](../clock):
+
+```go
+m := clock.NewMock(time.Unix(0, 0))
+b := ratelimit.NewBucket(10, 1)
+b.SetClock(m.Now)
+b.Allow()              // false after the burst is spent
+m.Advance(time.Second) // refills
+b.Allow()              // true
+```

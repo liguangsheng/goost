@@ -18,3 +18,7 @@ err := backoff.Retry(ctx, b, 5, func(ctx context.Context) error {
 Return `backoff.Permanent(err)` from the callback to abort retries
 immediately. Pass `maxAttempts = 0` for unlimited retries (governed by
 `ctx`).
+
+`Backoff.Rand` accepts a function returning `[0, 1)` so tests can fix the
+jitter. See also [`clock`](../clock) for advancing time deterministically
+in code that consumes the `Backoff.Next()` durations.
