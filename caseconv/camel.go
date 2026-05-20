@@ -7,47 +7,58 @@ import (
 	"unicode/utf8"
 )
 
-const (
-	CLASS_LOWER = iota
-	CLASS_UPPER
-	CLASS_DIGIT
-	CLASS_OTHER
+// runeClass categorizes a rune for word-boundary detection.
+type runeClass int
 
-	UPPER_PREV
-	LOWER_PREV
-	TITLE_PREV
+const (
+	classLower runeClass = iota
+	classUpper
+	classDigit
+	classOther
 )
 
-func CamelSplit(src string) (entries []string) {
-	// don't split invalid utf8
+// prevWordCase tracks the casing produced for the previous word so adjacent
+// acronyms don't all get UPPER-cased.
+type prevWordCase int
+
+const (
+	prevNone prevWordCase = iota
+	prevUpper
+	prevLower
+	prevTitle
+)
+
+// CamelSplit splits a camel-case string into its component words.
+// Invalid UTF-8 is returned unchanged in a single-element slice.
+func CamelSplit(src string) []string {
 	if !utf8.ValidString(src) {
 		return []string{src}
 	}
-	entries = []string{}
+	if src == "" {
+		return []string{}
+	}
+
 	var runes [][]rune
-	lastClass := 0
-	class := 0
-	// split into fields based on class of unicode character
-	for _, r := range src {
-		switch true {
+	var class, lastClass runeClass
+	for i, r := range src {
+		switch {
 		case unicode.IsLower(r):
-			class = CLASS_LOWER
+			class = classLower
 		case unicode.IsUpper(r):
-			class = CLASS_UPPER
+			class = classUpper
 		case unicode.IsDigit(r):
-			class = CLASS_DIGIT
+			class = classDigit
 		default:
-			class = CLASS_OTHER
+			class = classOther
 		}
-		if class == lastClass {
+		if i > 0 && class == lastClass {
 			runes[len(runes)-1] = append(runes[len(runes)-1], r)
 		} else {
 			runes = append(runes, []rune{r})
 		}
 		lastClass = class
 	}
-	// handle upper case -> lower case sequences, e.g.
-	// "PDFL", "oader" -> "PDF", "Loader"
+	// Handle UPPER->lower boundaries, e.g. "PDFL"+"oader" -> "PDF"+"Loader".
 	for i := 0; i < len(runes)-1; i++ {
 		if IsAcronym(string(runes[i])) {
 			continue
@@ -57,67 +68,64 @@ func CamelSplit(src string) (entries []string) {
 			runes[i] = runes[i][:len(runes[i])-1]
 		}
 	}
-	// construct []string from results
+
+	out := make([]string, 0, len(runes))
 	for _, s := range runes {
 		if len(s) > 0 {
-			entries = append(entries, string(s))
+			out = append(out, string(s))
 		}
 	}
-	return
+	return out
 }
 
+// CamelJoin joins parts into a single camel-case string. When upper is true,
+// the result is UpperCamelCase (Pascal case); otherwise lowerCamelCase.
+// Registered acronyms are rendered in upper case, except that two adjacent
+// acronyms produce one upper + one lower so the boundary stays readable.
 func CamelJoin(parts []string, upper bool) string {
 	if len(parts) == 0 {
 		return ""
 	}
 
-	var buffer bytes.Buffer
-	var prevWordStatus int
+	var buf bytes.Buffer
+	var prev prevWordCase
 
 	first := parts[0]
 	if upper {
 		if IsAcronym(first) {
 			first = strings.ToUpper(first)
 		} else {
-			first = strings.Title(first)
+			first = titleFirst(strings.ToLower(first))
 		}
 	} else {
 		first = strings.ToLower(first)
 	}
-	buffer.WriteString(first)
+	buf.WriteString(first)
 
 	for _, part := range parts[1:] {
 		var word string
 		if IsAcronym(part) {
-			if prevWordStatus == UPPER_PREV {
+			if prev == prevUpper {
 				word = strings.ToLower(part)
-				prevWordStatus = LOWER_PREV
+				prev = prevLower
 			} else {
 				word = strings.ToUpper(part)
-				prevWordStatus = UPPER_PREV
+				prev = prevUpper
 			}
 		} else {
-			word = strings.Title(part)
-			prevWordStatus = TITLE_PREV
+			word = titleFirst(strings.ToLower(part))
+			prev = prevTitle
 		}
-		buffer.WriteString(word)
+		buf.WriteString(word)
 	}
-	return buffer.String()
+	return buf.String()
 }
 
-func UpperCamelJoin(parts []string) string {
-	return CamelJoin(parts, true)
-}
+func UpperCamelJoin(parts []string) string { return CamelJoin(parts, true) }
+func LowerCamelJoin(parts []string) string { return CamelJoin(parts, false) }
 
-func LowerCamelJoin(parts []string) string {
-	return CamelJoin(parts, false)
-}
+// PascalSplit is an alias of CamelSplit kept for readability.
+func PascalSplit(s string) []string { return CamelSplit(s) }
 
-// Pascal style == Upper Camel Style
-func PascalSplit(s string) []string {
-	return CamelSplit(s)
-}
-
-func PascalJoin(a []string) string {
-	return UpperCamelJoin(a)
-}
+// PascalJoin is an alias of UpperCamelJoin kept for readability.
+func PascalJoin(a []string) string { return UpperCamelJoin(a) }

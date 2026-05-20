@@ -1,57 +1,49 @@
 # zapctx
-zap logger from context.
 
-# example
+Carry a `*zap.Logger` (and accumulated structured fields) through
+`context.Context` so handlers can log with request-scoped data without
+threading the logger through every signature.
 
-## simple
+## Quickstart
+
 ```go
-package main
-
 func init() {
-	zapctx.BetterDefault()
+    if err := zapctx.BetterDefault(); err != nil {
+        log.Fatal(err)
+    }
 }
 
-func SomeFunction(ctx context.Context) {
-    logger := zapctx.L(ctx)
-    
-	logger.Info("some log") 
-	// {"level":"info","time":"2019-10-11T10:28:18.492+0800","caller":"_playground/main.go:64","msg":"some log","hello":"world"}
-	
-	logger.Info("some log") 
-	// {"level":"info","time":"2019-10-11T10:28:18.492+0800","caller":"_playground/main.go:64","msg":"some log","hello":"world"}
-	
-	sampledLogger := zapctx.Sampled(ctx)
-	sampledLogger.Info("some log") 
-	// nothing, because Sampled is false
+func handler(ctx context.Context) {
+    zapctx.L(ctx).Info("hello") // includes any fields attached upstream
 }
 
 func main() {
-	originContext := context.Background()
-	newCtx := zapctx.ToContext(originContext, zap.L())
-	_ctx := zapctx.Extract(newCtx)
-	_ctx.AddFields(zap.String("hello", "world"))
-	_ctx.Sampled = false
-
-	SomeFunction(newCtx)
+    ctx := zapctx.ToContext(context.Background(), zap.L())
+    zapctx.Extract(ctx).AddFields(zap.String("hello", "world"))
+    handler(ctx)
 }
 ```
 
-## gin middleware
+`zapctx.Sampled(ctx)` returns a no-op logger unless the request is marked
+sampled (see `OpenTraceInject`), useful for verbose per-request logs.
+
+## Middleware
 
 ```go
-engine := gin.Default()
+// gin
+engine.Use(zapctx.GinMiddleware(zap.L()))
+
+// grpc
+grpc.NewServer(grpc.UnaryInterceptor(
+    zapctx.UnaryServerInterceptor(zap.L()),
+))
+```
+
+## OpenCensus trace injection
+
+```go
 engine.Use(zapctx.GinMiddleware(zap.L(), zapctx.OpenTraceInject))
 ```
 
-## grpc middleware
-```go
-grpc.NewServer(
-	grpc.StatsHandler(statsHandler),
-	grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-		zapctx.UnaryServerInterceptor(zap.L(), zapctx.OpenTraceInject),
-	)))
-```
-
-# TODO
-
-- payload middleware
+> `OpenTraceInject` is deprecated: OpenCensus is no longer maintained.
+> New code should adapt to OpenTelemetry.

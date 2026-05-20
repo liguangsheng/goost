@@ -1,28 +1,29 @@
-# go-shuwdown
+# shutdown
 
-Golang app shutdown hooks
-
-# example
+Coordinate graceful shutdown hooks driven by OS signals.
 
 ```go
 func StartServer() {
-    lis, err := net.Listen("tcp", "127.0.0.1")
-    if err != nil {
-    	panic(err)
-    }
-   
-    server := grpc.NewServer()
-    shutdown.Add(func() {
-    	server.GracefulStop()
-    })
-    server.Serve(lis)
+    lis, _ := net.Listen("tcp", "127.0.0.1:0")
+    srv := grpc.NewServer()
+    shutdown.Add(srv.GracefulStop)
+    _ = srv.Serve(lis)
 }
 
 func main() {
-    go StartServer1()
-    go StartServer2()
-    ...
+    go StartServer()
 
-    shutdown.C()
+    // Block until SIGINT/SIGTERM, then run hooks and return.
+    shutdown.Wait(context.Background())
 }
 ```
+
+For tests or libraries that need an isolated registry, use `NewManager`:
+
+```go
+m := shutdown.NewManager(syscall.SIGUSR1)
+m.Add(func() { /* ... */ })
+m.Wait(ctx)
+```
+
+Hook panics are recovered so later hooks still run.

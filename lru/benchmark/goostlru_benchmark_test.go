@@ -1,8 +1,10 @@
 package benchmark
 
 import (
-	golru "github.com/liguangsheng/goost/lru"
+	"strconv"
 	"testing"
+
+	golru "github.com/liguangsheng/goost/lru"
 )
 
 const size = 1000 * 1000
@@ -25,7 +27,7 @@ longtextlongtextlongtextlongtextlongtextlongtextlongtextlongtextlongtextlongtext
 }
 
 func key(i int) string {
-	return string(i)
+	return strconv.Itoa(i)
 }
 
 func value(i int) interface{} {
@@ -33,15 +35,14 @@ func value(i int) interface{} {
 }
 
 func Benchmark_goostlru_Set(b *testing.B) {
-	c := golru.New().Cap(size).Safe(true).Build()
+	c := golru.New[string, interface{}]().Cap(size).Safe(true).Build()
 	for i := 0; i < b.N; i++ {
 		c.Set(key(i), value(i))
 	}
-
 }
 
 func Benchmark_goostlru_Get(b *testing.B) {
-	c := golru.New().Cap(size).Safe(true).Build()
+	c := golru.New[string, interface{}]().Cap(size).Safe(true).Build()
 	for i := 0; i < size; i++ {
 		if i%2 == 0 {
 			c.Set(key(i), value(i))
@@ -49,23 +50,22 @@ func Benchmark_goostlru_Get(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		value, ok := c.Get(string(i))
+		v, ok := c.Get(key(i))
 		if ok {
-			_ = value
+			_ = v
 		}
 	}
 }
 
 func Benchmark_goostlru_UnsafeSet(b *testing.B) {
-	c := golru.New().Cap(size).Safe(false).Build()
+	c := golru.New[string, interface{}]().Cap(size).Safe(false).Build()
 	for i := 0; i < b.N; i++ {
 		c.Set(key(i), value(i))
 	}
-
 }
 
 func Benchmark_goostlru_UnsafeGet(b *testing.B) {
-	c := golru.New().Cap(size).Safe(false).Build()
+	c := golru.New[string, interface{}]().Cap(size).Safe(false).Build()
 	for i := 0; i < size; i++ {
 		if i%2 == 0 {
 			c.Set(key(i), value(i))
@@ -73,9 +73,9 @@ func Benchmark_goostlru_UnsafeGet(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		value, ok := c.Get(string(i))
+		v, ok := c.Get(key(i))
 		if ok {
-			_ = value
+			_ = v
 		}
 	}
 }

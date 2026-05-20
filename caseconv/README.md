@@ -1,33 +1,20 @@
 # caseconv
 
-case provides functions to split or join string in different styles.
+Split and join identifiers across casing styles.
 
-## example
+```go
+caseconv.CamelSplit("HelloHTTPWorld")               // ["Hello", "HTTP", "World"]
+caseconv.UpperCamelJoin([]string{"i","love","you"}) // "ILoveYou"
+caseconv.LowerCamelJoin([]string{"i","love","you"}) // "iLoveYou"
+caseconv.UpperSnakeJoin([]string{"i","love","you"}) // "I_LOVE_YOU"
+caseconv.LowerSnakeJoin([]string{"i","love","you"}) // "i_love_you"
+caseconv.UpperKebabJoin([]string{"i","love","you"}) // "I-LOVE-YOU"
+caseconv.TitleSnakeJoin([]string{"i","love","you"}) // "I_Love_You"
 ```
-package main
 
-import (
-	"fmt"
-	"github.com/liguangsheng/tile/caser"
-)
+Acronyms are preserved in camel-case output. Register additional ones at
+startup; the default set includes `HTTP`, `ID`, `WWW`, `URL`, `DAO`, `XML`:
 
-func main() {
-	fmt.Println(caser.CamelSplit("HTTPurlID"))       // [HTTP url ID]
-	fmt.Println(caser.CamelSplit("ThankYou"))        // [Thank You]
-	fmt.Println(caser.SnakeSplit("how_are_you"))     // [how are you]
-	fmt.Println(caser.PascalSplit("ILoveYou"))       // [I Love You]
-	fmt.Println(caser.KebabSplit("how-old-are-you")) // [how old are you]
-
-	parts := []string{"i", "love", "you"}
-	fmt.Println(caser.UpperCamelJoin(parts)) // ILoveYou
-	fmt.Println(caser.UpperKebabJoin(parts)) // I-LOVE-YOU
-	fmt.Println(caser.UpperSnakeJoin(parts)) // I_LOVE_YOU
-	fmt.Println(caser.LowerCamelJoin(parts)) // iLoveYou
-	fmt.Println(caser.LowerKebabJoin(parts)) // i-love-you
-	fmt.Println(caser.LowerSnakeJoin(parts)) // i_love_you
-	fmt.Println(caser.PascalJoin(parts))     // ILoveYou
-	fmt.Println(caser.TitleKebabJoin(parts)) // I-Love-You
-	fmt.Println(caser.TitleSnakeJoin(parts)) // I_Love_You
-	fmt.Println(caser.PascalJoin(parts))     // ILoveYou
-}
+```go
+caseconv.RegisterAcronym("ACL")
 ```

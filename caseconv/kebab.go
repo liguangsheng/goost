@@ -1,12 +1,8 @@
 package caseconv
 
-import (
-	"strings"
-)
+import "strings"
 
-func KebabSplit(s string) []string {
-	return strings.Split(s, "-")
-}
+func KebabSplit(s string) []string { return strings.Split(s, "-") }
 
 func UpperKebabJoin(parts []string) string {
 	return SimpleJoin(parts, "-", strings.ToUpper)
@@ -17,5 +13,5 @@ func LowerKebabJoin(parts []string) string {
 }
 
 func TitleKebabJoin(parts []string) string {
-	return SimpleJoin(parts, "-", strings.Title)
+	return SimpleJoin(parts, "-", titleFirst)
 }

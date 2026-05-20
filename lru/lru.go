@@ -1,163 +1,158 @@
+// Package lru implements a generic least-recently-used cache with optional
+// per-entry expiration and an evict hook.
 package lru
 
 import (
+	"container/list"
 	"sync"
 	"time"
 )
 
-type (
-	LRU      = *lru
-	key      = string
-	value    = interface{}
-	HookFunc func(k key, v value)
+// EvictHook is invoked when an entry is evicted because the cache is full.
+type EvictHook[K comparable, V any] func(K, V)
 
-	entry struct {
-		key       key
-		value     value
-		expiredAt int64
-	}
+type entry[K comparable, V any] struct {
+	key       K
+	value     V
+	expiredAt time.Time
+}
 
-	lru struct {
-		access     map[key]*element
-		ll         *lis
-		maxEntries int
-		evictHook  HookFunc
-		freeList   *lis
-		lock       sync.Locker
-	}
-)
+// Cache is a generic LRU cache. The zero value is not usable; build one with New.
+type Cache[K comparable, V any] struct {
+	access     map[K]*list.Element
+	ll         *list.List
+	maxEntries int
+	evictHook  EvictHook[K, V]
+	lock       sync.Locker
+}
 
-func newLRU(maxEntries int, lock sync.Locker, hook ...HookFunc) *lru {
-	e := &lru{
+func newCache[K comparable, V any](maxEntries int, lock sync.Locker, hook EvictHook[K, V]) *Cache[K, V] {
+	return &Cache[K, V]{
+		access:     make(map[K]*list.Element, maxEntries),
+		ll:         list.New(),
 		maxEntries: maxEntries,
-		access:     make(map[key]*element, maxEntries),
-		ll:         newList(),
-		freeList:   newList(),
+		evictHook:  hook,
 		lock:       lock,
 	}
-
-	if len(hook) > 0 {
-		e.evictHook = hook[0]
-	}
-	return e
 }
 
-func (e *lru) getFreeElement() *element {
-	if e.freeList.Len() > 0 {
-		return e.freeList.PopBack()
-	}
-	return &element{Value: &entry{}}
+// Set inserts or updates the value for key without expiration.
+func (c *Cache[K, V]) Set(key K, value V) {
+	c.lock.Lock()
+	c.set(key, value, time.Time{})
+	c.lock.Unlock()
 }
 
-func (e *lru) putFreeElement(ele *element) {
-	if e.ll.Len()+e.freeList.Len() <= e.maxEntries {
-		e.freeList.PushBack(ele)
-	}
+// SetWithExpire inserts or updates the value for key with an absolute expiration.
+func (c *Cache[K, V]) SetWithExpire(key K, value V, expiredAt time.Time) {
+	c.lock.Lock()
+	c.set(key, value, expiredAt)
+	c.lock.Unlock()
 }
 
-func (e *lru) set(key key, value value, expiration int64) {
-	if ele, ok := e.access[key]; ok {
-		ele.Value.(*entry).value = value
-		e.ll.MoveToFront(ele)
-		return
-	}
-
-	ele := e.getFreeElement()
-	ent := ele.Value.(*entry)
-	ent.key = key
-	ent.value = value
-	ent.expiredAt = expiration
-	e.access[key] = e.ll.PushFront(ele)
-
-	if e.maxEntries != 0 && e.ll.Len() > e.maxEntries {
-		e.removeOldest()
-	}
+// SetWithDuration inserts or updates the value for key with a relative expiration.
+func (c *Cache[K, V]) SetWithDuration(key K, value V, d time.Duration) {
+	c.lock.Lock()
+	c.set(key, value, time.Now().Add(d))
+	c.lock.Unlock()
 }
 
-func (e *lru) get(key key) *entry {
-	ele, ok := e.access[key]
+// Get returns the value for key and whether it was found. Expired entries are
+// evicted on access.
+func (c *Cache[K, V]) Get(key K) (V, bool) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	ele, ok := c.access[key]
 	if !ok {
-		return nil
+		var zero V
+		return zero, false
 	}
-
-	ent := ele.Value.(*entry)
-	if ent.expiredAt > 0 && ent.expiredAt < time.Now().Unix() {
-		return nil
+	ent := ele.Value.(*entry[K, V])
+	if !ent.expiredAt.IsZero() && ent.expiredAt.Before(time.Now()) {
+		c.removeElement(ele)
+		var zero V
+		return zero, false
 	}
-
-	e.ll.MoveToFront(ele)
-	return ent
-}
-
-func (e *lru) remove(k key) {
-	if ele, hit := e.access[k]; hit {
-		e.removeElement(ele)
-	}
-}
-
-func (e *lru) Clear() {
-	e.ll = newList()
-	e.access = make(map[key]*element, e.maxEntries)
-}
-
-func (e *lru) size() int {
-	return e.ll.Len()
-}
-
-func (e *lru) removeOldest() {
-	ele := e.ll.Back()
-	if ele != nil {
-		if e.evictHook != nil {
-			ent := ele.Value.(*entry)
-			e.evictHook(ent.key, ent.value)
-		}
-		e.removeElement(ele)
-	}
-}
-
-func (e *lru) removeElement(ele *element) {
-	ent := ele.Value.(*entry)
-	key := ent.key
-	e.ll.Remove(ele)
-	e.putFreeElement(ele)
-	delete(e.access, key)
-}
-
-func (e *lru) Set(key key, value value) {
-	e.lock.Lock()
-	e.set(key, value, -1)
-	e.lock.Unlock()
-}
-
-func (e *lru) SetWithExpire(key key, value value, expiredAt time.Time) {
-	e.lock.Lock()
-	e.set(key, value, expiredAt.Unix())
-	e.lock.Unlock()
-}
-
-func (e *lru) SetWithDuration(key key, value value, duration time.Duration) {
-	e.lock.Lock()
-	e.set(key, value, time.Now().Add(duration).Unix())
-	e.lock.Unlock()
-}
-
-func (e *lru) Get(key key) (value, bool) {
-	e.lock.Lock()
-	ent := e.get(key)
-	if ent == nil {
-		e.lock.Unlock()
-		return nil, false
-	}
-	e.lock.Unlock()
+	c.ll.MoveToFront(ele)
 	return ent.value, true
 }
 
-func (e *lru) Remove(key key) {
-	e.lock.Lock()
-	e.remove(key)
-	e.lock.Unlock()
+// Peek returns the value for key without updating recency.
+func (c *Cache[K, V]) Peek(key K) (V, bool) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	ele, ok := c.access[key]
+	if !ok {
+		var zero V
+		return zero, false
+	}
+	ent := ele.Value.(*entry[K, V])
+	if !ent.expiredAt.IsZero() && ent.expiredAt.Before(time.Now()) {
+		c.removeElement(ele)
+		var zero V
+		return zero, false
+	}
+	return ent.value, true
 }
 
-func (e *lru) Size() int {
-	return e.size()
+// Remove deletes key from the cache.
+func (c *Cache[K, V]) Remove(key K) {
+	c.lock.Lock()
+	if ele, ok := c.access[key]; ok {
+		c.removeElement(ele)
+	}
+	c.lock.Unlock()
+}
+
+// Size returns the current number of entries.
+func (c *Cache[K, V]) Size() int {
+	c.lock.Lock()
+	n := c.ll.Len()
+	c.lock.Unlock()
+	return n
+}
+
+// Clear removes all entries.
+func (c *Cache[K, V]) Clear() {
+	c.lock.Lock()
+	c.ll = list.New()
+	c.access = make(map[K]*list.Element, c.maxEntries)
+	c.lock.Unlock()
+}
+
+func (c *Cache[K, V]) set(key K, value V, expiredAt time.Time) {
+	if ele, ok := c.access[key]; ok {
+		ent := ele.Value.(*entry[K, V])
+		ent.value = value
+		ent.expiredAt = expiredAt
+		c.ll.MoveToFront(ele)
+		return
+	}
+
+	ent := &entry[K, V]{key: key, value: value, expiredAt: expiredAt}
+	c.access[key] = c.ll.PushFront(ent)
+
+	if c.maxEntries > 0 && c.ll.Len() > c.maxEntries {
+		c.removeOldest()
+	}
+}
+
+func (c *Cache[K, V]) removeOldest() {
+	ele := c.ll.Back()
+	if ele == nil {
+		return
+	}
+	if c.evictHook != nil {
+		ent := ele.Value.(*entry[K, V])
+		c.evictHook(ent.key, ent.value)
+	}
+	c.removeElement(ele)
+}
+
+func (c *Cache[K, V]) removeElement(ele *list.Element) {
+	ent := ele.Value.(*entry[K, V])
+	c.ll.Remove(ele)
+	delete(c.access, ent.key)
 }

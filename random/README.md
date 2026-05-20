@@ -1,26 +1,23 @@
 # random
 
-生成随机字符串，并发安全，性能超高，内存占用超小
-
-# example
+Concurrency-safe random string generator. Uses `math/rand/v2` for the
+default source.
 
 ```go
 random.String(16, random.HumanAlphanumeric)
-
-or
-
-s := random.New()
-s.Next(16, random.HumanAlphanumeric)
+// "kJ3pq8rNb2tFm7sH"
 ```
 
-# benchmark
+Built-in charsets: `Uppercase`, `Lowercase`, `Alphabetic`, `Numeric`,
+`Alphanumeric`, `HumanAlphanumeric`, `Symbols`, `Hex`.
+
+For a reproducible stream, build a `Sequence` with your own source:
+
+```go
+src := rand.New(rand.NewPCG(1, 2))
+s := random.NewSequence(src.Uint64)
+s.Next(8, random.Hex)
 ```
-goos: linux
-goarch: amd64
-pkg: github.com/liguangsheng/goost/random
-cpu: Intel(R) Core(TM) i7-9700 CPU @ 3.00GHz
-Benchmark_String
-Benchmark_String-4   	9837387	      110.3 ns/op	     16 B/op	      1 allocs/op
-PASS
-ok  	github.com/liguangsheng/goost/random	1.241s
-```
+
+> The generator is suitable for non-security use. For tokens, use
+> `crypto/rand` instead.

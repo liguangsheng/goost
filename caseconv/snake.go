@@ -1,12 +1,8 @@
 package caseconv
 
-import (
-	"strings"
-)
+import "strings"
 
-func SnakeSplit(s string) []string {
-	return strings.Split(s, "_")
-}
+func SnakeSplit(s string) []string { return strings.Split(s, "_") }
 
 func UpperSnakeJoin(parts []string) string {
 	return SimpleJoin(parts, "_", strings.ToUpper)
@@ -17,5 +13,5 @@ func LowerSnakeJoin(parts []string) string {
 }
 
 func TitleSnakeJoin(parts []string) string {
-	return SimpleJoin(parts, "_", strings.Title)
+	return SimpleJoin(parts, "_", titleFirst)
 }

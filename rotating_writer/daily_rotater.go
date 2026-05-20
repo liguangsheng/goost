@@ -2,26 +2,22 @@ package rotating_writer
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
-	"sync"
 	"time"
 )
 
-const oneday = time.Hour * 24
+const oneDay = 24 * time.Hour
 
+// DailyRotater rolls a single file over to a new dated file once per day.
 type DailyRotater struct {
 	dir       string
 	format    string
 	maxBackup int
 
-	file         *os.File
-	rolloverAt   int64
-	rolloverDate string
-
-	m sync.Mutex
+	file       *os.File
+	rolloverAt int64
 }
 
 func NewDailyRotater(dir, format string, maxBackup int) *DailyRotater {
@@ -37,22 +33,18 @@ func (r *DailyRotater) Writer() io.Writer {
 }
 
 func (r *DailyRotater) ShouldRollover(current time.Time) bool {
-	return current.Unix() > r.rolloverAt
+	return r.file == nil || current.Unix() > r.rolloverAt
 }
 
 func (r *DailyRotater) DoRollover(current time.Time) error {
-	r.m.Lock()
-	defer r.m.Unlock()
-
-	if r.file != nil {
-		r.file.Close()
-	}
-
-	file, err := r.open(r.newFilename(current))
+	file, err := r.open(r.filename(current))
 	if err != nil {
 		return err
 	}
 
+	if r.file != nil {
+		_ = r.file.Close()
+	}
 	r.file = file
 	r.rolloverAt = r.nextRolloverAt(current)
 
@@ -63,49 +55,43 @@ func (r *DailyRotater) DoRollover(current time.Time) error {
 }
 
 func (r *DailyRotater) deleteExpiredFiles() {
-	var toSort []os.FileInfo
-
-	files, _ := ioutil.ReadDir(r.dir)
-	for _, file := range files {
-		// 跳过不符合命名规则的文件
-		_, err := time.Parse(r.format, file.Name())
-		if err != nil {
-			continue
-		}
-
-		if file.Size() == 0 {
-			// 删除空文件
-			//os.Remove(filepath.Join(r.dir, file.Name()))
-		} else {
-			toSort = append(toSort, file)
-		}
+	entries, err := os.ReadDir(r.dir)
+	if err != nil {
+		return
 	}
 
-	sort.Slice(toSort, func(i, j int) bool {
-		a, _ := time.Parse(r.format, toSort[i].Name())
-		b, _ := time.Parse(r.format, toSort[j].Name())
+	var matched []os.DirEntry
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		if _, err := time.Parse(r.format, e.Name()); err != nil {
+			continue
+		}
+		matched = append(matched, e)
+	}
+
+	sort.Slice(matched, func(i, j int) bool {
+		a, _ := time.Parse(r.format, matched[i].Name())
+		b, _ := time.Parse(r.format, matched[j].Name())
 		return a.After(b)
 	})
 
-	for i, file := range toSort {
+	for i, e := range matched {
 		if i >= r.maxBackup {
-			os.Remove(filepath.Join(r.dir, file.Name()))
+			_ = os.Remove(filepath.Join(r.dir, e.Name()))
 		}
 	}
 }
 
-func (r *DailyRotater) newFilename(current time.Time) string {
-	return filepath.Join(r.dir, current.Format(r.format))
-}
-
-func (r *DailyRotater) rolloverFilename(current time.Time) string {
+func (r *DailyRotater) filename(current time.Time) string {
 	return filepath.Join(r.dir, current.Format(r.format))
 }
 
 func (r *DailyRotater) nextRolloverAt(current time.Time) int64 {
-	return current.Add(oneday).Truncate(oneday).Unix()
+	return current.Add(oneDay).Truncate(oneDay).Unix()
 }
 
 func (r *DailyRotater) open(name string) (*os.File, error) {
-	return os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666|os.ModeSticky)
+	return os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
 }

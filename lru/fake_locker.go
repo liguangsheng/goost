@@ -1,7 +1,6 @@
 package lru
 
-type fakeLocker struct{}
+type noopLocker struct{}
 
-func (l *fakeLocker) Lock() {}
-
-func (l *fakeLocker) Unlock() {}
+func (noopLocker) Lock()   {}
+func (noopLocker) Unlock() {}

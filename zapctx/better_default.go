@@ -1,6 +1,7 @@
 package zapctx
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -8,16 +9,24 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-func BetterDefault() {
+// BetterDefault installs a zap global logger configured for either
+// development (debug level, dev encoder defaults) or production
+// (info level), based on the APP_ENV environment variable.
+//
+// It returns an error rather than panicking so callers can decide how
+// to handle failure.
+func BetterDefault() error {
+	env := strings.ToLower(os.Getenv("APP_ENV"))
+	production := env == "production" || env == "prod"
+
 	level := zapcore.DebugLevel
-	env := strings.ToUpper(os.Getenv("APP_ENV"))
-	if env == "production" || env == "prod" {
+	if production {
 		level = zapcore.InfoLevel
 	}
 
-	logger, err := zap.Config{
+	cfg := zap.Config{
 		Level:       zap.NewAtomicLevelAt(level),
-		Development: true,
+		Development: !production,
 		Encoding:    "json",
 		EncoderConfig: zapcore.EncoderConfig{
 			TimeKey:        "time",
@@ -34,10 +43,12 @@ func BetterDefault() {
 		},
 		OutputPaths:      []string{"stderr"},
 		ErrorOutputPaths: []string{"stderr"},
-	}.Build()
-	if err != nil {
-		panic(err)
 	}
 
+	logger, err := cfg.Build()
+	if err != nil {
+		return fmt.Errorf("zapctx: build logger: %w", err)
+	}
 	zap.ReplaceGlobals(logger)
+	return nil
 }

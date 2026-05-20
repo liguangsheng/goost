@@ -2,38 +2,45 @@ package lru
 
 import "sync"
 
-type builder struct {
+// Builder constructs a Cache. Use New to obtain one.
+type Builder[K comparable, V any] struct {
 	cap       int
 	locker    sync.Locker
-	evictHook HookFunc
+	evictHook EvictHook[K, V]
 }
 
-func New() *builder {
-	return &builder{
+// New creates a Builder with sensible defaults: capacity 10000 and concurrency-safe.
+func New[K comparable, V any]() *Builder[K, V] {
+	return &Builder[K, V]{
 		cap:    10000,
 		locker: &sync.Mutex{},
 	}
 }
 
-func (b *builder) Cap(i int) *builder {
-	b.cap = i
+// Cap sets the maximum number of entries. A value of 0 disables eviction.
+func (b *Builder[K, V]) Cap(n int) *Builder[K, V] {
+	b.cap = n
 	return b
 }
 
-func (b *builder) Safe(safe bool) *builder {
+// Safe toggles internal locking. When false, callers must serialize access.
+func (b *Builder[K, V]) Safe(safe bool) *Builder[K, V] {
 	if safe {
 		b.locker = &sync.Mutex{}
 	} else {
-		b.locker = &fakeLocker{}
+		b.locker = noopLocker{}
 	}
 	return b
 }
 
-func (b *builder) Evict(fn HookFunc) *builder {
+// Evict installs a hook that is called whenever an entry is evicted due to
+// capacity. It is not called by Remove or Clear.
+func (b *Builder[K, V]) Evict(fn EvictHook[K, V]) *Builder[K, V] {
 	b.evictHook = fn
 	return b
 }
 
-func (b *builder) Build() LRU {
-	return newLRU(b.cap, b.locker, b.evictHook)
+// Build returns the configured Cache.
+func (b *Builder[K, V]) Build() *Cache[K, V] {
+	return newCache(b.cap, b.locker, b.evictHook)
 }
