@@ -35,3 +35,29 @@ jobs:
       - uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+
+  staticcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - run: staticcheck ./...
+
+  gosec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Run Gosec
+        uses: securego/gosec@master
+        with:
+          # G103: unsafe pkg in bytesconv is by design (doc explains).
+          # G115: bounded mask conversions in random.
+          # G301/G302: log files need group/other readability (0o644/0o755) for logrotate, ops tooling.
+          # G304: rotatingwriter takes the file path from the caller by design.
+          args: -exclude=G103,G115,G301,G302,G304 -exclude-dir=examples ./...

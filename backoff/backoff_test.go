@@ -41,6 +41,18 @@ func Test_BackoffJitterBounded(t *testing.T) {
 	}
 }
 
+func Test_BackoffDeterministicJitter(t *testing.T) {
+	// Inject a deterministic source: always 0.0 → jitter offset = -0.2 * d.
+	b := &Backoff{
+		Initial: 100 * time.Millisecond,
+		Max:     100 * time.Millisecond,
+		Factor:  2,
+		Jitter:  0.2,
+		Rand:    func() float64 { return 0.0 },
+	}
+	assert.Equal(t, 80*time.Millisecond, b.Next())
+}
+
 func Test_RetrySuccess(t *testing.T) {
 	var calls atomic.Int64
 	err := Retry(context.Background(), &Backoff{Initial: time.Millisecond}, 5, func(_ context.Context) error {

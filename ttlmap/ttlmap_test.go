@@ -47,6 +47,37 @@ func Test_BackgroundSweep(t *testing.T) {
 	assert.Equal(t, 0, m.Len())
 }
 
+func Test_OnExpireOnGet(t *testing.T) {
+	var fired []string
+	m := New(0, WithOnExpire(func(k string, v int) {
+		fired = append(fired, k)
+	}))
+	defer m.Close()
+	m.Set("a", 1, 10*time.Millisecond)
+	time.Sleep(30 * time.Millisecond)
+	_, ok := m.Get("a")
+	assert.False(t, ok)
+	assert.Equal(t, []string{"a"}, fired)
+}
+
+func Test_OnExpireOnSweep(t *testing.T) {
+	var fired []string
+	var mu sync.Mutex
+	m := New(20*time.Millisecond, WithOnExpire(func(k string, v int) {
+		mu.Lock()
+		fired = append(fired, k)
+		mu.Unlock()
+	}))
+	defer m.Close()
+	m.Set("a", 1, 5*time.Millisecond)
+	m.Set("b", 2, 5*time.Millisecond)
+	time.Sleep(80 * time.Millisecond)
+	mu.Lock()
+	got := append([]string{}, fired...)
+	mu.Unlock()
+	assert.ElementsMatch(t, []string{"a", "b"}, got)
+}
+
 func Test_DeleteCloseRace(t *testing.T) {
 	m := New[string, int](5 * time.Millisecond)
 	var wg sync.WaitGroup

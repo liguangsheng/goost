@@ -23,6 +23,10 @@ type Backoff struct {
 	// Jitter is the maximum random fraction added to each delay (0–1).
 	// 0.2 means up to ±20%. Defaults to 0 (no jitter).
 	Jitter float64
+	// Rand, if non-nil, is used to draw jitter in place of math/rand/v2.
+	// Useful for deterministic tests; pass a function that returns a value
+	// in [0, 1).
+	Rand func() float64
 
 	step int
 }
@@ -50,8 +54,12 @@ func (b *Backoff) Next() time.Duration {
 	b.step++
 
 	if b.Jitter > 0 {
+		r := rand.Float64
+		if b.Rand != nil {
+			r = b.Rand
+		}
 		// add a random offset in [-Jitter, +Jitter] * d
-		j := (rand.Float64()*2 - 1) * b.Jitter
+		j := (r()*2 - 1) * b.Jitter
 		d += d * j
 	}
 	if d < 0 {

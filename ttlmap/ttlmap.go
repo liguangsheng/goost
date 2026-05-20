@@ -15,20 +15,39 @@ type entry[V any] struct {
 	expireNs int64
 }
 
+// OnExpire is called when an entry is evicted because its TTL elapsed.
+// It runs on either the goroutine that observed the expiration (during
+// Get) or the sweep goroutine. Do not block.
+type OnExpire[K comparable, V any] func(K, V)
+
+// Option configures a TTLMap at construction time.
+type Option[K comparable, V any] func(*TTLMap[K, V])
+
+// WithOnExpire installs an expiration hook.
+func WithOnExpire[K comparable, V any](fn OnExpire[K, V]) Option[K, V] {
+	return func(m *TTLMap[K, V]) {
+		m.onExpire = fn
+	}
+}
+
 // TTLMap is a concurrent map with per-key expiration.
 type TTLMap[K comparable, V any] struct {
 	mu       sync.RWMutex
 	data     map[K]entry[V]
 	stop     chan struct{}
 	stopOnce sync.Once
+	onExpire OnExpire[K, V]
 }
 
 // New creates a TTLMap and starts a sweep goroutine that runs every
 // sweepEvery (use 0 to disable background sweeping). Call Close to stop it.
-func New[K comparable, V any](sweepEvery time.Duration) *TTLMap[K, V] {
+func New[K comparable, V any](sweepEvery time.Duration, opts ...Option[K, V]) *TTLMap[K, V] {
 	m := &TTLMap[K, V]{
 		data: make(map[K]entry[V]),
 		stop: make(chan struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
 	}
 	if sweepEvery > 0 {
 		go m.sweepLoop(sweepEvery)
@@ -49,7 +68,7 @@ func (m *TTLMap[K, V]) Set(key K, value V, ttl time.Duration) {
 }
 
 // Get returns the value for key and whether it was found and not expired.
-// An expired entry is removed on access.
+// An expired entry is removed on access (and OnExpire fires).
 func (m *TTLMap[K, V]) Get(key K) (V, bool) {
 	m.mu.RLock()
 	e, ok := m.data[key]
@@ -63,8 +82,13 @@ func (m *TTLMap[K, V]) Get(key K) (V, bool) {
 		// recheck under the write lock to avoid removing a refresh
 		if cur, ok := m.data[key]; ok && cur.expireNs == e.expireNs {
 			delete(m.data, key)
+			m.mu.Unlock()
+			if m.onExpire != nil {
+				m.onExpire(key, e.value)
+			}
+		} else {
+			m.mu.Unlock()
 		}
-		m.mu.Unlock()
 		var zero V
 		return zero, false
 	}
@@ -107,11 +131,24 @@ func (m *TTLMap[K, V]) sweepLoop(every time.Duration) {
 }
 
 func (m *TTLMap[K, V]) sweep(nowNs int64) {
+	type expired struct {
+		k K
+		v V
+	}
+	var fired []expired
+
 	m.mu.Lock()
 	for k, e := range m.data {
 		if e.expireNs > 0 && e.expireNs <= nowNs {
+			if m.onExpire != nil {
+				fired = append(fired, expired{k, e.value})
+			}
 			delete(m.data, k)
 		}
 	}
 	m.mu.Unlock()
+
+	for _, x := range fired {
+		m.onExpire(x.k, x.v)
+	}
 }

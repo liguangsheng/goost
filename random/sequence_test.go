@@ -40,6 +40,28 @@ func Test_Race(t *testing.T) {
 	wg.Wait()
 }
 
+func Test_SecureString(t *testing.T) {
+	s := SecureString(32, Hex)
+	assert.Equal(t, 32, len(s))
+	for _, r := range s {
+		assert.True(t, strings.ContainsRune(Hex, r))
+	}
+	assert.Equal(t, "", SecureString(0, Hex))
+	assert.Equal(t, "", SecureString(8, ""))
+}
+
+func Test_SecureStringUniqueness(t *testing.T) {
+	// 16-char alphanumeric -> 2^95+ bits of entropy; collisions are
+	// astronomically unlikely.
+	seen := make(map[string]struct{}, 256)
+	for range 256 {
+		s := SecureString(16, Alphanumeric)
+		_, dup := seen[s]
+		assert.False(t, dup, "unexpected duplicate %q", s)
+		seen[s] = struct{}{}
+	}
+}
+
 func Benchmark_String(b *testing.B) {
 	for range b.N {
 		_ = String(16, HumanAlphanumeric)

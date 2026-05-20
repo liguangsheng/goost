@@ -12,15 +12,32 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`defaultmap`** — `GetOrInit` returns `(V, loaded bool)`; `LoadOrStore`
   for `sync.Map`-style insertion without calling the constructor.
 - **`zapctx`** — `PayloadGinMiddleware` logs request/response bodies, status
-  and latency, with `WithMaxBody`, `WithSampling`, `WithSkipper` options.
+  and latency, with `WithMaxBody`, `WithSampling`, `WithSkipper` options;
+  `PayloadUnaryServerInterceptor` is the gRPC counterpart.
 - **`pool`** — `Stats()` exposes workers, in-flight, queued, completed and
   panic counts via cheap atomics.
+- **`ttlmap`** — `WithOnExpire` hook fires when an entry is evicted by
+  either active access or background sweep.
+- **`random`** — `SecureString` uses `crypto/rand` for tokens/salts.
+- **`backoff`** — `Backoff.Rand` lets tests inject a deterministic jitter
+  source.
+- **`caseconv`** — one-step `ToUpperCamel` / `ToLowerSnake` /
+  `ToLowerKebab` / etc. that auto-detect the input style.
 - **`slogctx`** — new package: `log/slog` counterpart to `zapctx`, including
   `OtelTraceInject`.
 - **`errors`** — new package: lightweight stack-trace wrapping with
   `errors.Is`/`As`/`%w` compatibility.
 - **`taskgroup`** — new package: `errgroup` plus concurrency limit and
   panic recovery.
+- **`ratelimit`** — new package: token bucket and leaky bucket with
+  `Allow` / `Wait(ctx)` and injectable clock.
+- **`circuitbreaker`** — new package: closed / open / half-open state
+  machine with configurable thresholds, cooldown, and `OnStateChange`.
+- Root `doc.go` summarizes the module's packages.
+- `examples/` directory: three runnable programs (`httpserver`,
+  `concurrent`, `cache`) demonstrating package combinations.
+- CI now runs `staticcheck` and `gosec` jobs in addition to
+  `golangci-lint`.
 
 ## [v0.1.0] — 2026-05-20
 
