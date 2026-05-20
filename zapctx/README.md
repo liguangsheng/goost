@@ -39,11 +39,13 @@ grpc.NewServer(grpc.UnaryInterceptor(
 ))
 ```
 
-## OpenCensus trace injection
+## OpenTelemetry trace injection
 
 ```go
-engine.Use(zapctx.GinMiddleware(zap.L(), zapctx.OpenTraceInject))
+engine.Use(zapctx.GinMiddleware(zap.L(), zapctx.OtelTraceInject))
 ```
 
-> `OpenTraceInject` is deprecated: OpenCensus is no longer maintained.
-> New code should adapt to OpenTelemetry.
+`OtelTraceInject` reads `trace.SpanContextFromContext(ctx)` and adds
+`trace.traceid` / `trace.spanid` / `trace.sampled` fields to the bound
+logger; it also forwards the sample flag so `zapctx.Sampled(ctx)` can
+gate verbose per-request logs.

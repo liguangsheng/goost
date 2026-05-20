@@ -25,19 +25,6 @@ func Test_L_FallbackToGlobal(t *testing.T) {
 	assert.Equal(t, zap.L(), L(context.Background()))
 }
 
-func Test_OpenTraceInjectNoContext(t *testing.T) {
-	// Must not panic when ctx has neither ZapContext nor span.
-	ctx := OpenTraceInject(context.Background())
-	assert.NotNil(t, ctx)
-}
-
-func Test_OpenTraceInjectWithLogger(t *testing.T) {
-	ctx := ToContext(context.Background(), zap.NewNop())
-	// No span attached — should be a no-op.
-	out := OpenTraceInject(ctx)
-	assert.Equal(t, ctx, out)
-}
-
 func Test_BetterDefault(t *testing.T) {
 	assert.NoError(t, BetterDefault())
 }
