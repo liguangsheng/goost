@@ -37,6 +37,26 @@ jobs:
       - run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
       - run: golangci-lint run ./...
 
+  split-modules:
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - examples
+          - lru/benchmark
+          - zapctx/zapctxgin
+          - zapctx/zapctxgrpc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.25.10'
+      - run: go vet ./...
+        working-directory: ${{ matrix.dir }}
+      - run: go test ./...
+        working-directory: ${{ matrix.dir }}
+
   staticcheck:
     runs-on: ubuntu-latest
     steps:
@@ -57,11 +77,10 @@ jobs:
       - name: Run Gosec
         uses: securego/gosec@master
         with:
-          # G103: unsafe pkg in bytesconv is by design (doc explains).
           # G115: bounded mask conversions in random.
           # G301/G302: log files need group/other readability (0o644/0o755) for logrotate, ops tooling.
           # G304: rotatingwriter takes the file path from the caller by design.
-          args: -exclude=G103,G115,G301,G302,G304 -exclude-dir=examples ./...
+          args: -exclude=G115,G301,G302,G304 -exclude-dir=examples ./...
 
   govulncheck:
     runs-on: ubuntu-latest

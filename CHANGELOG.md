@@ -28,6 +28,8 @@ splits optional/demo modules out of the root module dependency graph.
 - `examples/`, `lru/benchmark`, `zapctx/zapctxgin`, and `zapctx/zapctxgrpc`
   now have their own `go.mod` files, keeping demo, benchmark, Gin, and gRPC
   dependencies out of the root library module.
+- CI now vets and tests those split modules explicitly, since the root
+  `go test ./...` no longer traverses nested modules.
 - CI now uses Node 24-native `actions/checkout@v6` and `actions/setup-go@v6`.
 - CI now uses Node 24-native `codecov/codecov-action@v6`.
 
