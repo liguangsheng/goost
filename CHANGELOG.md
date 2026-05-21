@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - CI now uses Node 24-native `actions/checkout@v6` and `actions/setup-go@v6`.
+- CI now uses Node 24-native `codecov/codecov-action@v6`.
 
 ## [v0.3.0] — 2026-05-21
 
