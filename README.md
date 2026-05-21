@@ -23,7 +23,7 @@ go get github.com/liguangsheng/goost
 | [`env`](./env) | Struct-tag configuration loader from environment variables. |
 | [`errors`](./errors) | `errors` with stack traces; `Join`; `Recover` (defer panic→error); `Is`/`As`/`%w` compatible. |
 | [`fanout`](./fanout) | In-process broadcaster: one publisher, many subscribers; drop-on-slow. |
-| [`httpx`](./httpx) | `*http.Client` with retry + ratelimit + circuit breaker. |
+| [`httpx`](./httpx) | `*http.Client` with retry, ratelimit, circuit breaker, and request logging. |
 | [`itertools`](./itertools) | Generic slice helpers: `Map`, `Filter`, `Reduce`, `Chunk`, etc. |
 | [`keyedmutex`](./keyedmutex) | Per-key mutex: parallel across keys, serial per key; slots GC when idle. |
 | [`lru`](./lru) | Generic LRU cache with optional per-entry expiration; sharded variant; `Keys`/`Range`/`Resize`. |

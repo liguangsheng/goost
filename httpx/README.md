@@ -1,7 +1,7 @@
 # httpx
 
 `*http.Client` assembled from goost building blocks: retry with backoff,
-optional rate limiting, optional circuit breaker.
+optional rate limiting, optional circuit breaker, and optional request logging.
 
 ```go
 c := httpx.New(httpx.Options{
@@ -19,6 +19,7 @@ c := httpx.New(httpx.Options{
         FailureThreshold: 5,
         CooldownPeriod:   30 * time.Second,
     }),
+    Logger: slog.Default(),
 })
 
 resp, err := c.Get("https://api.example.com/users")
@@ -27,3 +28,7 @@ resp, err := c.Get("https://api.example.com/users")
 The default retry policy retries on transport errors, HTTP 429, and any
 5xx. Override with `RetryPolicy.RetryOn`. Bodies passed to `Post` are
 buffered so they can be replayed on retry.
+
+When `Logger` is set, `httpx` logs one summary line per request after retries
+finish. The log includes method, scheme, host, path, status, attempts,
+duration, and error. Query strings and bodies are intentionally omitted.

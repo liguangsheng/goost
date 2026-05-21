@@ -1,9 +1,11 @@
 package httpx
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -140,4 +142,52 @@ func Test_BodyResnapshotForRetry(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "payload", lastBody.Load())
+}
+
+func Test_LoggerRecordsFinalRequestSummary(t *testing.T) {
+	var calls atomic.Int64
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if calls.Add(1) < 2 {
+			w.WriteHeader(http.StatusBadGateway)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer s.Close()
+
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	c := New(Options{
+		Logger: logger,
+		Retry:  &RetryPolicy{MaxAttempts: 2, Backoff: &backoff.Backoff{Initial: time.Millisecond}},
+	})
+
+	resp, err := c.Get(s.URL + "/users?token=secret")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+	out := buf.String()
+	assert.Contains(t, out, "msg=\"httpx request\"")
+	assert.Contains(t, out, "method=GET")
+	assert.Contains(t, out, "path=/users")
+	assert.Contains(t, out, "status=201")
+	assert.Contains(t, out, "attempts=2")
+	assert.NotContains(t, out, "token=secret")
+}
+
+func Test_LoggerRecordsLimiterError(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, nil))
+	c := New(Options{
+		Logger:  logger,
+		Limiter: errLimiter{err: errors.New("blocked")},
+	})
+
+	_, err := c.Get("https://api.example.com/users")
+	assert.Error(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "status=0")
+	assert.Contains(t, out, "attempts=0")
+	assert.Contains(t, out, "error=blocked")
 }

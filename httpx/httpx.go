@@ -1,6 +1,6 @@
 // Package httpx assembles http.Client with goost building blocks:
 // exponential-backoff retry, optional rate limiting, optional circuit
-// breaker, and (TODO) request logging.
+// breaker, and optional request logging.
 //
 // All knobs are off by default; New returns a plain *http.Client with
 // the wrapped transport, ready to be tuned via the option setters.
@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -21,8 +22,8 @@ import (
 
 // RetryPolicy controls Retry.
 type RetryPolicy struct {
-	MaxAttempts int               // 0 = no retry
-	Backoff     *backoff.Backoff  // required when MaxAttempts > 0
+	MaxAttempts int              // 0 = no retry
+	Backoff     *backoff.Backoff // required when MaxAttempts > 0
 	RetryOn     func(*http.Response, error) bool
 }
 
@@ -43,6 +44,9 @@ type Options struct {
 	Limiter Limiter
 	// Breaker, when non-nil, short-circuits requests after enough failures.
 	Breaker *circuitbreaker.Breaker
+	// Logger, when non-nil, logs one summary line after each RoundTrip.
+	// URL query strings and request/response bodies are not logged.
+	Logger *slog.Logger
 }
 
 // New returns an *http.Client whose Transport is wrapped according to opts.
@@ -74,11 +78,17 @@ var DefaultRetryOn = func(resp *http.Response, err error) bool {
 	return resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500
 }
 
-func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	start := time.Now()
+	attemptsMade := 0
+	defer func() {
+		t.logRoundTrip(req, start, attemptsMade, resp, err)
+	}()
+
 	// Apply rate limit first to avoid spending retry budget on rejections.
 	if t.opts.Limiter != nil {
-		if err := t.opts.Limiter.Wait(req.Context(), 1); err != nil {
-			return nil, err
+		if waitErr := t.opts.Limiter.Wait(req.Context(), 1); waitErr != nil {
+			return nil, waitErr
 		}
 	}
 
@@ -101,9 +111,9 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		policy.Backoff.Reset()
 	}
 
-	var resp *http.Response
 	var lastErr error
 	for i := 0; i < attempts; i++ {
+		attemptsMade++
 		if body != nil {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
@@ -122,6 +132,29 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 	return resp, lastErr
+}
+
+func (t *transport) logRoundTrip(req *http.Request, start time.Time, attempts int, resp *http.Response, err error) {
+	if t.opts.Logger == nil {
+		return
+	}
+	status := 0
+	if resp != nil {
+		status = resp.StatusCode
+	}
+	attrs := []slog.Attr{
+		slog.String("method", req.Method),
+		slog.String("scheme", req.URL.Scheme),
+		slog.String("host", req.URL.Host),
+		slog.String("path", req.URL.Path),
+		slog.Int("status", status),
+		slog.Int("attempts", attempts),
+		slog.Duration("duration", time.Since(start)),
+	}
+	if err != nil {
+		attrs = append(attrs, slog.String("error", err.Error()))
+	}
+	t.opts.Logger.LogAttrs(req.Context(), slog.LevelInfo, "httpx request", attrs...)
 }
 
 func (t *transport) callOnce(req *http.Request) (*http.Response, error) {

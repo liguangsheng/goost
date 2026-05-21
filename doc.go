@@ -14,7 +14,7 @@
 //   - env:             struct-tag configuration loader from environment vars
 //   - errors:          stack-tracing wrap on top of stdlib errors; Recover
 //   - fanout:          in-process broadcaster with drop-on-slow backpressure
-//   - httpx:           *http.Client with retry / ratelimit / circuit breaker
+//   - httpx:           *http.Client with retry / ratelimit / circuit breaker / logging
 //   - itertools:       generic slice helpers (Map/Filter/Reduce/...)
 //   - keyedmutex:      per-key mutex, slot GC when idle
 //   - lru:             generic LRU cache; optional TTL; sharded variant
