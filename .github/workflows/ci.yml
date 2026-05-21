@@ -38,24 +38,22 @@ jobs:
       - run: golangci-lint run ./...
 
   split-modules:
-    strategy:
-      fail-fast: false
-      matrix:
-        dir:
-          - examples
-          - lru/benchmark
-          - zapctx/zapctxgin
-          - zapctx/zapctxgrpc
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
         with:
           go-version: '1.25.10'
-      - run: go vet ./...
-        working-directory: ${{ matrix.dir }}
-      - run: go test ./...
-        working-directory: ${{ matrix.dir }}
+      - name: Vet and test split modules
+        run: |
+          set -euo pipefail
+          find . -mindepth 2 -name go.mod -print0 |
+            while IFS= read -r -d '' mod; do
+              dir="$(dirname "$mod")"
+              echo "::group::$dir"
+              (cd "$dir" && go vet ./... && go test ./...)
+              echo "::endgroup::"
+            done
 
   staticcheck:
     runs-on: ubuntu-latest
