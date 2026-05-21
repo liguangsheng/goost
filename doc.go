@@ -26,9 +26,13 @@
 //   - rotatingwriter:  io.Writer with daily or size-based rotation
 //   - shutdown:        signal-driven graceful shutdown coordinator
 //   - slogctx:         log/slog companion to zapctx
+//   - slogctx/slogctxotel: OpenTelemetry trace hook for slogctx
 //   - taskgroup:       errgroup + concurrency limit + panic recovery
 //   - ttlmap:          concurrent map with per-entry TTL and OnExpire
 //   - zapctx:          *zap.Logger and structured fields via context.Context
+//   - zapctx/zapctxgin: Gin middleware and HTTP payload logging for zapctx
+//   - zapctx/zapctxgrpc: gRPC interceptors and payload logging for zapctx
+//   - zapctx/zapctxotel: OpenTelemetry trace hook for zapctx
 //
 // See CHANGELOG.md for release notes and the examples/ directory for
 // end-to-end programs that combine several packages.

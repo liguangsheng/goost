@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.opentelemetry.io/otel/trace"
 )
 
 func newCapturingLogger() (*slog.Logger, *bytes.Buffer) {
@@ -46,29 +45,4 @@ func Test_SampledNoOpWhenNotSampled(t *testing.T) {
 	ctx := ToContext(context.Background(), logger)
 	Sampled(ctx).Info("nope")
 	assert.Empty(t, buf.String())
-}
-
-func Test_OtelTraceInjectWithSpan(t *testing.T) {
-	tid, _ := trace.TraceIDFromHex("0102030405060708090a0b0c0d0e0f10")
-	sid, _ := trace.SpanIDFromHex("0102030405060708")
-	sc := trace.NewSpanContext(trace.SpanContextConfig{
-		TraceID:    tid,
-		SpanID:     sid,
-		TraceFlags: trace.FlagsSampled,
-	})
-
-	logger, buf := newCapturingLogger()
-	ctx := ToContext(context.Background(), logger)
-	ctx = trace.ContextWithSpanContext(ctx, sc)
-	OtelTraceInject(ctx)
-
-	Sampled(ctx).Info("yes") // sampled now, must log
-	out := buf.String()
-	assert.Contains(t, out, "trace.traceid=0102030405060708090a0b0c0d0e0f10")
-	assert.Contains(t, out, "yes")
-}
-
-func Test_OtelTraceInjectNoZapContext(t *testing.T) {
-	out := OtelTraceInject(context.Background())
-	assert.NotNil(t, out)
 }

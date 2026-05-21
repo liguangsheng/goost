@@ -1,10 +1,11 @@
-package zapctx
+package zapctxgrpc
 
 import (
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/liguangsheng/goost/zapctx"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -19,7 +20,7 @@ func Test_PayloadUnaryServerInterceptor_Success(t *testing.T) {
 	logger := zap.New(core)
 
 	chain := func(ctx context.Context, req any) (any, error) {
-		ctx = ToContext(ctx, logger)
+		ctx = zapctx.ToContext(ctx, logger)
 		return PayloadUnaryServerInterceptor(logger, GRPCWithBody(true))(
 			ctx, req,
 			&grpc.UnaryServerInfo{FullMethod: "/svc/Ping"},
@@ -44,7 +45,7 @@ func Test_PayloadUnaryServerInterceptor_Error(t *testing.T) {
 
 	want := status.Error(codes.PermissionDenied, "no")
 	_, err := PayloadUnaryServerInterceptor(logger)(
-		ToContext(context.Background(), logger), nil,
+		zapctx.ToContext(context.Background(), logger), nil,
 		&grpc.UnaryServerInfo{FullMethod: "/svc/Op"},
 		func(ctx context.Context, req any) (any, error) { return nil, want },
 	)
@@ -61,7 +62,7 @@ func Test_PayloadUnaryServerInterceptor_Sampling(t *testing.T) {
 	icp := PayloadUnaryServerInterceptor(logger, GRPCWithSampling(3))
 
 	for range 9 {
-		_, _ = icp(ToContext(context.Background(), logger), nil,
+		_, _ = icp(zapctx.ToContext(context.Background(), logger), nil,
 			&grpc.UnaryServerInfo{FullMethod: "/svc/M"},
 			func(ctx context.Context, req any) (any, error) { return nil, nil },
 		)
@@ -77,7 +78,7 @@ func Test_PayloadUnaryServerInterceptor_Skipper(t *testing.T) {
 	}))
 
 	for _, m := range []string{"/svc/Health", "/svc/Do"} {
-		_, _ = icp(ToContext(context.Background(), logger), nil,
+		_, _ = icp(zapctx.ToContext(context.Background(), logger), nil,
 			&grpc.UnaryServerInfo{FullMethod: m},
 			func(ctx context.Context, req any) (any, error) { return nil, nil },
 		)

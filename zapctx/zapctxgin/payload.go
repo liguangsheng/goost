@@ -1,4 +1,4 @@
-package zapctx
+package zapctxgin
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/liguangsheng/goost/zapctx"
 	"go.uber.org/zap"
 )
 
@@ -40,10 +41,10 @@ func WithSkipper(fn func(*gin.Context) bool) PayloadOption {
 	return func(c *payloadConfig) { c.skip = fn }
 }
 
-// PayloadGinMiddleware logs request/response bodies, status, latency, and
+// PayloadMiddleware logs request/response bodies, status, latency, and
 // trace fields attached by upstream hooks. Bodies are truncated by maxBody
 // to keep log lines bounded. Bodies are kept fully readable by handlers.
-func PayloadGinMiddleware(logger *zap.Logger, opts ...PayloadOption) gin.HandlerFunc {
+func PayloadMiddleware(logger *zap.Logger, opts ...PayloadOption) gin.HandlerFunc {
 	cfg := &payloadConfig{maxBody: 4096, sampleEvery: 1}
 	for _, o := range opts {
 		o(cfg)
@@ -79,9 +80,11 @@ func PayloadGinMiddleware(logger *zap.Logger, opts ...PayloadOption) gin.Handler
 				zap.ByteString("response_body", rw.captured()),
 			)
 		}
-		L(c.Request.Context()).With(fields...).Info("http")
-		// reuse logger to keep linter happy and allow future filtering by name
-		_ = logger
+		log := zapctx.L(c.Request.Context())
+		if zapctx.Extract(c.Request.Context()) == nil && logger != nil {
+			log = logger
+		}
+		log.With(fields...).Info("http")
 	}
 }
 

@@ -47,7 +47,9 @@ func New[K comparable, V any](sweepEvery time.Duration, opts ...Option[K, V]) *T
 		stop: make(chan struct{}),
 	}
 	for _, opt := range opts {
-		opt(m)
+		if opt != nil {
+			opt(m)
+		}
 	}
 	if sweepEvery > 0 {
 		go m.sweepLoop(sweepEvery)

@@ -52,6 +52,9 @@ func (b *Builder[T]) Buffer(n int) *Builder[T] {
 
 // Build returns a ready Broadcaster.
 func (b *Builder[T]) Build() *Broadcaster[T] {
+	if b.buf <= 0 {
+		b.buf = 16
+	}
 	return &Broadcaster[T]{
 		subs: make(map[*Sub[T]]struct{}),
 		buf:  b.buf,

@@ -25,27 +25,44 @@ func main() {
 ```
 
 `zapctx.Sampled(ctx)` returns a no-op logger unless the request is marked
-sampled (see `OpenTraceInject`), useful for verbose per-request logs.
+sampled, useful for verbose per-request logs.
 
 ## Middleware
 
 ```go
 // gin
-engine.Use(zapctx.GinMiddleware(zap.L()))
+engine.Use(zapctxgin.Middleware(zap.L()))
 
 // grpc
 grpc.NewServer(grpc.UnaryInterceptor(
-    zapctx.UnaryServerInterceptor(zap.L()),
+    zapctxgrpc.UnaryServerInterceptor(zap.L()),
 ))
+```
+
+The framework integrations live in subpackages so core `zapctx` stays usable
+without compiling Gin or gRPC:
+
+```go
+import (
+    "github.com/liguangsheng/goost/zapctx/zapctxgin"
+    "github.com/liguangsheng/goost/zapctx/zapctxgrpc"
+)
 ```
 
 ## OpenTelemetry trace injection
 
 ```go
-engine.Use(zapctx.GinMiddleware(zap.L(), zapctx.OtelTraceInject))
+engine.Use(zapctxgin.Middleware(zap.L(), zapctxotel.TraceInject))
 ```
 
-`OtelTraceInject` reads `trace.SpanContextFromContext(ctx)` and adds
+The OpenTelemetry hook lives in a subpackage so core `zapctx` stays usable
+without compiling OpenTelemetry:
+
+```go
+import "github.com/liguangsheng/goost/zapctx/zapctxotel"
+```
+
+`zapctxotel.TraceInject` reads `trace.SpanContextFromContext(ctx)` and adds
 `trace.traceid` / `trace.spanid` / `trace.sampled` fields to the bound
 logger; it also forwards the sample flag so `zapctx.Sampled(ctx)` can
 gate verbose per-request logs.

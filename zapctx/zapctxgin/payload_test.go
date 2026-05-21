@@ -1,4 +1,4 @@
-package zapctx
+package zapctxgin
 
 import (
 	"bytes"
@@ -23,8 +23,8 @@ func Test_PayloadGinMiddleware_LogsBodies(t *testing.T) {
 	logger, logs := newObservedLogger()
 
 	e := gin.New()
-	e.Use(GinMiddleware(logger))
-	e.Use(PayloadGinMiddleware(logger))
+	e.Use(Middleware(logger))
+	e.Use(PayloadMiddleware(logger))
 	e.POST("/echo", func(c *gin.Context) {
 		body, _ := c.GetRawData()
 		c.Data(http.StatusCreated, "text/plain", body)
@@ -50,8 +50,8 @@ func Test_PayloadGinMiddleware_Sampling(t *testing.T) {
 	logger, logs := newObservedLogger()
 
 	e := gin.New()
-	e.Use(GinMiddleware(logger))
-	e.Use(PayloadGinMiddleware(logger, WithSampling(3), WithMaxBody(0)))
+	e.Use(Middleware(logger))
+	e.Use(PayloadMiddleware(logger, WithSampling(3), WithMaxBody(0)))
 	e.GET("/ping", func(c *gin.Context) { c.String(200, "pong") })
 
 	for range 9 {
@@ -69,8 +69,8 @@ func Test_PayloadGinMiddleware_Skipper(t *testing.T) {
 	logger, logs := newObservedLogger()
 
 	e := gin.New()
-	e.Use(GinMiddleware(logger))
-	e.Use(PayloadGinMiddleware(logger, WithSkipper(func(c *gin.Context) bool {
+	e.Use(Middleware(logger))
+	e.Use(PayloadMiddleware(logger, WithSkipper(func(c *gin.Context) bool {
 		return c.Request.URL.Path == "/health"
 	})))
 	e.GET("/health", func(c *gin.Context) { c.String(200, "ok") })

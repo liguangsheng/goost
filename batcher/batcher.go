@@ -68,6 +68,9 @@ type Builder[K comparable, V any] struct {
 // New starts a Builder around fn. Default MaxBatch is 128 and default
 // MaxWait is 4ms.
 func New[K comparable, V any](fn LoadFunc[K, V]) *Builder[K, V] {
+	if fn == nil {
+		panic("batcher: load func must not be nil")
+	}
 	return &Builder[K, V]{
 		loadFn:   fn,
 		maxBatch: 128,
@@ -107,6 +110,9 @@ func (b *Builder[K, V]) Context(ctx context.Context) *Builder[K, V] {
 
 // Build returns a ready Batcher.
 func (b *Builder[K, V]) Build() *Batcher[K, V] {
+	if b.loadFn == nil {
+		panic("batcher: load func must not be nil")
+	}
 	return &Batcher[K, V]{
 		loadFn:   b.loadFn,
 		maxBatch: b.maxBatch,

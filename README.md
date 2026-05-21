@@ -35,9 +35,13 @@ go get github.com/liguangsheng/goost
 | [`rotatingwriter`](./rotatingwriter) | `io.Writer` that rotates the backing file (daily or size-based, optional gzip). |
 | [`shutdown`](./shutdown) | Signal-driven graceful shutdown coordinator (per-hook timeouts). |
 | [`slogctx`](./slogctx) | Carry a `*slog.Logger` and attrs through `context.Context`. |
+| [`slogctx/slogctxotel`](./slogctx/slogctxotel) | OpenTelemetry trace hook for `slogctx`. |
 | [`taskgroup`](./taskgroup) | `errgroup` + concurrency limit + panic recovery. |
 | [`ttlmap`](./ttlmap) | Concurrent map with per-entry expiration and background sweep. |
 | [`zapctx`](./zapctx) | Carry a `*zap.Logger` and structured fields through `context.Context`. |
+| [`zapctx/zapctxgin`](./zapctx/zapctxgin) | Gin middleware and HTTP payload logging for `zapctx`. |
+| [`zapctx/zapctxgrpc`](./zapctx/zapctxgrpc) | gRPC interceptors and payload logging for `zapctx`. |
+| [`zapctx/zapctxotel`](./zapctx/zapctxotel) | OpenTelemetry trace hook for `zapctx`. |
 
 Runnable end-to-end programs live in [`examples/`](./examples).
 

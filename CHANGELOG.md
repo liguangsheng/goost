@@ -5,6 +5,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- Example tests for `batcher`, `clock.Mock`, `debounce`, `errors.Recover`,
+  `fanout`, `keyedmutex`, and `priorityqueue`, so public examples are
+  compiled by `go test`.
+- Race-oriented stress tests for `batcher`, `fanout`, `keyedmutex`, `pool`,
+  and `ttlmap`.
+- `zapctx/zapctxgin`, `zapctx/zapctxgrpc`, `zapctx/zapctxotel`, and
+  `slogctx/slogctxotel` subpackages for optional framework and tracing
+  integrations.
+
+### Changed
+
+- Moved Gin, gRPC, and OpenTelemetry integrations out of core `zapctx`, and
+  moved the OpenTelemetry hook out of core `slogctx`, so importing the core
+  logging context packages no longer compiles those optional integrations.
+- `batcher.New`/`Build` now reject a nil load function immediately.
+- `debounce.WithClock(nil)` and `ttlmap.New(..., nil)` now ignore nil
+  configuration values instead of storing them.
+- `fanout.Builder.Build` now restores the default buffer if a builder is
+  somehow left with an invalid buffer size.
+
 ## [v0.2.0] — 2026-05-21
 
 This release expands goost from a small grab bag into a broader set of

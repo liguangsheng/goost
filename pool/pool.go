@@ -37,6 +37,7 @@ type Pool struct {
 	sem     chan struct{}
 	work    chan func()
 	closed  chan struct{}
+	mu      sync.RWMutex
 	wg      sync.WaitGroup
 	once    sync.Once
 	onPanic atomic.Pointer[PanicHandler]
@@ -130,6 +131,9 @@ func (p *Pool) schedule(task func(), timeout <-chan time.Time) error {
 	default:
 	}
 
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
 	select {
 	case <-p.closed:
 		return ErrPoolClosed
@@ -150,6 +154,8 @@ func (p *Pool) schedule(task func(), timeout <-chan time.Time) error {
 func (p *Pool) Close() {
 	p.once.Do(func() {
 		close(p.closed)
+		p.mu.Lock()
+		defer p.mu.Unlock()
 		close(p.work)
 	})
 	p.wg.Wait()

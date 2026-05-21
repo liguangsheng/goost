@@ -1,4 +1,4 @@
-package zapctx
+package zapctxgrpc
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/liguangsheng/goost/zapctx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -78,8 +79,11 @@ func PayloadUnaryServerInterceptor(logger *zap.Logger, opts ...GRPCPayloadOption
 		if err != nil {
 			fields = append(fields, zap.Error(err))
 		}
-		L(ctx).With(fields...).Info("grpc")
-		_ = logger
+		log := zapctx.L(ctx)
+		if zapctx.Extract(ctx) == nil && logger != nil {
+			log = logger
+		}
+		log.With(fields...).Info("grpc")
 		return resp, err
 	}
 }

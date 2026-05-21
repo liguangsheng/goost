@@ -56,6 +56,9 @@ func New[T any](quiet time.Duration) *Debouncer[T] {
 
 // WithClock injects a Clock; useful in tests.
 func (d *Debouncer[T]) WithClock(c clock.Clock) *Debouncer[T] {
+	if c == nil {
+		return d
+	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.clk = c
