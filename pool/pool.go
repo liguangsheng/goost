@@ -137,6 +137,12 @@ func (p *Pool) schedule(task func(), timeout <-chan time.Time) error {
 	select {
 	case <-p.closed:
 		return ErrPoolClosed
+	default:
+	}
+
+	select {
+	case <-p.closed:
+		return ErrPoolClosed
 	case <-timeout:
 		return ErrScheduleTimeout
 	case p.work <- task:

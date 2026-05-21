@@ -128,6 +128,11 @@ func Test_Stats(t *testing.T) {
 	}
 	wg.Wait()
 
+	assert.Eventually(t, func() bool {
+		s := p.Stats()
+		return s.Completed == 5 && s.InFlight == 0
+	}, time.Second, time.Millisecond)
+
 	s := p.Stats()
 	assert.EqualValues(t, 5, s.Completed)
 	assert.EqualValues(t, 0, s.InFlight)
@@ -150,6 +155,8 @@ func Test_StatsCountsPanics(t *testing.T) {
 	}
 	wg.Wait()
 
-	s := p.Stats()
-	assert.EqualValues(t, 3, s.Panics)
+	assert.Eventually(t, func() bool {
+		s := p.Stats()
+		return s.Panics == 3
+	}, time.Second, time.Millisecond)
 }
