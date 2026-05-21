@@ -4,7 +4,7 @@
 // subscribers (reloader, audit log, metrics) each receive the same
 // event independently.
 //
-// Run: go run ./examples/eventbus
+// Run from examples/: go run ./eventbus
 package main
 
 import (

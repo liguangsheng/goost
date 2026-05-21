@@ -2,7 +2,7 @@
 // herd, only one fetch per missing key reaches the slow loader;
 // subsequent callers receive the cached value.
 //
-// Run: go run ./examples/cache
+// Run from examples/: go run ./cache
 package main
 
 import (

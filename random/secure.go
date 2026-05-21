@@ -4,8 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"math/bits"
-
-	"github.com/liguangsheng/goost/bytesconv"
 )
 
 // SecureString returns a random string of length n drawn from charsets,
@@ -35,7 +33,7 @@ func SecureString(n uint, charsets string) string {
 		cache >>= letterBits
 		remain--
 	}
-	return bytesconv.Bytes2String(b)
+	return string(b)
 }
 
 // secureUint64 returns 8 cryptographically random bytes as a uint64.

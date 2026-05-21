@@ -2,7 +2,7 @@
 // with a concurrency cap; each retries transient failures with
 // exponential backoff before giving up.
 //
-// Run: go run ./examples/concurrent
+// Run from examples/: go run ./concurrent
 package main
 
 import (

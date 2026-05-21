@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+该版本计划作为 v0.4.0 发布，因为它移除了低价值公开包，并把可选/demo
+module 从根 module 依赖图中拆出。
+
 ### Added
 
 - 新增中文 Markdown 文档：根部文档和每个包 README 都有对应的 `*.zh.md`。
@@ -18,9 +21,19 @@
 
 ### Changed
 
+- `examples/`、`lru/benchmark`、`zapctx/zapctxgin` 和 `zapctx/zapctxgrpc`
+  现在拥有各自的 `go.mod`，避免 demo、benchmark、Gin 和 gRPC 依赖进入根库
+  module。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和
   `actions/setup-go@v6`。
 - CI 现在使用 Node 24-native 的 `codecov/codecov-action@v6`。
+
+### Removed
+
+- 移除低价值公开包：`bytesconv`、`itertools`、`redact`、
+  `slogctx/slogctxotel` 和 `zapctx/zapctxotel`。
+- `random` 不再依赖 `bytesconv`；随机字符串生成改用普通
+  `string([]byte)` 转换。
 
 ### Fixed
 

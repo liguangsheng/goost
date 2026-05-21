@@ -1,8 +1,7 @@
-// httpserver demonstrates zapctx + gin + OpenTelemetry hooks: every
-// request gets a logger pre-loaded with trace IDs, and zapctxgin payload logging
-// logs the response body and timing.
+// httpserver demonstrates zapctx + gin: every request gets a context-bound
+// logger, and zapctxgin payload logging logs the response body and timing.
 //
-// Run:  go run ./examples/httpserver
+// Run from examples/: go run ./httpserver
 // Then: curl -X POST -d hello localhost:8080/echo
 package main
 
@@ -14,7 +13,6 @@ import (
 	"github.com/liguangsheng/goost/shutdown"
 	"github.com/liguangsheng/goost/zapctx"
 	"github.com/liguangsheng/goost/zapctx/zapctxgin"
-	"github.com/liguangsheng/goost/zapctx/zapctxotel"
 	"go.uber.org/zap"
 )
 
@@ -25,7 +23,7 @@ func main() {
 	logger := zap.L()
 
 	e := gin.New()
-	e.Use(zapctxgin.Middleware(logger, zapctxotel.TraceInject))
+	e.Use(zapctxgin.Middleware(logger))
 	e.Use(zapctxgin.PayloadMiddleware(logger,
 		zapctxgin.WithMaxBody(1024),
 		zapctxgin.WithSkipper(func(c *gin.Context) bool {

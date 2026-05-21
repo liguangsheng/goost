@@ -14,7 +14,6 @@ go get github.com/liguangsheng/goost
 | --- | --- |
 | [`backoff`](./backoff) | 带 jitter 的指数退避，以及感知 `context` 的 `Retry`。 |
 | [`batcher`](./batcher) | DataLoader 风格：把并发的按 key 加载合并成一次批量调用。 |
-| [`bytesconv`](./bytesconv) | 零分配 `string` / `[]byte` 转换（只读）。 |
 | [`caseconv`](./caseconv) | camel/snake/kebab/pascal case 拆分与拼接辅助函数。 |
 | [`circuitbreaker`](./circuitbreaker) | 三态熔断器（closed/open/half-open），保护下游调用。 |
 | [`clock`](./clock) | `Clock` 抽象，包含 `Real` 和 `Mock`，用于确定性时间测试。 |
@@ -24,28 +23,29 @@ go get github.com/liguangsheng/goost
 | [`errors`](./errors) | 带 stack trace 的 `errors`；`Join`；`Recover`；兼容 `Is`/`As`/`%w`。 |
 | [`fanout`](./fanout) | 进程内广播器：一个发布者，多个订阅者；慢订阅者丢弃。 |
 | [`httpx`](./httpx) | 带 retry、ratelimit、circuit breaker 和请求日志的 `*http.Client`。 |
-| [`itertools`](./itertools) | 泛型 slice 辅助函数：`Map`、`Filter`、`Reduce`、`Chunk` 等。 |
 | [`keyedmutex`](./keyedmutex) | 按 key 互斥：不同 key 并行，相同 key 串行；空闲 slot 自动 GC。 |
 | [`lru`](./lru) | 泛型 LRU 缓存，支持可选单条目过期；分片变体；`Keys`/`Range`/`Resize`。 |
 | [`pool`](./pool) | 有界 goroutine 池，支持可选队列、panic handler 和 `Stats`。 |
 | [`priorityqueue`](./priorityqueue) | 基于 `container/heap` 的泛型最小/最大堆，用 comparator 替代五个方法。 |
-| [`redact`](./redact) | 日志字符串脱敏（`Email`/`Phone`/`Token`/`Mask`）。 |
 | [`random`](./random) | 并发安全随机字符串生成器；`SecureString` 使用 `crypto/rand`。 |
 | [`ratelimit`](./ratelimit) | token bucket 和 leaky bucket 限流器。 |
 | [`rotatingwriter`](./rotatingwriter) | 会轮转底层文件的 `io.Writer`（按天或按大小，可选 gzip）。 |
 | [`shutdown`](./shutdown) | 信号驱动的优雅关闭协调器（支持 per-hook timeout）。 |
 | [`slogctx`](./slogctx) | 通过 `context.Context` 携带 `*slog.Logger` 和 attrs。 |
-| [`slogctx/slogctxotel`](./slogctx/slogctxotel) | `slogctx` 的 OpenTelemetry trace hook。 |
 | [`taskgroup`](./taskgroup) | `errgroup` + 并发限制 + panic 恢复。 |
 | [`ttlmap`](./ttlmap) | 带单条目过期时间和后台扫描的并发 map。 |
 | [`zapctx`](./zapctx) | 通过 `context.Context` 携带 `*zap.Logger` 和结构化字段。 |
-| [`zapctx/zapctxgin`](./zapctx/zapctxgin) | `zapctx` 的 Gin 中间件和 HTTP payload 日志。 |
-| [`zapctx/zapctxgrpc`](./zapctx/zapctxgrpc) | `zapctx` 的 gRPC interceptor 和 payload 日志。 |
-| [`zapctx/zapctxotel`](./zapctx/zapctxotel) | `zapctx` 的 OpenTelemetry trace hook。 |
 
 可运行的端到端程序位于 [`examples/`](./examples)。
 
 所有包彼此独立；按需依赖即可。
+
+## 可选集成 Modules
+
+| Module | 用途 |
+| --- | --- |
+| [`zapctx/zapctxgin`](./zapctx/zapctxgin) | `zapctx` 的 Gin 中间件和 HTTP payload 日志。 |
+| [`zapctx/zapctxgrpc`](./zapctx/zapctxgrpc) | `zapctx` 的 gRPC interceptor 和 payload 日志。 |
 
 ## 稳定性
 

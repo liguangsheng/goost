@@ -3,8 +3,6 @@ package random
 import (
 	"math/bits"
 	"math/rand/v2"
-
-	"github.com/liguangsheng/goost/bytesconv"
 )
 
 // Charsets
@@ -67,5 +65,5 @@ func (s *Sequence) Next(n uint, charsets string) string {
 		cache >>= letterBits
 		remain--
 	}
-	return bytesconv.Bytes2String(b)
+	return string(b)
 }

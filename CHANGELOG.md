@@ -5,6 +5,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+This is planned as v0.4.0 because it removes low-value public packages and
+splits optional/demo modules out of the root module dependency graph.
+
 ### Added
 
 - Chinese-language Markdown docs now mirror the root docs and every package
@@ -22,8 +25,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `examples/`, `lru/benchmark`, `zapctx/zapctxgin`, and `zapctx/zapctxgrpc`
+  now have their own `go.mod` files, keeping demo, benchmark, Gin, and gRPC
+  dependencies out of the root library module.
 - CI now uses Node 24-native `actions/checkout@v6` and `actions/setup-go@v6`.
 - CI now uses Node 24-native `codecov/codecov-action@v6`.
+
+### Removed
+
+- Removed low-value public packages: `bytesconv`, `itertools`, `redact`,
+  `slogctx/slogctxotel`, and `zapctx/zapctxotel`.
+- `random` no longer depends on `bytesconv`; random string generation now uses
+  the ordinary `string([]byte)` conversion.
 
 ### Fixed
 

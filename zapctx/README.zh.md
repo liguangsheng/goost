@@ -38,7 +38,7 @@ grpc.NewServer(grpc.UnaryInterceptor(
 ))
 ```
 
-框架集成位于子包中，因此核心 `zapctx` 无需编译 Gin 或 gRPC 也能使用：
+框架集成位于可选 module 中，因此核心 `zapctx` 无需编译 Gin 或 gRPC 也能使用：
 
 ```go
 import (
@@ -46,20 +46,3 @@ import (
     "github.com/liguangsheng/goost/zapctx/zapctxgrpc"
 )
 ```
-
-## OpenTelemetry trace 注入
-
-```go
-engine.Use(zapctxgin.Middleware(zap.L(), zapctxotel.TraceInject))
-```
-
-OpenTelemetry hook 位于子包中，因此核心 `zapctx` 无需编译 OpenTelemetry 也能使用：
-
-```go
-import "github.com/liguangsheng/goost/zapctx/zapctxotel"
-```
-
-`zapctxotel.TraceInject` 会读取 `trace.SpanContextFromContext(ctx)`，
-并把 `trace.traceid` / `trace.spanid` / `trace.sampled` 字段添加到绑定的
-logger；它也会转发 sample 标记，让 `zapctx.Sampled(ctx)` 可以控制冗长的
-单请求日志。

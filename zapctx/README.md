@@ -39,8 +39,8 @@ grpc.NewServer(grpc.UnaryInterceptor(
 ))
 ```
 
-The framework integrations live in subpackages so core `zapctx` stays usable
-without compiling Gin or gRPC:
+The framework integrations live in optional modules so core `zapctx` stays
+usable without compiling Gin or gRPC:
 
 ```go
 import (
@@ -48,21 +48,3 @@ import (
     "github.com/liguangsheng/goost/zapctx/zapctxgrpc"
 )
 ```
-
-## OpenTelemetry trace injection
-
-```go
-engine.Use(zapctxgin.Middleware(zap.L(), zapctxotel.TraceInject))
-```
-
-The OpenTelemetry hook lives in a subpackage so core `zapctx` stays usable
-without compiling OpenTelemetry:
-
-```go
-import "github.com/liguangsheng/goost/zapctx/zapctxotel"
-```
-
-`zapctxotel.TraceInject` reads `trace.SpanContextFromContext(ctx)` and adds
-`trace.traceid` / `trace.spanid` / `trace.sampled` fields to the bound
-logger; it also forwards the sample flag so `zapctx.Sampled(ctx)` can
-gate verbose per-request logs.
