@@ -54,6 +54,62 @@ func Test_RetryOn5xx(t *testing.T) {
 	assert.EqualValues(t, 3, calls.Load())
 }
 
+func Test_OnRetryReportsRetryableAttempts(t *testing.T) {
+	var calls atomic.Int64
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if calls.Add(1) < 3 {
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer s.Close()
+
+	var events []RetryEvent
+	c := New(Options{
+		Retry: &RetryPolicy{
+			MaxAttempts: 3,
+			Backoff:     &backoff.Backoff{Initial: time.Millisecond, Max: time.Millisecond},
+			OnRetry: func(e RetryEvent) {
+				events = append(events, e)
+			},
+		},
+	})
+
+	resp, err := c.Get(s.URL)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.Len(t, events, 2)
+	assert.Equal(t, RetryEvent{Attempt: 1, MaxAttempts: 3, StatusCode: http.StatusTooManyRequests, Delay: time.Millisecond}, events[0])
+	assert.Equal(t, RetryEvent{Attempt: 2, MaxAttempts: 3, StatusCode: http.StatusTooManyRequests, Delay: time.Millisecond}, events[1])
+}
+
+func Test_OnRetryReportsTransportError(t *testing.T) {
+	want := errors.New("network down")
+	var events []RetryEvent
+	c := New(Options{
+		Base: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			return nil, want
+		}),
+		Retry: &RetryPolicy{
+			MaxAttempts: 2,
+			Backoff:     &backoff.Backoff{Initial: time.Millisecond},
+			OnRetry: func(e RetryEvent) {
+				events = append(events, e)
+			},
+		},
+	})
+
+	_, err := c.Get("https://api.example.com/users")
+	assert.ErrorIs(t, err, want)
+	assert.Len(t, events, 1)
+	assert.Equal(t, 1, events[0].Attempt)
+	assert.Equal(t, 2, events[0].MaxAttempts)
+	assert.Equal(t, 0, events[0].StatusCode)
+	assert.ErrorIs(t, events[0].Err, want)
+	assert.Equal(t, time.Millisecond, events[0].Delay)
+}
+
 func Test_RetryGivesUp(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadGateway)
@@ -120,6 +176,12 @@ func Test_LimiterErrorAborts(t *testing.T) {
 type errLimiter struct{ err error }
 
 func (e errLimiter) Wait(_ context.Context, _ int) error { return e.err }
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
 
 func Test_BodyResnapshotForRetry(t *testing.T) {
 	var calls atomic.Int64

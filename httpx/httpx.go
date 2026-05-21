@@ -25,6 +25,16 @@ type RetryPolicy struct {
 	MaxAttempts int              // 0 = no retry
 	Backoff     *backoff.Backoff // required when MaxAttempts > 0
 	RetryOn     func(*http.Response, error) bool
+	OnRetry     func(RetryEvent)
+}
+
+// RetryEvent describes a retryable attempt before httpx waits for the next one.
+type RetryEvent struct {
+	Attempt     int
+	MaxAttempts int
+	StatusCode  int
+	Err         error
+	Delay       time.Duration
 }
 
 // Limiter is the minimal interface httpx needs from a rate limiter.
@@ -121,17 +131,37 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		if !retryOn(resp, lastErr) {
 			return resp, lastErr
 		}
-		drain(resp)
 		if i == attempts-1 || policy == nil || policy.Backoff == nil {
+			drain(resp)
 			break
 		}
+		delay := policy.Backoff.Next()
+		t.notifyRetry(policy, i+1, attempts, resp, lastErr, delay)
+		drain(resp)
 		select {
 		case <-req.Context().Done():
 			return nil, req.Context().Err()
-		case <-time.After(policy.Backoff.Next()):
+		case <-time.After(delay):
 		}
 	}
 	return resp, lastErr
+}
+
+func (t *transport) notifyRetry(policy *RetryPolicy, attempt, maxAttempts int, resp *http.Response, err error, delay time.Duration) {
+	if policy.OnRetry == nil {
+		return
+	}
+	status := 0
+	if resp != nil {
+		status = resp.StatusCode
+	}
+	policy.OnRetry(RetryEvent{
+		Attempt:     attempt,
+		MaxAttempts: maxAttempts,
+		StatusCode:  status,
+		Err:         err,
+		Delay:       delay,
+	})
 }
 
 func (t *transport) logRoundTrip(req *http.Request, start time.Time, attempts int, resp *http.Response, err error) {

@@ -10,6 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `httpx.Options.Logger` logs one sanitized request summary after retries
   finish, including status, attempts, duration, and error without query
   strings or bodies.
+- `httpx.RetryPolicy.OnRetry` reports retryable attempts with status, error,
+  attempt count, and next delay before the next request is sent.
 
 ### Changed
 
