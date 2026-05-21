@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- CI now uses Node 24-native `actions/checkout@v6` and `actions/setup-go@v6`.
+
 ## [v0.3.0] — 2026-05-21
 
 v0.3.0 finishes the logging-integration split started after v0.2.0, adds
