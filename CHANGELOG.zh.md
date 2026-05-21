@@ -24,8 +24,8 @@ module 从根 module 依赖图中拆出。
 - `examples/`、`lru/benchmark`、`zapctx/zapctxgin` 和 `zapctx/zapctxgrpc`
   现在拥有各自的 `go.mod`，避免 demo、benchmark、Gin 和 gRPC 依赖进入根库
   module。
-- CI 现在会自动发现并显式 vet/test nested module，因为根部 `go test ./...`
-  不会遍历它们。
+- CI 现在会自动发现 nested module，并显式运行 `go vet`、`go test`、
+  `staticcheck` 和 `govulncheck`，因为根部命令不会遍历它们。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和
   `actions/setup-go@v6`。
 - CI 现在使用 Node 24-native 的 `codecov/codecov-action@v6`。
