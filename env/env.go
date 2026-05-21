@@ -30,7 +30,7 @@ func LoadFromMap(dst any, m map[string]string) error {
 
 func load(dst any, get func(string) string) error {
 	v := reflect.ValueOf(dst)
-	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("env: dst must be *struct, got %T", dst)
 	}
 	v = v.Elem()
@@ -82,7 +82,7 @@ func parseTag(tag string) (name, def string, required bool) {
 }
 
 func setField(fv reflect.Value, raw string) error {
-	if fv.Kind() == reflect.Ptr {
+	if fv.Kind() == reflect.Pointer {
 		if fv.IsNil() {
 			fv.Set(reflect.New(fv.Type().Elem()))
 		}
