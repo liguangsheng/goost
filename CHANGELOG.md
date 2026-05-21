@@ -5,6 +5,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [v0.2.0] — 2026-05-21
+
+This release expands goost from a small grab bag into a broader set of
+production-leaning concurrency, scheduling, logging, and utility packages.
+It also removes the low-value `singleflight` wrapper. APIs remain pre-1.0.
+
 ### Added
 
 - **`batcher`** — new package: DataLoader-style coalescing of concurrent
@@ -84,8 +90,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Root `doc.go` summarizes the module's packages.
 - `examples/` directory: three runnable programs (`httpserver`,
   `concurrent`, `cache`) demonstrating package combinations.
-- CI now runs `staticcheck` and `gosec` jobs in addition to
-  `golangci-lint`.
+- CI now runs on Go 1.25.10 and includes `staticcheck`, `gosec`,
+  `golangci-lint`, and `govulncheck` jobs.
 
 ### Removed
 
@@ -159,4 +165,5 @@ single baseline. APIs are still pre-1.0; expect breaking changes.
   panic when the context has no attached logger.
 - Test code that previously failed to compile (`string(int)` in lru tests).
 
+[v0.2.0]: https://github.com/liguangsheng/goost/releases/tag/v0.2.0
 [v0.1.0]: https://github.com/liguangsheng/goost/releases/tag/v0.1.0

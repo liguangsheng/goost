@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go: ['1.24', '1.25']
+        go: ['1.25.10']
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +20,6 @@ jobs:
       - run: go vet ./...
       - run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
       - uses: codecov/codecov-action@v4
-        if: matrix.go == '1.25'
         with:
           files: coverage.out
           fail_ci_if_error: false
@@ -31,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: '1.25.10'
       - uses: golangci/golangci-lint-action@v6
         with:
           version: latest
@@ -42,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: '1.25.10'
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - run: staticcheck ./...
 
@@ -52,7 +51,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: '1.25.10'
       - name: Run Gosec
         uses: securego/gosec@master
         with:
@@ -61,3 +60,13 @@ jobs:
           # G301/G302: log files need group/other readability (0o644/0o755) for logrotate, ops tooling.
           # G304: rotatingwriter takes the file path from the caller by design.
           args: -exclude=G103,G115,G301,G302,G304 -exclude-dir=examples ./...
+
+  govulncheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.10'
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...

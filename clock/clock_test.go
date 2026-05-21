@@ -207,30 +207,16 @@ func Test_RealTicker(t *testing.T) {
 	}
 }
 
-// fire order is by deadline, not registration order.
-func Test_MockEventsFireInDeadlineOrder(t *testing.T) {
+// delivery order is by deadline, not registration order.
+func Test_MockAfterChannelsFireInDeadlineOrder(t *testing.T) {
 	m := NewMock(time.Unix(0, 0))
-	var order []int
-	var mu sync.Mutex
-	record := func(n int) func() {
-		return func() {
-			mu.Lock()
-			order = append(order, n)
-			mu.Unlock()
-		}
-	}
-	m.AfterFunc(30*time.Millisecond, record(3))
-	m.AfterFunc(10*time.Millisecond, record(1))
-	m.AfterFunc(20*time.Millisecond, record(2))
+	third := m.After(30 * time.Millisecond)
+	first := m.After(10 * time.Millisecond)
+	second := m.After(20 * time.Millisecond)
 
 	m.Advance(50 * time.Millisecond)
-	require.Eventually(t, func() bool {
-		mu.Lock()
-		defer mu.Unlock()
-		return len(order) == 3
-	}, time.Second, time.Millisecond)
 
-	mu.Lock()
-	defer mu.Unlock()
-	assert.Equal(t, []int{1, 2, 3}, order)
+	assert.Equal(t, time.Unix(0, 0).Add(10*time.Millisecond), <-first)
+	assert.Equal(t, time.Unix(0, 0).Add(20*time.Millisecond), <-second)
+	assert.Equal(t, time.Unix(0, 0).Add(30*time.Millisecond), <-third)
 }
