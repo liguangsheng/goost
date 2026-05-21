@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/liguangsheng/goost/shutdown"
@@ -38,10 +39,10 @@ func main() {
 		c.Data(http.StatusOK, "text/plain", body)
 	})
 
-	srv := &http.Server{Addr: ":8080", Handler: e}
+	srv := &http.Server{Addr: ":8080", Handler: e, ReadHeaderTimeout: 5 * time.Second}
 	shutdown.Add(func() {
 		_ = srv.Shutdown(context.Background())
-	}, shutdown.WithName("http"), shutdown.WithTimeout(5))
+	}, shutdown.WithName("http"), shutdown.WithTimeout(5*time.Second))
 
 	logger.Info("listening", zap.String("addr", srv.Addr))
 	go func() {

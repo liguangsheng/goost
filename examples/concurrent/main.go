@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 	"time"
 
 	"github.com/liguangsheng/goost/backoff"
@@ -18,8 +17,8 @@ import (
 
 var errFlaky = errors.New("flaky")
 
-func fetch(ctx context.Context, id int) (string, error) {
-	if rand.IntN(3) == 0 {
+func fetch(ctx context.Context, id, attempt int) (string, error) {
+	if id%3 == 0 && attempt == 1 {
 		return "", errFlaky
 	}
 	return fmt.Sprintf("item-%d", id), nil
@@ -38,8 +37,10 @@ func main() {
 				Factor:  2,
 				Jitter:  0.2,
 			}
+			attempt := 0
 			return backoff.Retry(ctx, b, 5, func(ctx context.Context) error {
-				v, err := fetch(ctx, i)
+				attempt++
+				v, err := fetch(ctx, i, attempt)
 				if err != nil {
 					return err
 				}

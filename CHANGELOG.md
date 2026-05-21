@@ -29,8 +29,11 @@ splits optional/demo modules out of the root module dependency graph.
   now have their own `go.mod` files, keeping demo, benchmark, Gin, and gRPC
   dependencies out of the root library module.
 - CI now discovers and checks nested modules explicitly with `go vet`,
-  `go test`, `staticcheck`, and `govulncheck`, since root-level commands do
-  not traverse nested modules.
+  `go test`, `staticcheck`, `govulncheck`, and `gosec`, since root-level
+  commands do not traverse nested modules.
+- Examples no longer trip security checks: the HTTP server configures
+  `ReadHeaderTimeout`, and the concurrent retry demo uses deterministic
+  transient failures instead of `math/rand`.
 - CI now uses Node 24-native `actions/checkout@v6` and `actions/setup-go@v6`.
 - CI now uses Node 24-native `codecov/codecov-action@v6`.
 
