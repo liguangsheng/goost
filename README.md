@@ -51,6 +51,7 @@ All packages are independent; depend on what you need.
 
 The module is still pre-1.0. APIs may change between minor versions.
 See [CHANGELOG.md](./CHANGELOG.md) for release history.
+See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 ## License
 

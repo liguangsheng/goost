@@ -3,7 +3,11 @@
 All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [v0.3.0] — 2026-05-21
+
+v0.3.0 finishes the logging-integration split started after v0.2.0, adds
+compiled examples for the new public entry points, and tightens concurrency
+coverage. APIs remain pre-1.0.
 
 ### Added
 
@@ -15,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `zapctx/zapctxgin`, `zapctx/zapctxgrpc`, `zapctx/zapctxotel`, and
   `slogctx/slogctxotel` subpackages for optional framework and tracing
   integrations.
+- v0.3.0 migration notes covering the moved logging integration APIs.
 
 ### Changed
 
@@ -26,6 +31,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   configuration values instead of storing them.
 - `fanout.Builder.Build` now restores the default buffer if a builder is
   somehow left with an invalid buffer size.
+- CI opts into Node.js 24 for JavaScript actions ahead of GitHub's Node 20
+  runner deprecation.
 
 ## [v0.2.0] — 2026-05-21
 

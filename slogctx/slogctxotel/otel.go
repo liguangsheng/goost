@@ -32,6 +32,8 @@ func TraceInject(ctx context.Context) context.Context {
 }
 
 // OtelTraceInject is kept as a migration alias for TraceInject.
+//
+// Deprecated: use TraceInject.
 func OtelTraceInject(ctx context.Context) context.Context {
 	return TraceInject(ctx)
 }
