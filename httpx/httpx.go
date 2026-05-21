@@ -95,8 +95,8 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		t.logRoundTrip(req, start, attemptsMade, resp, err)
 	}()
 
-	if err := t.waitLimiter(req); err != nil {
-		return nil, err
+	if limiterErr := t.waitLimiter(req); limiterErr != nil {
+		return nil, limiterErr
 	}
 
 	policy := t.opts.Retry
@@ -121,8 +121,8 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	var lastErr error
 	for i := 0; i < attempts; i++ {
 		if i > 0 {
-			if err := t.waitLimiter(req); err != nil {
-				return nil, err
+			if limiterErr := t.waitLimiter(req); limiterErr != nil {
+				return nil, limiterErr
 			}
 		}
 		attemptsMade++
