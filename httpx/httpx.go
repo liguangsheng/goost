@@ -95,11 +95,8 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		t.logRoundTrip(req, start, attemptsMade, resp, err)
 	}()
 
-	// Apply rate limit first to avoid spending retry budget on rejections.
-	if t.opts.Limiter != nil {
-		if waitErr := t.opts.Limiter.Wait(req.Context(), 1); waitErr != nil {
-			return nil, waitErr
-		}
+	if err := t.waitLimiter(req); err != nil {
+		return nil, err
 	}
 
 	policy := t.opts.Retry
@@ -123,8 +120,18 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 
 	var lastErr error
 	for i := 0; i < attempts; i++ {
+		if i > 0 {
+			if err := t.waitLimiter(req); err != nil {
+				return nil, err
+			}
+		}
 		attemptsMade++
-		if body != nil {
+		if i > 0 && req.GetBody != nil {
+			req.Body, err = req.GetBody()
+			if err != nil {
+				return nil, err
+			}
+		} else if body != nil {
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 		resp, lastErr = t.callOnce(req)
@@ -145,6 +152,13 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 		}
 	}
 	return resp, lastErr
+}
+
+func (t *transport) waitLimiter(req *http.Request) error {
+	if t.opts.Limiter == nil {
+		return nil
+	}
+	return t.opts.Limiter.Wait(req.Context(), 1)
 }
 
 func (t *transport) notifyRetry(policy *RetryPolicy, attempt, maxAttempts int, resp *http.Response, err error, delay time.Duration) {

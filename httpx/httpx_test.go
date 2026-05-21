@@ -160,10 +160,68 @@ func Test_LimiterWaits(t *testing.T) {
 	assert.EqualValues(t, 1, lim.calls.Load())
 }
 
+func Test_LimiterWaitsBeforeEachRetryAttempt(t *testing.T) {
+	var calls atomic.Int64
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if calls.Add(1) < 3 {
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer s.Close()
+
+	lim := &fakeLimiter{}
+	c := New(Options{
+		Limiter: lim,
+		Retry:   &RetryPolicy{MaxAttempts: 3, Backoff: &backoff.Backoff{Initial: time.Millisecond}},
+	})
+
+	resp, err := c.Get(s.URL)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.EqualValues(t, 3, calls.Load())
+	assert.EqualValues(t, 3, lim.calls.Load())
+}
+
+func Test_LimiterErrorBeforeRetryStopsWithoutAnotherRequest(t *testing.T) {
+	want := errors.New("blocked retry")
+	var calls atomic.Int64
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	defer s.Close()
+
+	lim := &failAfterLimiter{failAfter: 1, err: want}
+	c := New(Options{
+		Limiter: lim,
+		Retry:   &RetryPolicy{MaxAttempts: 3, Backoff: &backoff.Backoff{Initial: time.Millisecond}},
+	})
+
+	_, err := c.Get(s.URL)
+	assert.ErrorIs(t, err, want)
+	assert.EqualValues(t, 1, calls.Load())
+	assert.EqualValues(t, 2, lim.calls.Load())
+}
+
 type fakeLimiter struct{ calls atomic.Int64 }
 
 func (f *fakeLimiter) Wait(_ context.Context, _ int) error {
 	f.calls.Add(1)
+	return nil
+}
+
+type failAfterLimiter struct {
+	calls     atomic.Int64
+	failAfter int64
+	err       error
+}
+
+func (f *failAfterLimiter) Wait(_ context.Context, _ int) error {
+	if f.calls.Add(1) > f.failAfter {
+		return f.err
+	}
 	return nil
 }
 
@@ -204,6 +262,71 @@ func Test_BodyResnapshotForRetry(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "payload", lastBody.Load())
+}
+
+func Test_BodyGetBodyReplayForRetry(t *testing.T) {
+	var bodies []string
+	c := New(Options{
+		Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, err
+			}
+			bodies = append(bodies, string(body))
+			status := http.StatusOK
+			if len(bodies) == 1 {
+				status = http.StatusInternalServerError
+			}
+			return &http.Response{
+				StatusCode: status,
+				Body:       io.NopCloser(strings.NewReader("")),
+				Request:    req,
+			}, nil
+		}),
+		Retry: &RetryPolicy{MaxAttempts: 2, Backoff: &backoff.Backoff{Initial: time.Millisecond}},
+	})
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.example.com/users", strings.NewReader("payload"))
+	assert.NoError(t, err)
+
+	resp, err := c.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, []string{"payload", "payload"}, bodies)
+}
+
+func Test_BodyGetBodyErrorStopsRetryAfterFirstAttempt(t *testing.T) {
+	want := errors.New("cannot replay body")
+	var calls atomic.Int64
+	var bodies []string
+	c := New(Options{
+		Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, err
+			}
+			bodies = append(bodies, string(body))
+			return &http.Response{
+				StatusCode: http.StatusInternalServerError,
+				Body:       io.NopCloser(strings.NewReader("")),
+				Request:    req,
+			}, nil
+		}),
+		Retry: &RetryPolicy{MaxAttempts: 2, Backoff: &backoff.Backoff{Initial: time.Millisecond}},
+	})
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.example.com/users", nil)
+	assert.NoError(t, err)
+	req.Body = io.NopCloser(strings.NewReader("payload"))
+	req.GetBody = func() (io.ReadCloser, error) {
+		return nil, want
+	}
+
+	_, err = c.Do(req)
+	assert.ErrorIs(t, err, want)
+	assert.EqualValues(t, 1, calls.Load())
+	assert.Equal(t, []string{"payload"}, bodies)
 }
 
 func Test_LoggerRecordsFinalRequestSummary(t *testing.T) {

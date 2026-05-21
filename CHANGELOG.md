@@ -7,6 +7,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Chinese-language Markdown docs now mirror the root docs and every package
+  README as `*.zh.md`.
+- A consumer dependency smoke test now discovers the core package set and
+  guards it from importing optional Gin, gRPC, or OpenTelemetry integration
+  dependencies.
+- A compiled `httpx` example now covers retry callbacks and request summary
+  logging together.
 - `httpx.Options.Logger` logs one sanitized request summary after retries
   finish, including status, attempts, duration, and error without query
   strings or bodies.
@@ -17,6 +24,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - CI now uses Node 24-native `actions/checkout@v6` and `actions/setup-go@v6`.
 - CI now uses Node 24-native `codecov/codecov-action@v6`.
+
+### Fixed
+
+- `httpx` now applies `Options.Limiter` before each retry attempt instead of
+  only once before the first request.
+- `httpx` now replays request bodies through `Request.GetBody` on each retry
+  attempt instead of relying on a previously consumed body.
 
 ## [v0.3.0] — 2026-05-21
 
