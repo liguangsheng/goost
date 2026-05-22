@@ -53,6 +53,11 @@ go get github.com/liguangsheng/goost
 发布历史见 [CHANGELOG.md](./CHANGELOG.md)。
 minor version 迁移说明见 [MIGRATION.md](./MIGRATION.md)。
 
+## 开发检查
+
+发布前运行 `./scripts/check-root.sh` 检查根 module，并运行
+`./scripts/check-split-modules.sh` 检查 nested optional/demo modules。
+
 ## License
 
 MIT，见 [LICENSE](./LICENSE)。

@@ -9,25 +9,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        go: ['1.25.10']
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
-        with:
-          go-version: ${{ matrix.go }}
-      - run: go vet ./...
-      - run: go test -race -coverprofile=coverage.out -covermode=atomic ./...
-      - uses: codecov/codecov-action@v6
-        with:
-          files: coverage.out
-          fail_ci_if_error: false
-
-  lint:
+  root:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -35,7 +17,14 @@ jobs:
         with:
           go-version: '1.25.10'
       - run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
-      - run: golangci-lint run ./...
+      - run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - run: ./scripts/check-root.sh
+      - uses: codecov/codecov-action@v6
+        with:
+          files: coverage.out
+          fail_ci_if_error: false
 
   split-modules:
     runs-on: ubuntu-latest
@@ -48,38 +37,3 @@ jobs:
       - run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
       - run: ./scripts/check-split-modules.sh
-
-  staticcheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
-        with:
-          go-version: '1.25.10'
-      - run: go install honnef.co/go/tools/cmd/staticcheck@latest
-      - run: staticcheck ./...
-
-  gosec:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
-        with:
-          go-version: '1.25.10'
-      - name: Run Gosec
-        uses: securego/gosec@master
-        with:
-          # G115: bounded mask conversions in random.
-          # G301/G302: log files need group/other readability (0o644/0o755) for logrotate, ops tooling.
-          # G304: rotatingwriter takes the file path from the caller by design.
-          args: -exclude=G115,G301,G302,G304 -exclude-dir=examples ./...
-
-  govulncheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
-        with:
-          go-version: '1.25.10'
-      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
-      - run: govulncheck ./...

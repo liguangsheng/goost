@@ -53,6 +53,12 @@ The module is still pre-1.0. APIs may change between minor versions.
 See [CHANGELOG.md](./CHANGELOG.md) for release history.
 See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
+## Development Checks
+
+Run `./scripts/check-root.sh` for the root module and
+`./scripts/check-split-modules.sh` for nested optional/demo modules before
+publishing a release.
+
 ## License
 
 MIT — see [LICENSE](./LICENSE).
