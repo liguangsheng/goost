@@ -23,7 +23,12 @@ For tests or libraries that need an isolated registry, use `NewManager`:
 ```go
 m := shutdown.NewManager(syscall.SIGUSR1)
 m.Add(func() { /* ... */ })
-m.Wait(ctx)
+sig := m.Wait(ctx) // nil when ctx is canceled
 ```
 
-Hook panics are recovered so later hooks still run.
+Hooks run in registration order. `Cleanup` is idempotent and also available
+directly when you want to trigger shutdown without waiting for a signal.
+
+Hook panics are recovered so later hooks still run. Use `WithTimeout(d)` to
+abandon a slow hook and continue to the next one; use `WithName(name)` to label
+timeout and panic log lines.

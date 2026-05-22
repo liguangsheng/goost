@@ -2,6 +2,8 @@ package shutdown
 
 import (
 	"context"
+	"os"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"testing"
@@ -26,6 +28,28 @@ func Test_CleanupRunsHooks(t *testing.T) {
 	assert.EqualValues(t, 1, a.Load())
 }
 
+func Test_CleanupRunsHooksInRegistrationOrder(t *testing.T) {
+	m := NewManager()
+	m.SetLogger(nil)
+
+	var mu sync.Mutex
+	var order []int
+	m.Add(func() {
+		mu.Lock()
+		order = append(order, 1)
+		mu.Unlock()
+	})
+	m.Add(func() {
+		mu.Lock()
+		order = append(order, 2)
+		mu.Unlock()
+	})
+
+	m.Cleanup()
+
+	assert.Equal(t, []int{1, 2}, order)
+}
+
 func Test_CleanupRecoversPanic(t *testing.T) {
 	m := NewManager()
 	m.SetLogger(nil)
@@ -44,10 +68,9 @@ func Test_WaitOnSignal(t *testing.T) {
 	var ran atomic.Int64
 	m.Add(func() { ran.Add(1) })
 
-	done := make(chan struct{})
+	done := make(chan os.Signal, 1)
 	go func() {
-		m.Wait(context.Background())
-		close(done)
+		done <- m.Wait(context.Background())
 	}()
 
 	// Give Wait time to install the notify channel.
@@ -55,7 +78,8 @@ func Test_WaitOnSignal(t *testing.T) {
 	assert.NoError(t, syscall.Kill(syscall.Getpid(), syscall.SIGUSR1))
 
 	select {
-	case <-done:
+	case sig := <-done:
+		assert.Equal(t, syscall.SIGUSR1, sig)
 	case <-time.After(time.Second):
 		t.Fatal("Wait did not return on signal")
 	}

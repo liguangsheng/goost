@@ -23,7 +23,11 @@ func main() {
 ```go
 m := shutdown.NewManager(syscall.SIGUSR1)
 m.Add(func() { /* ... */ })
-m.Wait(ctx)
+sig := m.Wait(ctx) // ctx 取消时返回 nil
 ```
 
-hook panic 会被恢复，因此后续 hook 仍会继续运行。
+hook 会按注册顺序运行。`Cleanup` 是幂等的；如果想不等待信号而直接触发关闭，
+也可以直接调用它。
+
+hook panic 会被恢复，因此后续 hook 仍会继续运行。可用 `WithTimeout(d)` 放弃慢
+hook 并继续执行下一个；可用 `WithName(name)` 给 timeout 和 panic 日志加标签。
