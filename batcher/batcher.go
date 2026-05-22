@@ -55,6 +55,14 @@ type Stats struct {
 	Coalesced int64
 	// MaxBatchSize is the largest batch loadFn has been called with.
 	MaxBatchSize int64
+	// PendingKeys is the number of unique keys waiting in the current open window.
+	PendingKeys int
+	// InFlight is the number of loadFn invocations currently running.
+	InFlight int64
+	// MaxBatch is the configured maximum number of keys per loadFn invocation.
+	MaxBatch int
+	// MaxWait is the configured maximum age of an open batch window.
+	MaxWait time.Duration
 }
 
 // Builder configures a Batcher. Use New to obtain one.
@@ -135,6 +143,7 @@ type Batcher[K comparable, V any] struct {
 	loads        atomic.Int64
 	coalesced    atomic.Int64
 	maxBatchSize atomic.Int64
+	inFlight     atomic.Int64
 }
 
 type batch[K comparable, V any] struct {
@@ -210,11 +219,22 @@ func (b *Batcher[K, V]) LoadMany(ctx context.Context, keys []K) (vals map[K]V, e
 
 // Stats returns a counter snapshot.
 func (b *Batcher[K, V]) Stats() Stats {
+	b.mu.Lock()
+	pending := 0
+	if b.cur != nil {
+		pending = len(b.cur.keys)
+	}
+	b.mu.Unlock()
+
 	return Stats{
 		Batches:      b.batches.Load(),
 		Loads:        b.loads.Load(),
 		Coalesced:    b.coalesced.Load(),
 		MaxBatchSize: b.maxBatchSize.Load(),
+		PendingKeys:  pending,
+		InFlight:     b.inFlight.Load(),
+		MaxBatch:     b.maxBatch,
+		MaxWait:      b.maxWait,
 	}
 }
 
@@ -233,6 +253,9 @@ func (b *Batcher[K, V]) enqueue(key K) (*batch[K, V], bool) {
 		}
 		bt.keys = append(bt.keys, key)
 		bt.set[key] = struct{}{}
+		if len(bt.keys) >= b.maxBatch {
+			return bt, true
+		}
 		b.cur = bt
 		bt.timer = time.AfterFunc(b.maxWait, func() {
 			b.mu.Lock()
@@ -271,10 +294,12 @@ func (b *Batcher[K, V]) enqueue(key K) (*batch[K, V], bool) {
 // exclusive caller guard is the b.cur==bt check in enqueue.
 func (b *Batcher[K, V]) run(bt *batch[K, V]) {
 	b.batches.Add(1)
+	b.inFlight.Add(1)
 	if n := int64(len(bt.keys)); n > b.maxBatchSize.Load() {
 		b.maxBatchSize.Store(n)
 	}
 	defer func() {
+		b.inFlight.Add(-1)
 		if r := recover(); r != nil {
 			bt.err = fmt.Errorf("batcher: panic in loadFn: %v\n%s", r, debug.Stack())
 		}

@@ -26,6 +26,8 @@ module 从根 module 依赖图中拆出。
 - `ttlmap.TTLMap.PurgeExpired` 可按需删除已过期条目，返回删除数量，并触发过期 hook。
 - `lru.Cache.Snapshot` 和 `lru.ShardedCache.Snapshot` 提供只读大小、容量和 shard
   数视图，便于指标和日志采集。
+- `batcher.Stats` 现在包含打开窗口大小、正在运行的 loadFn 数量和批处理配置上限，
+  便于调优和观测。
 
 ### Changed
 
@@ -61,6 +63,8 @@ module 从根 module 依赖图中拆出。
   第一次请求前执行一次。
 - `httpx` 现在会通过 `Request.GetBody` 为 retry attempt 回放请求 body，
   而不是依赖已经被消费过的 body。
+- `batcher` 现在会在新窗口的第一个 key 已达到 `MaxBatch` 时立即刷新，包含
+  `MaxBatch(1)` 场景。
 
 ## [v0.3.0] - 2026-05-21
 

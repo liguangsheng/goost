@@ -47,6 +47,10 @@ s := b.Stats()
 // s.Loads        - Load 调用总数
 // s.Coalesced    - 加入已有窗口的 Load 调用数
 // s.MaxBatchSize - 见过的最大批次大小
+// s.PendingKeys  - 当前打开窗口中等待的唯一 key 数
+// s.InFlight     - 当前正在运行的 loadFn 调用数
+// s.MaxBatch     - 配置的批次大小上限
+// s.MaxWait      - 配置的窗口最大等待时间
 ```
 
 如果 `Coalesced` 长期接近 0，说明窗口相对于到达速率太短，可以提高

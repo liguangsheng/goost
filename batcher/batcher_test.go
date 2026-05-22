@@ -85,6 +85,25 @@ func Test_FlushesAtMaxBatch(t *testing.T) {
 	assert.EqualValues(t, 1, batches.Load())
 }
 
+func Test_FlushesImmediatelyWhenFirstKeyReachesMaxBatch(t *testing.T) {
+	load := func(ctx context.Context, ids []int) (map[int]string, error) {
+		out := make(map[int]string, len(ids))
+		for _, id := range ids {
+			out[id] = "v"
+		}
+		return out, nil
+	}
+	b := New(load).MaxBatch(1).MaxWait(time.Hour).Build()
+
+	start := time.Now()
+	v, err := b.Load(context.Background(), 1)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "v", v)
+	assert.Less(t, time.Since(start), 500*time.Millisecond,
+		"first key should flush immediately when it reaches MaxBatch")
+}
+
 // Trailing partial batch flushes when MaxWait elapses.
 func Test_FlushesAtMaxWait(t *testing.T) {
 	var batches atomic.Int64
@@ -171,6 +190,65 @@ func Test_MissingKey_ReturnsErrNotFound(t *testing.T) {
 	b := New(load).MaxWait(5 * time.Millisecond).Build()
 	_, err := b.Load(context.Background(), 1)
 	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func Test_StatsReportsOpenWindowAndConfig(t *testing.T) {
+	load := func(ctx context.Context, ids []int) (map[int]string, error) {
+		out := make(map[int]string, len(ids))
+		for _, id := range ids {
+			out[id] = "v"
+		}
+		return out, nil
+	}
+	b := New(load).MaxBatch(2).MaxWait(time.Hour).Build()
+
+	done := make(chan struct{})
+	go func() {
+		_, _ = b.Load(context.Background(), 1)
+		close(done)
+	}()
+
+	assert.Eventually(t, func() bool {
+		st := b.Stats()
+		return st.PendingKeys == 1 && st.Loads == 1 && st.MaxBatch == 2 && st.MaxWait == time.Hour
+	}, 500*time.Millisecond, time.Millisecond)
+
+	select {
+	case <-done:
+		t.Fatal("load returned before the open window flushed")
+	default:
+	}
+
+	_, err := b.Load(context.Background(), 2)
+	assert.NoError(t, err)
+	<-done
+}
+
+func Test_StatsReportsInFlight(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	load := func(ctx context.Context, ids []int) (map[int]string, error) {
+		close(started)
+		<-release
+		return map[int]string{1: "v"}, nil
+	}
+	b := New(load).MaxBatch(1).MaxWait(time.Hour).Build()
+
+	done := make(chan struct{})
+	go func() {
+		_, _ = b.Load(context.Background(), 1)
+		close(done)
+	}()
+	<-started
+
+	st := b.Stats()
+	assert.EqualValues(t, 1, st.Batches)
+	assert.EqualValues(t, 1, st.InFlight)
+	assert.Equal(t, 0, st.PendingKeys)
+
+	close(release)
+	<-done
+	assert.Eventually(t, func() bool { return b.Stats().InFlight == 0 }, 500*time.Millisecond, time.Millisecond)
 }
 
 func Test_ContextCancelReturnsImmediately(t *testing.T) {

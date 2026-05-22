@@ -33,6 +33,8 @@ splits optional/demo modules out of the root module dependency graph.
   removal count, and fires expiration hooks.
 - `lru.Cache.Snapshot` and `lru.ShardedCache.Snapshot` expose read-only size,
   capacity, and shard-count views for metrics and logs.
+- `batcher.Stats` now includes open-window size, in-flight load count, and
+  configured batch limits for tuning and observability.
 
 ### Changed
 
@@ -68,6 +70,8 @@ splits optional/demo modules out of the root module dependency graph.
   only once before the first request.
 - `httpx` now replays request bodies through `Request.GetBody` on each retry
   attempt instead of relying on a previously consumed body.
+- `batcher` now flushes immediately when the first key in a new window reaches
+  `MaxBatch`, including the `MaxBatch(1)` case.
 
 ## [v0.3.0] — 2026-05-21
 

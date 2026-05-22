@@ -49,6 +49,10 @@ s := b.Stats()
 // s.Loads        — total Load calls
 // s.Coalesced    — Load calls that joined an existing window
 // s.MaxBatchSize — largest batch seen
+// s.PendingKeys  — unique keys waiting in the current open window
+// s.InFlight     — loadFn calls currently running
+// s.MaxBatch     — configured batch-size cap
+// s.MaxWait      — configured maximum wait for an open window
 ```
 
 If `Coalesced` stays near zero, your windows are too short for the
