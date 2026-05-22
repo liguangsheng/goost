@@ -20,6 +20,7 @@ splits optional/demo modules out of the root module dependency graph.
 - Compiled `taskgroup` examples now cover `Group` and `Results[T]` usage.
 - A compiled `rotatingwriter` example now covers size-based file rotation.
 - A compiled `random` example now covers reproducible `Sequence` usage.
+- A compiled `env` example now covers `LoadFromMap` configuration loading.
 - `httpx.Options.Logger` logs one sanitized request summary after retries
   finish, including status, attempts, duration, and error without query
   strings or bodies.
