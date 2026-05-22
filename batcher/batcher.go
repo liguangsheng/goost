@@ -50,8 +50,8 @@ type Stats struct {
 	Batches int64
 	// Loads is the total number of Load calls.
 	Loads int64
-	// Coalesced is the number of Load calls that joined an existing
-	// in-flight batch (i.e. did not start a new one).
+	// Coalesced is the number of Load calls that joined an existing open
+	// batch window (i.e. did not start a new one).
 	Coalesced int64
 	// MaxBatchSize is the largest batch loadFn has been called with.
 	MaxBatchSize int64
@@ -295,9 +295,7 @@ func (b *Batcher[K, V]) enqueue(key K) (*batch[K, V], bool) {
 func (b *Batcher[K, V]) run(bt *batch[K, V]) {
 	b.batches.Add(1)
 	b.inFlight.Add(1)
-	if n := int64(len(bt.keys)); n > b.maxBatchSize.Load() {
-		b.maxBatchSize.Store(n)
-	}
+	b.recordBatchSize(len(bt.keys))
 	defer func() {
 		b.inFlight.Add(-1)
 		if r := recover(); r != nil {
@@ -306,4 +304,14 @@ func (b *Batcher[K, V]) run(bt *batch[K, V]) {
 		close(bt.done)
 	}()
 	bt.result, bt.err = b.loadFn(b.ctx, bt.keys)
+}
+
+func (b *Batcher[K, V]) recordBatchSize(n int) {
+	size := int64(n)
+	for {
+		cur := b.maxBatchSize.Load()
+		if size <= cur || b.maxBatchSize.CompareAndSwap(cur, size) {
+			return
+		}
+	}
 }

@@ -77,6 +77,8 @@ splits optional/demo modules out of the root module dependency graph.
   only once before the first request.
 - `httpx` now replays request bodies through `Request.GetBody` on each retry
   attempt instead of relying on a previously consumed body.
+- `batcher.Stats().MaxBatchSize` now remains monotonic under overlapping batch
+  executions.
 - `batcher` now flushes immediately when the first key in a new window reaches
   `MaxBatch`, including the `MaxBatch(1)` case.
 

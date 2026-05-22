@@ -251,6 +251,19 @@ func Test_StatsReportsInFlight(t *testing.T) {
 	assert.Eventually(t, func() bool { return b.Stats().InFlight == 0 }, 500*time.Millisecond, time.Millisecond)
 }
 
+func Test_StatsMaxBatchSizeDoesNotDecrease(t *testing.T) {
+	b := New(func(context.Context, []int) (map[int]string, error) {
+		return nil, nil
+	}).Build()
+
+	b.recordBatchSize(5)
+	b.recordBatchSize(3)
+	assert.EqualValues(t, 5, b.Stats().MaxBatchSize)
+
+	b.recordBatchSize(8)
+	assert.EqualValues(t, 8, b.Stats().MaxBatchSize)
+}
+
 func Test_ContextCancelReturnsImmediately(t *testing.T) {
 	hold := make(chan struct{})
 	defer close(hold)
@@ -268,6 +281,29 @@ func Test_ContextCancelReturnsImmediately(t *testing.T) {
 	cancel()
 	_, err := b.Load(ctx, 1)
 	assert.ErrorIs(t, err, context.Canceled)
+}
+
+func Test_ContextCancelDoesNotAbortBatch(t *testing.T) {
+	loaded := make(chan []int, 1)
+	load := func(ctx context.Context, ids []int) (map[int]string, error) {
+		loaded <- append([]int(nil), ids...)
+		out := make(map[int]string, len(ids))
+		for _, id := range ids {
+			out[id] = "v" + itoa(id)
+		}
+		return out, nil
+	}
+	b := New(load).MaxBatch(2).MaxWait(time.Hour).Build()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := b.Load(ctx, 1)
+	assert.ErrorIs(t, err, context.Canceled)
+
+	v, err := b.Load(context.Background(), 2)
+	assert.NoError(t, err)
+	assert.Equal(t, "v2", v)
+	assert.Equal(t, []int{1, 2}, <-loaded)
 }
 
 func Test_LoadMany(t *testing.T) {
