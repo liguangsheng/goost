@@ -42,6 +42,8 @@ splits optional/demo modules out of the root module dependency graph.
   targeted module checks, while CI explicitly runs the full gates.
 - CI tool installation now goes through `scripts/install-ci-tools.sh`, with Go
   and tool versions declared once in the workflow environment.
+- CI Go module caching now keys off the root and nested module `go.sum` files,
+  so split-module dependency changes refresh the cache explicitly.
 - Examples no longer trip security checks: the HTTP server configures
   `ReadHeaderTimeout`, and the concurrent retry demo uses deterministic
   transient failures instead of `math/rand`.

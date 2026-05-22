@@ -36,6 +36,8 @@ module 从根 module 依赖图中拆出。
   检查；CI 会显式运行 full gate。
 - CI 工具安装现在统一走 `scripts/install-ci-tools.sh`，Go 和工具版本集中声明在
   workflow environment 中。
+- CI 的 Go module cache 现在显式使用 root 与 nested module 的 `go.sum`
+  作为 key，split module 依赖变化会刷新 cache。
 - 示例不再触发安全检查：HTTP server 配置了 `ReadHeaderTimeout`，concurrent
   retry demo 改用确定性的临时失败，不再使用 `math/rand`。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和

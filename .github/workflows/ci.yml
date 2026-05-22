@@ -21,6 +21,12 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            go.sum
+            examples/go.sum
+            lru/benchmark/go.sum
+            zapctx/zapctxgin/go.sum
+            zapctx/zapctxgrpc/go.sum
       - run: ./scripts/install-ci-tools.sh --root
       - run: ./scripts/check-root.sh --full
       - uses: codecov/codecov-action@v6
@@ -35,5 +41,11 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: |
+            go.sum
+            examples/go.sum
+            lru/benchmark/go.sum
+            zapctx/zapctxgin/go.sum
+            zapctx/zapctxgrpc/go.sum
       - run: ./scripts/install-ci-tools.sh --split
       - run: ./scripts/check-split-modules.sh --full
