@@ -38,6 +38,8 @@ splits optional/demo modules out of the root module dependency graph.
 - `scripts/check-root.sh` now provides the shared local/CI entry point for the
   root module gate, including tidy, race tests, lint, static analysis,
   vulnerability checks, and security scanning.
+- Root and split-module check scripts now support `--quick`, `--full`, and
+  targeted module checks, while CI explicitly runs the full gates.
 - Examples no longer trip security checks: the HTTP server configures
   `ReadHeaderTimeout`, and the concurrent retry demo uses deterministic
   transient failures instead of `math/rand`.

@@ -20,7 +20,7 @@ jobs:
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-      - run: ./scripts/check-root.sh
+      - run: ./scripts/check-root.sh --full
       - uses: codecov/codecov-action@v6
         with:
           files: coverage.out
@@ -36,4 +36,4 @@ jobs:
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-      - run: ./scripts/check-split-modules.sh
+      - run: ./scripts/check-split-modules.sh --full

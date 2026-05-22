@@ -55,9 +55,20 @@ See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 ## Development Checks
 
-Run `./scripts/check-root.sh` for the root module and
-`./scripts/check-split-modules.sh` for nested optional/demo modules before
-publishing a release.
+For day-to-day changes, run `./scripts/check-root.sh --quick`.
+
+Before publishing a release, run:
+
+```sh
+./scripts/check-root.sh --full
+./scripts/check-split-modules.sh --full
+```
+
+To check one nested module while iterating, run:
+
+```sh
+./scripts/check-split-modules.sh --quick --module zapctx/zapctxgin
+```
 
 ## License
 

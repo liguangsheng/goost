@@ -55,8 +55,20 @@ minor version 迁移说明见 [MIGRATION.md](./MIGRATION.md)。
 
 ## 开发检查
 
-发布前运行 `./scripts/check-root.sh` 检查根 module，并运行
-`./scripts/check-split-modules.sh` 检查 nested optional/demo modules。
+日常改动先运行 `./scripts/check-root.sh --quick`。
+
+发布前运行：
+
+```sh
+./scripts/check-root.sh --full
+./scripts/check-split-modules.sh --full
+```
+
+迭代单个 nested module 时可以运行：
+
+```sh
+./scripts/check-split-modules.sh --quick --module zapctx/zapctxgin
+```
 
 ## License
 

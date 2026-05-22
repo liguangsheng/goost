@@ -32,6 +32,8 @@ module 从根 module 依赖图中拆出。
   `go.sum` 进入发布。
 - `scripts/check-root.sh` 现在是 root module gate 在本地和 CI 中共享的入口，
   覆盖 tidy、race tests、lint、静态分析、漏洞检查和安全扫描。
+- Root 与 split-module 检查脚本现在支持 `--quick`、`--full` 和指定 module
+  检查；CI 会显式运行 full gate。
 - 示例不再触发安全检查：HTTP server 配置了 `ReadHeaderTimeout`，concurrent
   retry demo 改用确定性的临时失败，不再使用 `math/rand`。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和
