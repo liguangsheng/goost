@@ -32,6 +32,10 @@ sub.Drops()      // messages this sub missed
 b.Stats().Drops  // aggregate across all subs (alive and closed)
 ```
 
+`Stats()` also reports current subscribers, configured per-subscriber
+buffer size, queued messages across active subscribers, and whether the
+broadcaster is closed.
+
 If you cannot tolerate drops, set `Buffer` high enough to absorb your
 expected burst.
 

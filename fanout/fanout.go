@@ -148,6 +148,9 @@ type Stats struct {
 	Publishes   int64
 	Drops       int64
 	Subscribers int
+	Buffer      int
+	Queued      int
+	Closed      bool
 }
 
 // Stats returns a counter snapshot. Drops is the aggregate across all
@@ -155,11 +158,19 @@ type Stats struct {
 func (b *Broadcaster[T]) Stats() Stats {
 	b.mu.RLock()
 	n := len(b.subs)
+	queued := 0
+	for s := range b.subs {
+		queued += len(s.ch)
+	}
+	closed := b.closed
 	b.mu.RUnlock()
 	return Stats{
 		Publishes:   b.publishCount.Load(),
 		Drops:       b.dropCount.Load(),
 		Subscribers: n,
+		Buffer:      b.buf,
+		Queued:      queued,
+		Closed:      closed,
 	}
 }
 

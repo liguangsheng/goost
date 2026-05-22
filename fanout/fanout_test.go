@@ -172,7 +172,36 @@ func Test_Stats(t *testing.T) {
 	assert.EqualValues(t, 3, st.Publishes)
 	assert.EqualValues(t, 2, st.Drops)
 	assert.Equal(t, 1, st.Subscribers)
+	assert.Equal(t, 1, st.Buffer)
+	assert.Equal(t, 1, st.Queued)
+	assert.False(t, st.Closed)
 	assert.EqualValues(t, 2, s.Drops())
+}
+
+func Test_StatsReportsClosedState(t *testing.T) {
+	b := New[int]().Buffer(3).Build()
+	s1 := b.Subscribe()
+	s2 := b.Subscribe()
+
+	b.Publish(1)
+	st := b.Stats()
+	assert.Equal(t, 2, st.Subscribers)
+	assert.Equal(t, 3, st.Buffer)
+	assert.Equal(t, 2, st.Queued)
+	assert.False(t, st.Closed)
+
+	s1.Close()
+	st = b.Stats()
+	assert.Equal(t, 1, st.Subscribers)
+	assert.Equal(t, 1, st.Queued)
+	assert.False(t, st.Closed)
+
+	s2.Close()
+	b.Close()
+	st = b.Stats()
+	assert.Equal(t, 0, st.Subscribers)
+	assert.Equal(t, 0, st.Queued)
+	assert.True(t, st.Closed)
 }
 
 func Test_ConcurrentPublishSubscribeClose(t *testing.T) {

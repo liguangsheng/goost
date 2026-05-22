@@ -35,6 +35,8 @@ splits optional/demo modules out of the root module dependency graph.
   capacity, and shard-count views for metrics and logs.
 - `batcher.Stats` now includes open-window size, in-flight load count, and
   configured batch limits for tuning and observability.
+- `fanout.Stats` now includes buffer size, queued message count, and closed
+  state for runtime observability.
 
 ### Changed
 
