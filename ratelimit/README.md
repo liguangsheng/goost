@@ -50,7 +50,8 @@ tests. Pair them with [`clock.Mock`](../clock):
 m := clock.NewMock(time.Unix(0, 0))
 b := ratelimit.NewBucket(10, 1)
 b.SetClock(m.Now)
-b.Allow()              // false after the burst is spent
+b.Allow()              // true, spends the initial burst token
+b.Allow()              // false until enough time passes
 m.Advance(time.Second) // refills
 b.Allow()              // true
 ```

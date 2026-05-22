@@ -49,7 +49,8 @@ metrics.RecordLimiterDelay(snap.AvailableIn)
 m := clock.NewMock(time.Unix(0, 0))
 b := ratelimit.NewBucket(10, 1)
 b.SetClock(m.Now)
-b.Allow()              // 突发额度用完后为 false
+b.Allow()              // true，消耗初始突发 token
+b.Allow()              // 时间推进前为 false
 m.Advance(time.Second) // 补充 token
 b.Allow()              // true
 ```

@@ -168,7 +168,7 @@ func NewLeaky(interval time.Duration) *Leaky {
 	}
 }
 
-// SetClock replaces the bucket's clock; useful in tests.
+// SetClock replaces the leaky bucket's clock; useful in tests.
 func (l *Leaky) SetClock(fn func() time.Time) {
 	l.mu.Lock()
 	l.nowFn = fn
