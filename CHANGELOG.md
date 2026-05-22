@@ -23,6 +23,8 @@ splits optional/demo modules out of the root module dependency graph.
 - `httpx.RetryPolicy.OnRetry` reports retryable attempts with status, error,
   attempt count, next delay, and sanitized request metadata before the next
   request is sent.
+- `httpx.RetryPolicy.OnGiveUp` reports the final retryable response or
+  transport error when the retry budget is exhausted.
 
 ### Changed
 

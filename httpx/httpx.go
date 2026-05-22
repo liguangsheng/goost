@@ -26,6 +26,7 @@ type RetryPolicy struct {
 	Backoff     *backoff.Backoff // required when MaxAttempts > 0
 	RetryOn     func(*http.Response, error) bool
 	OnRetry     func(RetryEvent)
+	OnGiveUp    func(RetryEvent)
 }
 
 // RetryEvent describes a retryable attempt before httpx waits for the next one.
@@ -143,6 +144,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			return resp, lastErr
 		}
 		if i == attempts-1 || policy == nil || policy.Backoff == nil {
+			t.notifyGiveUp(req, policy, i+1, attempts, resp, lastErr)
 			drain(resp)
 			break
 		}
@@ -169,11 +171,22 @@ func (t *transport) notifyRetry(req *http.Request, policy *RetryPolicy, attempt,
 	if policy.OnRetry == nil {
 		return
 	}
+	policy.OnRetry(newRetryEvent(req, attempt, maxAttempts, resp, err, delay))
+}
+
+func (t *transport) notifyGiveUp(req *http.Request, policy *RetryPolicy, attempt, maxAttempts int, resp *http.Response, err error) {
+	if policy == nil || policy.OnGiveUp == nil {
+		return
+	}
+	policy.OnGiveUp(newRetryEvent(req, attempt, maxAttempts, resp, err, 0))
+}
+
+func newRetryEvent(req *http.Request, attempt, maxAttempts int, resp *http.Response, err error, delay time.Duration) RetryEvent {
 	status := 0
 	if resp != nil {
 		status = resp.StatusCode
 	}
-	policy.OnRetry(RetryEvent{
+	return RetryEvent{
 		Method:      req.Method,
 		Scheme:      req.URL.Scheme,
 		Host:        req.URL.Host,
@@ -183,7 +196,7 @@ func (t *transport) notifyRetry(req *http.Request, policy *RetryPolicy, attempt,
 		StatusCode:  status,
 		Err:         err,
 		Delay:       delay,
-	})
+	}
 }
 
 func (t *transport) logRoundTrip(req *http.Request, start time.Time, attempts int, resp *http.Response, err error) {

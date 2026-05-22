@@ -24,6 +24,15 @@ c := httpx.New(httpx.Options{
                 "delay", e.Delay,
                 "error", e.Err)
         },
+        OnGiveUp: func(e httpx.RetryEvent) {
+            slog.Warn("outbound request retries exhausted",
+                "attempt", e.Attempt,
+                "max_attempts", e.MaxAttempts,
+                "host", e.Host,
+                "path", e.Path,
+                "status", e.StatusCode,
+                "error", e.Err)
+        },
     },
     Limiter: ratelimit.NewBucket(50, 100),       // 50 req/s, burst 100
     Breaker: circuitbreaker.New(circuitbreaker.Config{
@@ -39,8 +48,10 @@ resp, err := c.Get("https://api.example.com/users")
 The default retry policy retries on transport errors, HTTP 429, and any
 5xx. Override with `RetryPolicy.RetryOn`. Bodies passed to `Post` are
 buffered so they can be replayed on retry. `RetryPolicy.OnRetry` runs only
-when another attempt will be made. Retry events include sanitized request
-metadata: method, scheme, host, and path, but not query strings or bodies.
+when another attempt will be made. `RetryPolicy.OnGiveUp` runs when the final
+attempt was still retryable but no attempt remains. Retry events include
+sanitized request metadata: method, scheme, host, and path, but not query
+strings or bodies.
 
 When `Logger` is set, `httpx` logs one summary line per request after retries
 finish. The log includes method, scheme, host, path, status, attempts,

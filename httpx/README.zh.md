@@ -24,6 +24,15 @@ c := httpx.New(httpx.Options{
                 "delay", e.Delay,
                 "error", e.Err)
         },
+        OnGiveUp: func(e httpx.RetryEvent) {
+            slog.Warn("outbound request retries exhausted",
+                "attempt", e.Attempt,
+                "max_attempts", e.MaxAttempts,
+                "host", e.Host,
+                "path", e.Path,
+                "status", e.StatusCode,
+                "error", e.Err)
+        },
     },
     Limiter: ratelimit.NewBucket(50, 100),       // 50 req/s，突发 100
     Breaker: circuitbreaker.New(circuitbreaker.Config{
@@ -38,8 +47,9 @@ resp, err := c.Get("https://api.example.com/users")
 
 默认重试策略会重试传输错误、HTTP 429 和所有 5xx。可用
 `RetryPolicy.RetryOn` 覆盖。传给 `Post` 的 body 会被缓冲，以便重试时回放。
-`RetryPolicy.OnRetry` 只会在确实将发起下一次尝试时运行。Retry event 会包含
-脱敏请求元数据：method、scheme、host 和 path，但不包含 query string 或 body。
+`RetryPolicy.OnRetry` 只会在确实将发起下一次尝试时运行。最后一次 attempt 仍然
+可重试但已没有剩余 attempt 时，会运行 `RetryPolicy.OnGiveUp`。Retry event 会
+包含脱敏请求元数据：method、scheme、host 和 path，但不包含 query string 或 body。
 
 设置 `Logger` 后，`httpx` 会在重试完成后为每个请求记录一行摘要。日志包含
 method、scheme、host、path、status、attempts、duration 和 error。查询字符串

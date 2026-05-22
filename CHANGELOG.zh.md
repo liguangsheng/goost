@@ -18,6 +18,8 @@ module 从根 module 依赖图中拆出。
   attempts、duration 和 error，不包含 query string 或 body。
 - `httpx.RetryPolicy.OnRetry` 会在下一次请求发送前报告可重试 attempt 的
   status、error、attempt count、next delay 和脱敏请求元数据。
+- `httpx.RetryPolicy.OnGiveUp` 会在 retry budget 耗尽时报告最后一次可重试
+  response 或 transport error。
 
 ### Changed
 

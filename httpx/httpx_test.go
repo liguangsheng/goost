@@ -146,6 +146,124 @@ func Test_RetryGivesUp(t *testing.T) {
 	assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
 }
 
+func Test_OnGiveUpReportsFinalRetryableResponse(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+	}))
+	defer s.Close()
+
+	var retries []RetryEvent
+	var giveUps []RetryEvent
+	c := New(Options{
+		Retry: &RetryPolicy{
+			MaxAttempts: 2,
+			Backoff:     &backoff.Backoff{Initial: time.Millisecond},
+			OnRetry: func(e RetryEvent) {
+				retries = append(retries, e)
+			},
+			OnGiveUp: func(e RetryEvent) {
+				giveUps = append(giveUps, e)
+			},
+		},
+	})
+
+	resp, err := c.Get(s.URL + "/users?token=secret")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
+	assert.Len(t, retries, 1)
+	assert.Len(t, giveUps, 1)
+	assert.Equal(t, RetryEvent{
+		Method:      http.MethodGet,
+		Scheme:      "http",
+		Host:        strings.TrimPrefix(s.URL, "http://"),
+		Path:        "/users",
+		Attempt:     2,
+		MaxAttempts: 2,
+		StatusCode:  http.StatusBadGateway,
+	}, giveUps[0])
+	assert.NotContains(t, giveUps[0].Path, "token=secret")
+	assert.Zero(t, giveUps[0].Delay)
+}
+
+func Test_OnGiveUpReportsFinalTransportError(t *testing.T) {
+	want := errors.New("network down")
+	var giveUps []RetryEvent
+	c := New(Options{
+		Base: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			return nil, want
+		}),
+		Retry: &RetryPolicy{
+			MaxAttempts: 2,
+			Backoff:     &backoff.Backoff{Initial: time.Millisecond},
+			OnGiveUp: func(e RetryEvent) {
+				giveUps = append(giveUps, e)
+			},
+		},
+	})
+
+	_, err := c.Get("https://api.example.com/users")
+	assert.ErrorIs(t, err, want)
+	assert.Len(t, giveUps, 1)
+	assert.Equal(t, http.MethodGet, giveUps[0].Method)
+	assert.Equal(t, "https", giveUps[0].Scheme)
+	assert.Equal(t, "api.example.com", giveUps[0].Host)
+	assert.Equal(t, "/users", giveUps[0].Path)
+	assert.Equal(t, 2, giveUps[0].Attempt)
+	assert.Equal(t, 2, giveUps[0].MaxAttempts)
+	assert.Equal(t, 0, giveUps[0].StatusCode)
+	assert.ErrorIs(t, giveUps[0].Err, want)
+	assert.Zero(t, giveUps[0].Delay)
+}
+
+func Test_OnGiveUpIgnoresNonRetryableResponseAndSuccessAfterRetry(t *testing.T) {
+	t.Run("non retryable", func(t *testing.T) {
+		var giveUps atomic.Int64
+		c := New(Options{
+			Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: http.StatusBadRequest, Body: io.NopCloser(strings.NewReader("")), Request: req}, nil
+			}),
+			Retry: &RetryPolicy{
+				MaxAttempts: 2,
+				Backoff:     &backoff.Backoff{Initial: time.Millisecond},
+				OnGiveUp: func(RetryEvent) {
+					giveUps.Add(1)
+				},
+			},
+		})
+
+		resp, err := c.Get("https://api.example.com/users")
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		assert.EqualValues(t, 0, giveUps.Load())
+	})
+
+	t.Run("success after retry", func(t *testing.T) {
+		var calls atomic.Int64
+		var giveUps atomic.Int64
+		c := New(Options{
+			Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				status := http.StatusOK
+				if calls.Add(1) == 1 {
+					status = http.StatusBadGateway
+				}
+				return &http.Response{StatusCode: status, Body: io.NopCloser(strings.NewReader("")), Request: req}, nil
+			}),
+			Retry: &RetryPolicy{
+				MaxAttempts: 2,
+				Backoff:     &backoff.Backoff{Initial: time.Millisecond},
+				OnGiveUp: func(RetryEvent) {
+					giveUps.Add(1)
+				},
+			},
+		})
+
+		resp, err := c.Get("https://api.example.com/users")
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assert.EqualValues(t, 0, giveUps.Load())
+	})
+}
+
 func Test_BreakerOpens(t *testing.T) {
 	var calls atomic.Int64
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
