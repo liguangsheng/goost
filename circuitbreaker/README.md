@@ -43,6 +43,10 @@ metrics.RecordBreakerState(snap.State.String(), snap.Failures, snap.CooldownRema
 
 ```go
 m := clock.NewMock(time.Unix(0, 0))
-b := circuitbreaker.New(circuitbreaker.Config{Now: m.Now, ...})
+b := circuitbreaker.New(circuitbreaker.Config{
+    FailureThreshold: 1,
+    CooldownPeriod:   time.Minute,
+    Now:              m.Now,
+})
 m.Advance(time.Minute) // moves cooldown forward
 ```
