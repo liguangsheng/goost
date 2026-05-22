@@ -55,7 +55,8 @@ See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 ## Development Checks
 
-For day-to-day changes, run `./scripts/check-root.sh --quick`.
+For day-to-day root-module changes, run `./scripts/check-root.sh --quick`.
+Nested modules are separate Go modules, so root checks do not traverse them.
 
 CI installs the required analysis tools through
 `./scripts/install-ci-tools.sh`, with tool versions controlled by the workflow
@@ -68,7 +69,8 @@ Before publishing a release, run:
 ./scripts/check-split-modules.sh --full
 ```
 
-To check one nested module while iterating, run:
+For day-to-day nested-module changes, run the split-module gate against the
+module you touched:
 
 ```sh
 ./scripts/check-split-modules.sh --quick --module zapctx/zapctxgin

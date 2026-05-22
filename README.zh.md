@@ -55,7 +55,8 @@ minor version 迁移说明见 [MIGRATION.md](./MIGRATION.md)。
 
 ## 开发检查
 
-日常改动先运行 `./scripts/check-root.sh --quick`。
+日常 root module 改动先运行 `./scripts/check-root.sh --quick`。Nested modules
+是独立 Go modules，root 检查不会遍历它们。
 
 CI 通过 `./scripts/install-ci-tools.sh` 安装所需分析工具，工具版本由 workflow
 environment 统一控制。
@@ -67,7 +68,7 @@ environment 统一控制。
 ./scripts/check-split-modules.sh --full
 ```
 
-迭代单个 nested module 时可以运行：
+日常 nested module 改动则针对改过的 module 运行 split-module gate：
 
 ```sh
 ./scripts/check-split-modules.sh --quick --module zapctx/zapctxgin
