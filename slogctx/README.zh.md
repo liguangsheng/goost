@@ -9,4 +9,10 @@ slogctx.Extract(ctx).AddAttrs(slog.String("request_id", id))
 slogctx.L(ctx).Info("hello") // 包含 request_id
 ```
 
-除非请求被标记为 sampled，`slogctx.Sampled(ctx)` 会返回 no-op logger。
+除非请求被标记为 sampled，`slogctx.Sampled(ctx)` 会返回 no-op logger：
+
+```go
+sc := slogctx.Extract(ctx)
+sc.Sampled = true
+slogctx.Sampled(ctx).Debug("verbose trace") // 会带上累积 attrs 输出
+```

@@ -46,3 +46,17 @@ func Test_SampledNoOpWhenNotSampled(t *testing.T) {
 	Sampled(ctx).Info("nope")
 	assert.Empty(t, buf.String())
 }
+
+func Test_SampledUsesLoggerWhenSampled(t *testing.T) {
+	logger, buf := newCapturingLogger()
+	ctx := ToContext(context.Background(), logger)
+	s := Extract(ctx)
+	s.AddAttrs(slog.String("request_id", "abc"))
+	s.Sampled = true
+
+	Sampled(ctx).Debug("sampled")
+
+	out := buf.String()
+	assert.Contains(t, out, "sampled")
+	assert.Contains(t, out, "request_id=abc")
+}

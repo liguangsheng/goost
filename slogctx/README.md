@@ -10,4 +10,10 @@ slogctx.L(ctx).Info("hello") // includes request_id
 ```
 
 `slogctx.Sampled(ctx)` returns a no-op logger unless the request is
-marked sampled.
+marked sampled:
+
+```go
+sc := slogctx.Extract(ctx)
+sc.Sampled = true
+slogctx.Sampled(ctx).Debug("verbose trace") // emitted with accumulated attrs
+```
