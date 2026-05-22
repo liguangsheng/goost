@@ -15,6 +15,9 @@ err := b.Do(ctx, func(ctx context.Context) error {
 if errors.Is(err, circuitbreaker.ErrOpen) {
     return fallback()
 }
+
+snap := b.Snapshot()
+metrics.RecordBreakerState(snap.State.String(), snap.Failures, snap.CooldownRemaining)
 ```
 
 ### 行为
@@ -28,6 +31,7 @@ if errors.Is(err, circuitbreaker.ErrOpen) {
 
 - `IsFailure` 可把 `context.Canceled` 这类预期错误排除在失败计数之外。
 - `OnStateChange` 会在每次状态切换时触发，可用于指标或日志。
+- `Snapshot` 会返回当前状态、失败计数、打开时间和剩余冷却时间，可用于指标或日志。
 - `Now` 可替换时钟，方便确定性测试；可配合 [`clock.Mock`](../clock)：
 
 ```go

@@ -16,6 +16,9 @@ err := b.Do(ctx, func(ctx context.Context) error {
 if errors.Is(err, circuitbreaker.ErrOpen) {
     return fallback()
 }
+
+snap := b.Snapshot()
+metrics.RecordBreakerState(snap.State.String(), snap.Failures, snap.CooldownRemaining)
 ```
 
 ### Behavior
@@ -33,6 +36,8 @@ if errors.Is(err, circuitbreaker.ErrOpen) {
 - `IsFailure` lets you exclude expected errors like `context.Canceled`
   from the failure count.
 - `OnStateChange` fires on every transition for metrics/logging.
+- `Snapshot` returns the current state, failure counters, open time, and
+  cooldown remaining for metrics/logging.
 - `Now` overrides the clock for deterministic tests; pair with
   [`clock.Mock`](../clock):
 

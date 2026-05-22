@@ -47,6 +47,62 @@ func Test_HalfOpenProbe(t *testing.T) {
 	assert.Equal(t, StateClosed, b.State())
 }
 
+func Test_SnapshotReportsStateAndCounters(t *testing.T) {
+	now := time.Unix(100, 0)
+	b := New(Config{
+		FailureThreshold:  3,
+		CooldownPeriod:    time.Second,
+		HalfOpenSuccesses: 2,
+		Now:               func() time.Time { return now },
+	})
+
+	snap := b.Snapshot()
+	assert.Equal(t, StateClosed, snap.State)
+	assert.EqualValues(t, 0, snap.Failures)
+	assert.EqualValues(t, 0, snap.HalfOpenSuccesses)
+	assert.True(t, snap.OpenedAt.IsZero())
+	assert.Zero(t, snap.CooldownRemaining)
+
+	fail := errors.New("fail")
+	for range 2 {
+		_ = b.Do(context.Background(), func(_ context.Context) error { return fail })
+	}
+	snap = b.Snapshot()
+	assert.Equal(t, StateClosed, snap.State)
+	assert.EqualValues(t, 2, snap.Failures)
+	assert.True(t, snap.OpenedAt.IsZero())
+
+	_ = b.Do(context.Background(), func(_ context.Context) error { return fail })
+	snap = b.Snapshot()
+	assert.Equal(t, StateOpen, snap.State)
+	assert.EqualValues(t, 3, snap.Failures)
+	assert.Equal(t, time.Unix(100, 0), snap.OpenedAt)
+	assert.Equal(t, time.Second, snap.CooldownRemaining)
+
+	now = now.Add(250 * time.Millisecond)
+	snap = b.Snapshot()
+	assert.Equal(t, StateOpen, snap.State)
+	assert.Equal(t, 750*time.Millisecond, snap.CooldownRemaining)
+
+	now = now.Add(time.Second)
+	snap = b.Snapshot()
+	assert.Equal(t, StateHalfOpen, snap.State)
+	assert.Zero(t, snap.CooldownRemaining)
+	assert.Equal(t, time.Unix(100, 0), snap.OpenedAt)
+
+	assert.NoError(t, b.Do(context.Background(), func(_ context.Context) error { return nil }))
+	snap = b.Snapshot()
+	assert.Equal(t, StateHalfOpen, snap.State)
+	assert.EqualValues(t, 1, snap.HalfOpenSuccesses)
+
+	assert.NoError(t, b.Do(context.Background(), func(_ context.Context) error { return nil }))
+	snap = b.Snapshot()
+	assert.Equal(t, StateClosed, snap.State)
+	assert.EqualValues(t, 0, snap.Failures)
+	assert.EqualValues(t, 0, snap.HalfOpenSuccesses)
+	assert.True(t, snap.OpenedAt.IsZero())
+}
+
 func Test_HalfOpenFailureReopens(t *testing.T) {
 	now := time.Unix(0, 0)
 	b := New(Config{

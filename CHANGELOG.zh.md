@@ -20,6 +20,7 @@ module 从根 module 依赖图中拆出。
   status、error、attempt count、next delay 和脱敏请求元数据。
 - `httpx.RetryPolicy.OnGiveUp` 会在 retry budget 耗尽时报告最后一次可重试
   response 或 transport error。
+- `circuitbreaker.Breaker.Snapshot` 提供只读状态与冷却时间视图，便于指标和日志采集。
 
 ### Changed
 

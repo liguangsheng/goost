@@ -25,6 +25,8 @@ splits optional/demo modules out of the root module dependency graph.
   request is sent.
 - `httpx.RetryPolicy.OnGiveUp` reports the final retryable response or
   transport error when the retry budget is exhausted.
+- `circuitbreaker.Breaker.Snapshot` exposes a read-only state and cooldown
+  view for metrics and logs.
 
 ### Changed
 

@@ -66,6 +66,15 @@ type Breaker struct {
 	halfOpenInFlight atomic.Bool
 }
 
+// Snapshot is a point-in-time view of a breaker.
+type Snapshot struct {
+	State             State
+	Failures          int64
+	HalfOpenSuccesses int64
+	OpenedAt          time.Time
+	CooldownRemaining time.Duration
+}
+
 // New constructs a Breaker. Zero-valued config fields fall back to defaults.
 func New(cfg Config) *Breaker {
 	if cfg.FailureThreshold <= 0 {
@@ -97,6 +106,30 @@ func (b *Breaker) State() State {
 		}
 	}
 	return s
+}
+
+// Snapshot returns a point-in-time view of the breaker for metrics or logs.
+// Like State, it lazily moves from open to half-open if the cooldown elapsed.
+func (b *Breaker) Snapshot() Snapshot {
+	s := b.State()
+	openedAtUnix := b.openedAt.Load()
+	snap := Snapshot{
+		State:             s,
+		Failures:          b.failures.Load(),
+		HalfOpenSuccesses: b.halfOpenSucc.Load(),
+	}
+	if openedAtUnix == 0 || s == StateClosed {
+		return snap
+	}
+	snap.OpenedAt = time.Unix(0, openedAtUnix)
+	if s == StateOpen {
+		elapsed := b.cfg.Now().Sub(snap.OpenedAt)
+		remaining := b.cfg.CooldownPeriod - elapsed
+		if remaining > 0 {
+			snap.CooldownRemaining = remaining
+		}
+	}
+	return snap
 }
 
 // Do executes fn, recording its outcome and updating the breaker. If the
