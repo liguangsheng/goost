@@ -18,5 +18,8 @@ if err := p.ScheduleTimeout(50*time.Millisecond, func() { doWork() }); err != ni
 
 - `Schedule` blocks until a slot is available.
 - `ScheduleTimeout` gives up after the deadline.
-- Task panics are recovered and logged with the zap global; the pool stays usable.
+- Task panics are recovered so the pool stays usable; use `WithPanicHandler`
+  to observe recovered panic values.
 - `Close` stops accepting new work and waits for in-flight workers to drain.
+- `Stats` reports workers, capacity, in-flight tasks, queued tasks, completed
+  tasks, panic count, and closed state.

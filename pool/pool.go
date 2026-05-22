@@ -25,11 +25,14 @@ type PanicHandler func(panicVal any)
 
 // Stats captures live pool metrics.
 type Stats struct {
-	Workers   int   // currently spawned workers
-	InFlight  int   // tasks currently executing
-	Queued    int   // tasks waiting in the buffer
-	Completed int64 // tasks that finished (including panicked)
-	Panics    int64 // tasks that panicked
+	Workers       int   // currently spawned workers
+	Capacity      int   // maximum concurrent workers
+	InFlight      int   // tasks currently executing
+	Queued        int   // tasks waiting in the buffer
+	QueueCapacity int   // task buffer capacity
+	Completed     int64 // tasks that finished (including panicked)
+	Panics        int64 // tasks that panicked
+	Closed        bool  // whether Close has been called
 }
 
 // Pool is a bounded goroutine pool.
@@ -169,12 +172,21 @@ func (p *Pool) Close() {
 
 // Stats returns a snapshot of pool metrics. Cheap to call.
 func (p *Pool) Stats() Stats {
+	closed := false
+	select {
+	case <-p.closed:
+		closed = true
+	default:
+	}
 	return Stats{
-		Workers:   int(p.workers.Load()),
-		InFlight:  int(p.inFlight.Load()),
-		Queued:    len(p.work),
-		Completed: p.completed.Load(),
-		Panics:    p.panics.Load(),
+		Workers:       int(p.workers.Load()),
+		Capacity:      cap(p.sem),
+		InFlight:      int(p.inFlight.Load()),
+		Queued:        len(p.work),
+		QueueCapacity: cap(p.work),
+		Completed:     p.completed.Load(),
+		Panics:        p.panics.Load(),
+		Closed:        closed,
 	}
 }
 

@@ -37,6 +37,8 @@ splits optional/demo modules out of the root module dependency graph.
   configured batch limits for tuning and observability.
 - `fanout.Stats` now includes buffer size, queued message count, and closed
   state for runtime observability.
+- `pool.Stats` now includes worker capacity, queue capacity, and closed state
+  for runtime observability.
 
 ### Changed
 

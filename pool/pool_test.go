@@ -137,7 +137,34 @@ func Test_Stats(t *testing.T) {
 	assert.EqualValues(t, 5, s.Completed)
 	assert.EqualValues(t, 0, s.InFlight)
 	assert.EqualValues(t, 0, s.Panics)
+	assert.Equal(t, 2, s.Capacity)
+	assert.Equal(t, 4, s.QueueCapacity)
+	assert.False(t, s.Closed)
 	assert.GreaterOrEqual(t, s.Workers, 1)
+}
+
+func Test_StatsReportsQueueAndClosedState(t *testing.T) {
+	p, err := NewPool(1, 2, 1)
+	assert.NoError(t, err)
+
+	hold := make(chan struct{})
+	assert.NoError(t, p.Schedule(func() { <-hold }))
+	assert.NoError(t, p.Schedule(func() {}))
+	assert.NoError(t, p.Schedule(func() {}))
+
+	assert.Eventually(t, func() bool {
+		s := p.Stats()
+		return s.InFlight == 1 && s.Queued == 2 && s.Capacity == 1 && s.QueueCapacity == 2 && !s.Closed
+	}, time.Second, time.Millisecond)
+
+	close(hold)
+	p.Close()
+
+	s := p.Stats()
+	assert.True(t, s.Closed)
+	assert.Equal(t, 0, s.Queued)
+	assert.Equal(t, 0, s.Workers)
+	assert.EqualValues(t, 3, s.Completed)
 }
 
 func Test_StatsCountsPanics(t *testing.T) {

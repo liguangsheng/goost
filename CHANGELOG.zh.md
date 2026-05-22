@@ -29,6 +29,7 @@ module 从根 module 依赖图中拆出。
 - `batcher.Stats` 现在包含打开窗口大小、正在运行的 loadFn 数量和批处理配置上限，
   便于调优和观测。
 - `fanout.Stats` 现在包含缓冲区大小、排队消息数量和关闭状态，便于运行态观测。
+- `pool.Stats` 现在包含 worker 容量、队列容量和关闭状态，便于运行态观测。
 
 ### Changed
 
