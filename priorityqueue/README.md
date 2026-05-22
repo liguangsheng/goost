@@ -20,6 +20,8 @@ For a max-heap, flip the comparator: `return a.Priority > b.Priority`.
 ## API
 
 ```go
+New(less func(a, b T) bool) *PriorityQueue[T]
+NewWithCapacity(less func(a, b T) bool, n int) *PriorityQueue[T]
 Push(v T)
 Pop() (T, bool)        // false when empty
 Peek() (T, bool)       // false when empty
@@ -33,4 +35,4 @@ Drain() []T            // pop everything into a slice in priority order
 - Not safe for concurrent use. Wrap with `sync.Mutex` if needed.
 - `Drain` is O(n log n). `Clear` is O(1) (keeps the underlying slice).
 - Use `NewWithCapacity(less, n)` if you know the queue size up front
-  to avoid grow-and-copy.
+  to avoid grow-and-copy; negative capacity is treated as zero.

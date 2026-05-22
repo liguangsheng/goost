@@ -60,6 +60,12 @@ func Test_Clear(t *testing.T) {
 	assert.Equal(t, 0, q.Len())
 	_, ok := q.Pop()
 	assert.False(t, ok)
+
+	q.Push(2)
+	q.Push(1)
+	v, ok := q.Pop()
+	assert.True(t, ok)
+	assert.Equal(t, 1, v)
 }
 
 func Test_CustomTypes(t *testing.T) {
@@ -93,6 +99,23 @@ func Test_NewWithCapacity(t *testing.T) {
 		expected[i] = i + 1
 	}
 	assert.Equal(t, expected, out)
+}
+
+func Test_NewWithCapacityNegative(t *testing.T) {
+	q := NewWithCapacity(func(a, b int) bool { return a < b }, -1)
+	q.Push(2)
+	q.Push(1)
+
+	out := q.Drain()
+	assert.Equal(t, []int{1, 2}, out)
+}
+
+func Test_DrainEmpty(t *testing.T) {
+	q := New(func(a, b int) bool { return a < b })
+	out := q.Drain()
+
+	assert.Empty(t, out)
+	assert.Equal(t, 0, q.Len())
 }
 
 // Stress: random sequence in vs. sorted out matches sort package.

@@ -20,6 +20,8 @@ top, _ := q.Pop() // {Priority: 1}
 ## API
 
 ```go
+New(less func(a, b T) bool) *PriorityQueue[T]
+NewWithCapacity(less func(a, b T) bool, n int) *PriorityQueue[T]
 Push(v T)
 Pop() (T, bool)        // 空时 false
 Peek() (T, bool)       // 空时 false
@@ -32,4 +34,5 @@ Drain() []T            // 按优先级顺序弹出全部元素
 
 - 非并发安全。需要并发使用时请自行包 `sync.Mutex`。
 - `Drain` 是 O(n log n)。`Clear` 是 O(1)，会保留底层 slice。
-- 如果预先知道队列大小，使用 `NewWithCapacity(less, n)` 可避免扩容和复制。
+- 如果预先知道队列大小，使用 `NewWithCapacity(less, n)` 可避免扩容和复制；
+  负容量会按 0 处理。
