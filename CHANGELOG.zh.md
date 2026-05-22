@@ -14,6 +14,18 @@ module 从根 module 依赖图中拆出。
 - 新增 consumer dependency smoke test：自动发现核心包集合，并防止核心包导入
   可选的 Gin、gRPC 或 OpenTelemetry 集成依赖。
 - 新增编译型 `httpx` 示例，同时覆盖 retry callback 和请求摘要日志。
+- 新增编译型 `taskgroup` 示例，覆盖 `Group` 和 `Results[T]` 用法。
+- 新增编译型 `rotatingwriter` 示例，覆盖按大小轮转文件。
+- 新增编译型 `random` 示例，覆盖可复现的 `Sequence` 用法。
+- 新增编译型 `env` 示例，覆盖 `LoadFromMap` 配置加载。
+- 新增编译型 `ttlmap` 示例，覆盖基础 `Set`/`Get` 用法。
+- 新增编译型 `slogctx` 示例，覆盖绑定到 context 的 slog attrs。
+- 新增编译型 `ratelimit` 示例，覆盖使用 fixed clock 的 token bucket refill。
+- 新增编译型 `circuitbreaker` 示例，覆盖 fixed clock 下的 open、
+  half-open 和 closed 状态切换。
+- 新增编译型 `backoff` 示例，覆盖确定性的延迟序列。
+- 新增编译型 `pool` 示例，覆盖队列任务执行和关闭后的 stats。
+- 新增编译型 `shutdown` 示例，覆盖有序且幂等的 cleanup hooks。
 - 新增编译型 `zapctx` 示例，覆盖绑定到 context 的 logger 字段。
 - 新增 root smoke test，确保每个列在 README 中的公开包都保留已编译的
   `Example` 测试。
