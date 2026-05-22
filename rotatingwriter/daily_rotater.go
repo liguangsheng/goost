@@ -96,12 +96,13 @@ func (r *DailyRotater) deleteExpiredFiles(current time.Time) {
 	})
 
 	currentPath := r.filename(current)
-	for i, e := range matched {
+	backupIndex := 0
+	for _, e := range matched {
 		if e.path == currentPath {
 			continue // never delete the file we just opened
 		}
 		drop := false
-		if r.maxBackup > 0 && i >= r.maxBackup {
+		if r.maxBackup > 0 && backupIndex >= r.maxBackup {
 			drop = true
 		}
 		if r.maxAge > 0 && current.Sub(e.date) > r.maxAge {
@@ -110,6 +111,7 @@ func (r *DailyRotater) deleteExpiredFiles(current time.Time) {
 		if drop {
 			_ = os.Remove(e.path)
 		}
+		backupIndex++
 	}
 }
 

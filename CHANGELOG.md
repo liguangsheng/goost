@@ -79,6 +79,8 @@ splits optional/demo modules out of the root module dependency graph.
   attempt instead of relying on a previously consumed body.
 - `batcher.Stats().MaxBatchSize` now remains monotonic under overlapping batch
   executions.
+- `rotatingwriter.DailyRotater` now treats `maxBackup` as the number of
+  historical backup files to keep, matching size-based rotation.
 - `batcher` now flushes immediately when the first key in a new window reaches
   `MaxBatch`, including the `MaxBatch(1)` case.
 

@@ -43,8 +43,15 @@ func Test_DailyRotater_MaxBackup(t *testing.T) {
 
 	files, err := os.ReadDir(dir)
 	assert.NoError(t, err)
-	// Today's file plus 2 backups.
-	assert.LessOrEqual(t, len(files), 3)
+	names := make([]string, 0, len(files))
+	for _, f := range files {
+		names = append(names, f.Name())
+	}
+	assert.ElementsMatch(t, []string{
+		time.Now().Format(format),
+		time.Now().AddDate(0, 0, -1).Format(format),
+		time.Now().AddDate(0, 0, -2).Format(format),
+	}, names)
 }
 
 func Test_DailyRotater_MkdirAll(t *testing.T) {
@@ -69,6 +76,14 @@ func Test_SizeRotater_RotatesAtLimit(t *testing.T) {
 	// active + at most maxBackup
 	assert.LessOrEqual(t, len(files), 4)
 	assert.Contains(t, files, base)
+}
+
+func Test_SizeRotater_RejectsNonPositiveMaxBytes(t *testing.T) {
+	dir := t.TempDir()
+	_, err := NewSizeRotater(filepath.Join(dir, "app.log"), 0, 1, false)
+	assert.Error(t, err)
+	_, err = NewSizeRotater(filepath.Join(dir, "app.log"), -1, 1, false)
+	assert.Error(t, err)
 }
 
 func Test_DailyRotater_MaxAge(t *testing.T) {
