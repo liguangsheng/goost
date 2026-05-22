@@ -20,6 +20,7 @@ if err := p.ScheduleTimeout(50*time.Millisecond, func() { doWork() }); err != ni
 - `ScheduleTimeout` gives up after the deadline.
 - Task panics are recovered so the pool stays usable; use `WithPanicHandler`
   to observe recovered panic values.
-- `Close` stops accepting new work and waits for in-flight workers to drain.
+- `Close` stops accepting new work and waits for workers to finish already
+  accepted tasks, including queued tasks.
 - `Stats` reports workers, capacity, in-flight tasks, queued tasks, completed
-  tasks, panic count, and closed state.
+  tasks, queue capacity, panic count, and closed state.

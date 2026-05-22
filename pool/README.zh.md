@@ -19,5 +19,5 @@ if err := p.ScheduleTimeout(50*time.Millisecond, func() { doWork() }); err != ni
 - `Schedule` 会阻塞直到有可用 slot。
 - `ScheduleTimeout` 会在截止时间后放弃。
 - 任务 panic 会被恢复，池仍然可用；可用 `WithPanicHandler` 观察恢复到的 panic 值。
-- `Close` 停止接受新任务，并等待正在执行的 worker 退出。
-- `Stats` 会报告 worker、容量、正在执行的任务、排队任务、已完成任务、panic 数量和关闭状态。
+- `Close` 停止接受新任务，并等待 worker 完成已经接受的任务，包括已排队任务。
+- `Stats` 会报告 worker、容量、正在执行的任务、排队任务、队列容量、已完成任务、panic 数量和关闭状态。

@@ -184,6 +184,6 @@ func Test_StatsCountsPanics(t *testing.T) {
 
 	assert.Eventually(t, func() bool {
 		s := p.Stats()
-		return s.Panics == 3
+		return s.Panics == 3 && s.Completed == 3
 	}, time.Second, time.Millisecond)
 }
