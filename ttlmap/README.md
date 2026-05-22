@@ -17,6 +17,11 @@ if s, ok := m.Get(token); ok {
 Pass `0` to `New` to disable background sweeping; expired entries are still
 removed on access.
 
+`Len` reports the number of stored entries, including expired entries that have
+not yet been read or swept.
+
 Use `PurgeExpired` to remove expired entries on demand when background sweeping
 is disabled or when you want to bound stale entries before measuring size. It
 returns the number of removed entries and fires `OnExpire` for each removal.
+`OnExpire` fires only for TTL expiration observed by `Get`, background sweep,
+or `PurgeExpired`; `Delete` and `Close` do not call it.
