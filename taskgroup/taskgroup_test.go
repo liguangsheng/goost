@@ -37,6 +37,16 @@ func Test_FirstErrorWins(t *testing.T) {
 	assert.ErrorIs(t, g.Wait(), first)
 }
 
+func Test_CauseReportsFirstError(t *testing.T) {
+	g := New(context.Background())
+	fail := errors.New("fail")
+
+	g.Go(func(_ context.Context) error { return fail })
+
+	assert.ErrorIs(t, g.Wait(), fail)
+	assert.ErrorIs(t, g.Cause(), fail)
+}
+
 func Test_ErrorCancelsSiblings(t *testing.T) {
 	g := New(context.Background())
 	fail := errors.New("fail")
@@ -54,6 +64,29 @@ func Test_ErrorCancelsSiblings(t *testing.T) {
 
 	assert.ErrorIs(t, g.Wait(), fail)
 	assert.True(t, canceled.Load(), "sibling task should observe cancellation")
+}
+
+func Test_WaitCancelsContextOnSuccess(t *testing.T) {
+	g := New(context.Background())
+	g.Go(func(_ context.Context) error { return nil })
+
+	assert.NoError(t, g.Wait())
+	assert.ErrorIs(t, g.Context().Err(), context.Canceled)
+}
+
+func Test_GoAfterCancelDoesNotStartTask(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	g := New(ctx)
+
+	var ran atomic.Bool
+	g.Go(func(_ context.Context) error {
+		ran.Store(true)
+		return nil
+	})
+
+	assert.NoError(t, g.Wait())
+	assert.False(t, ran.Load())
 }
 
 func Test_Limit(t *testing.T) {

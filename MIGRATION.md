@@ -7,6 +7,11 @@ The low-value public packages `bytesconv`, `itertools`, `redact`,
 Use the standard library or local application helpers for those narrow cases.
 The `zapctx/zapctxgin` and `zapctx/zapctxgrpc` integrations are now separate
 modules at the same import paths.
+`rotatingwriter` now creates new log directories with `0750` permissions and
+new log files/backups with `0600` permissions before umask. Existing files are
+not chmodded. If your deployment expects group-readable logs, set directory or
+file permissions outside `rotatingwriter` after creation, or pre-create the log
+paths with the desired permissions.
 
 - `bytesconv`: use ordinary `[]byte(s)` / `string(b)` conversions unless an
   application-specific unsafe helper is justified.

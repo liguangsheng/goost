@@ -19,4 +19,21 @@ if err := g.Wait(); err != nil {
 ```
 
 第一个非 nil 错误会取消 group 的 context，让兄弟任务可以提前退出；
-后续错误会被丢弃。
+后续错误会被丢弃。即使全部成功，`Wait` 返回前也会取消 context；如果存在任务
+错误，`Cause()` 会返回第一个任务错误。
+
+如果每个任务都会返回值，可使用 `Results[T]`：
+
+```go
+g := taskgroup.NewResults[string](ctx).WithLimit(4)
+for _, item := range items {
+    item := item
+    g.Run(func(ctx context.Context) (string, error) {
+        return fetch(ctx, item)
+    })
+}
+values, err := g.Wait() // values 按完成顺序返回
+```
+
+与 `Group` 一样，`Results[T]` 会在第一个任务错误或 `Wait` 返回时取消 context；
+如果存在任务错误，`Cause()` 会返回第一个任务错误。

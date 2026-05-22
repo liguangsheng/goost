@@ -8,7 +8,6 @@ package taskgroup
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 )
@@ -16,10 +15,10 @@ import (
 // Group is a collection of goroutines working on subtasks that are part
 // of the same overall task. The zero value is invalid; use New.
 type Group struct {
-	wg      sync.WaitGroup
-	sem     chan struct{}
-	cancel  context.CancelCauseFunc
-	ctx     context.Context
+	wg     sync.WaitGroup
+	sem    chan struct{}
+	cancel context.CancelCauseFunc
+	ctx    context.Context
 
 	errOnce sync.Once
 	err     error
@@ -94,5 +93,5 @@ func (g *Group) recordErr(err error) {
 // Cause returns the cancellation cause of g.Context(). Useful when chained
 // downstream contexts want to surface the original failing task's error.
 func (g *Group) Cause() error {
-	return errors.Unwrap(context.Cause(g.ctx))
+	return g.err
 }

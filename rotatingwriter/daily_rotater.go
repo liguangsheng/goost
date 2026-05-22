@@ -124,5 +124,5 @@ func (r *DailyRotater) nextRolloverAt(current time.Time) int64 {
 }
 
 func (r *DailyRotater) open(name string) (*os.File, error) {
-	return os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	return os.OpenFile(name, os.O_CREATE|os.O_WRONLY|os.O_APPEND, defaultFilePerm) // #nosec G304 -- name is the caller-selected log path plus formatted date.
 }

@@ -48,3 +48,6 @@ type Rotater interface {
 ```
 
 `RotatingWriter.Write` 可并发安全调用。
+
+自动创建的日志目录使用较收敛的权限（受 umask 影响前为 `0750`）；
+自动创建的日志文件和 gzip 备份使用 `0600`（受 umask 影响前）。

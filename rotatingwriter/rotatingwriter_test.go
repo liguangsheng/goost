@@ -58,6 +58,10 @@ func Test_DailyRotater_MkdirAll(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "a", "b", "c")
 	_, err := NewDailyRotatingWriter(dir, "2006-01-02.log", 0)
 	assert.NoError(t, err)
+
+	info, err := os.Stat(dir)
+	assert.NoError(t, err)
+	assert.Zero(t, info.Mode().Perm()&0o007, "created log directories should not be world-accessible")
 }
 
 func Test_SizeRotater_RotatesAtLimit(t *testing.T) {
@@ -189,4 +193,31 @@ func Test_SizeRotater_Gzip(t *testing.T) {
 	files, err := filepath.Glob(filepath.Join(dir, "app.log.*.gz"))
 	assert.NoError(t, err)
 	assert.NotEmpty(t, files, "expected at least one gzipped backup")
+
+	info, err := os.Stat(files[0])
+	assert.NoError(t, err)
+	assert.Zero(t, info.Mode().Perm()&0o077, "created gzip backups should not be group/world-accessible")
+}
+
+func Test_RotatingWriter_FilePermissions(t *testing.T) {
+	dir := t.TempDir()
+
+	daily, err := NewDailyRotatingWriter(dir, "2006-01-02.log", 0)
+	assert.NoError(t, err)
+	_, err = daily.Write([]byte("hello"))
+	assert.NoError(t, err)
+
+	dailyInfo, err := os.Stat(filepath.Join(dir, time.Now().Format("2006-01-02.log")))
+	assert.NoError(t, err)
+	assert.Zero(t, dailyInfo.Mode().Perm()&0o077, "created daily logs should not be group/world-accessible")
+
+	base := filepath.Join(dir, "app.log")
+	sized, err := NewSizeRotatingWriter(base, 10, 1, false)
+	assert.NoError(t, err)
+	_, err = sized.Write([]byte("hello"))
+	assert.NoError(t, err)
+
+	sizeInfo, err := os.Stat(base)
+	assert.NoError(t, err)
+	assert.Zero(t, sizeInfo.Mode().Perm()&0o077, "created size logs should not be group/world-accessible")
 }

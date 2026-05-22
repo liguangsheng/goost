@@ -43,7 +43,7 @@ func NewSizeRotater(base string, maxBytes int64, maxBackup int, gzipBak bool) (*
 	if maxBytes <= 0 {
 		return nil, fmt.Errorf("rotatingwriter: maxBytes must be > 0")
 	}
-	if err := os.MkdirAll(filepath.Dir(base), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(base), defaultDirPerm); err != nil {
 		return nil, err
 	}
 	return &SizeRotater{
@@ -68,7 +68,7 @@ func (r *SizeRotater) DoRollover(now time.Time) error {
 		}
 		r.file = nil
 	}
-	f, err := os.OpenFile(r.base, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	f, err := os.OpenFile(r.base, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, defaultFilePerm) // #nosec G304 -- base is the caller-selected log path.
 	if err != nil {
 		return err
 	}
@@ -172,12 +172,12 @@ func (r *SizeRotater) removeExpiredBackups(now time.Time, ext string) {
 }
 
 func gzipFile(src, dst string) error {
-	in, err := os.Open(src)
+	in, err := os.Open(src) // #nosec G304 -- src is derived from the caller-selected log path during rotation.
 	if err != nil {
 		return err
 	}
 	defer func() { _ = in.Close() }()
-	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, defaultFilePerm) // #nosec G304 -- dst is derived from the caller-selected log path during rotation.
 	if err != nil {
 		return err
 	}

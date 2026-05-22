@@ -49,6 +49,9 @@ splits optional/demo modules out of the root module dependency graph.
   shared local/CI gates for the root and nested modules, with `--quick`,
   `--full`, and targeted module checks. Full gates cover tidy, vet, tests,
   lint/static analysis, vulnerability checks, and security scanning.
+- Full local/CI gates now run `gosec ./...` without rule exclusions.
+- `rotatingwriter` now creates log directories/files with more restrictive
+  default permissions and documents intentional caller-selected file paths.
 - CI now explicitly runs the full root and nested-module gates, installs tools
   through `scripts/install-ci-tools.sh`, declares Go/tool versions once in the
   workflow environment, and keys Go module caching off every root and nested
@@ -81,6 +84,9 @@ splits optional/demo modules out of the root module dependency graph.
   executions.
 - `rotatingwriter.DailyRotater` now treats `maxBackup` as the number of
   historical backup files to keep, matching size-based rotation.
+- `taskgroup.Group.Cause()` now returns the first task error directly, and
+  `taskgroup.Results[T]` now exposes the same `Cause()` helper.
+- `random` no longer triggers integer-conversion warnings in security scans.
 - `batcher` now flushes immediately when the first key in a new window reaches
   `MaxBatch`, including the `MaxBatch(1)` case.
 

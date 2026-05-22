@@ -19,4 +19,22 @@ if err := g.Wait(); err != nil {
 ```
 
 The first non-nil error cancels the group's context so sibling tasks can
-exit early; subsequent errors are dropped.
+exit early; subsequent errors are dropped. `Wait` cancels the context before
+returning even on success, and `Cause()` reports the first task error when
+there was one.
+
+Use `Results[T]` when each task returns a value:
+
+```go
+g := taskgroup.NewResults[string](ctx).WithLimit(4)
+for _, item := range items {
+    item := item
+    g.Run(func(ctx context.Context) (string, error) {
+        return fetch(ctx, item)
+    })
+}
+values, err := g.Wait() // values are in completion order
+```
+
+Like `Group`, `Results[T]` cancels its context on the first task error or when
+`Wait` returns, and `Cause()` reports the first task error when there was one.

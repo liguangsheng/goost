@@ -51,3 +51,6 @@ type Rotater interface {
 ```
 
 `RotatingWriter.Write` is safe for concurrent use.
+
+Created log directories use restrictive permissions (`0750` before umask);
+created log files and gzip backups use `0600` before umask.

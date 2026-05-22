@@ -26,7 +26,7 @@ func SecureString(n uint, charsets string) string {
 		if remain == 0 {
 			cache, remain = secureUint64(), perDraw
 		}
-		if idx := int(cache & mask); idx < len(charsets) {
+		if idx := cache & mask; idx < uint64(len(charsets)) {
 			b[i] = charsets[idx]
 			i--
 		}

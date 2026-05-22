@@ -12,13 +12,13 @@ import (
 // canceled, panics are converted to errors, and Wait returns the first
 // non-nil error along with the values gathered up to that point.
 type Results[T any] struct {
-	wg      sync.WaitGroup
-	sem     chan struct{}
-	cancel  context.CancelCauseFunc
-	ctx     context.Context
+	wg     sync.WaitGroup
+	sem    chan struct{}
+	cancel context.CancelCauseFunc
+	ctx    context.Context
 
-	mu      sync.Mutex
-	values  []T
+	mu     sync.Mutex
+	values []T
 
 	errOnce sync.Once
 	err     error
@@ -78,6 +78,8 @@ func (g *Results[T]) Run(fn func(ctx context.Context) (T, error)) {
 
 // Wait blocks until every Run task returns. The first non-nil error is
 // reported alongside the values collected so far (in completion order).
+// Wait cancels the group's context before returning so that long-lived
+// consumers of Context() also exit.
 func (g *Results[T]) Wait() ([]T, error) {
 	g.wg.Wait()
 	g.cancel(nil)
@@ -89,4 +91,9 @@ func (g *Results[T]) recordErr(err error) {
 		g.err = err
 		g.cancel(err)
 	})
+}
+
+// Cause returns the first task error, when one was recorded.
+func (g *Results[T]) Cause() error {
+	return g.err
 }

@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+const (
+	defaultDirPerm  os.FileMode = 0o750
+	defaultFilePerm os.FileMode = 0o600
+)
+
 // Rotater decides when to rotate and exposes the current writer.
 type Rotater interface {
 	Writer() io.Writer
@@ -42,7 +47,7 @@ func (w *RotatingWriter) Write(p []byte) (int, error) {
 // NewDailyRotatingWriter is a convenience constructor for the common
 // "one file per day" case. dir is created if missing.
 func NewDailyRotatingWriter(dir, format string, maxBackup int) (*RotatingWriter, error) {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	if err := os.MkdirAll(dir, defaultDirPerm); err != nil {
 		return nil, err
 	}
 	return NewRotatingWriter(NewDailyRotater(dir, format, maxBackup)), nil
