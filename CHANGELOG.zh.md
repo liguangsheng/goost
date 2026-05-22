@@ -55,6 +55,9 @@ module 从根 module 依赖图中拆出。
   root 与 nested module 在本地和 CI 中共享的检查入口，支持 `--quick`、
   `--full` 和指定 module 检查。Full gate 覆盖 tidy、vet、tests、lint/静态分析、
   漏洞检查和安全扫描。
+- Full local/CI gates 现在运行 `gosec ./...` 时不再排除规则。
+- `rotatingwriter` 现在用更严格的默认权限创建日志目录和文件，并记录
+  caller-selected file paths 的意图。
 - CI 现在显式运行 root 与 nested module 的 full gate，通过
   `scripts/install-ci-tools.sh` 安装工具，在 workflow environment 中集中声明
   Go/工具版本，并使用 root 与所有 nested module 的 `go.sum` 作为 Go module
@@ -76,10 +79,19 @@ module 从根 module 依赖图中拆出。
 
 ### Fixed
 
+- `httpx` retry handling 现在会为每个 request 隔离 backoff 状态，在 context
+  cancellation 时及时停止 retry delay timer，并保持最终 response body 由调用者
+  关闭，同时仍会关闭中间 retry response。
 - `httpx` 现在会在每次 retry attempt 前应用 `Options.Limiter`，而不是只在
   第一次请求前执行一次。
 - `httpx` 现在会通过 `Request.GetBody` 为 retry attempt 回放请求 body，
   而不是依赖已经被消费过的 body。
+- `batcher.Stats().MaxBatchSize` 现在会在重叠 batch executions 下保持单调。
+- `rotatingwriter.DailyRotater` 现在把 `maxBackup` 视为要保留的历史 backup
+  文件数量，与按大小轮转保持一致。
+- `taskgroup.Group.Cause()` 现在直接返回第一个 task error，
+  `taskgroup.Results[T]` 也暴露相同的 `Cause()` helper。
+- `random` 不再触发 security scan 中的整数转换警告。
 - `batcher` 现在会在新窗口的第一个 key 已达到 `MaxBatch` 时立即刷新，包含
   `MaxBatch(1)` 场景。
 
