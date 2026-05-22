@@ -23,6 +23,8 @@ splits optional/demo modules out of the root module dependency graph.
 - A compiled `env` example now covers `LoadFromMap` configuration loading.
 - A compiled `ttlmap` example now covers basic `Set`/`Get` usage.
 - A compiled `slogctx` example now covers context-bound slog attrs.
+- A compiled `ratelimit` example now covers token-bucket refill with a fixed
+  clock.
 - `httpx.Options.Logger` logs one sanitized request summary after retries
   finish, including status, attempts, duration, and error without query
   strings or bodies.
