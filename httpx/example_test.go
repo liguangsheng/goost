@@ -28,6 +28,13 @@ func ExampleNew_retryAndLogging() {
 					"delay", e.Delay,
 					"error", e.Err)
 			},
+			OnGiveUp: func(e httpx.RetryEvent) {
+				logger.Warn("request retries exhausted",
+					"attempt", e.Attempt,
+					"max_attempts", e.MaxAttempts,
+					"status", e.StatusCode,
+					"error", e.Err)
+			},
 		},
 		Logger: logger,
 	})

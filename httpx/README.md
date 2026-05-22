@@ -51,7 +51,9 @@ buffered so they can be replayed on retry. `RetryPolicy.OnRetry` runs only
 when another attempt will be made. `RetryPolicy.OnGiveUp` runs when the final
 attempt was still retryable but no attempt remains. Retry events include
 sanitized request metadata: method, scheme, host, and path, but not query
-strings or bodies.
+strings or bodies. Retryable responses from intermediate attempts are drained
+and closed before the next attempt; the final response body remains owned by
+the caller.
 
 When `Logger` is set, `httpx` logs one summary line per request after retries
 finish. The log includes method, scheme, host, path, status, attempts,

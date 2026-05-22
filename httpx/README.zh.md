@@ -50,6 +50,8 @@ resp, err := c.Get("https://api.example.com/users")
 `RetryPolicy.OnRetry` 只会在确实将发起下一次尝试时运行。最后一次 attempt 仍然
 可重试但已没有剩余 attempt 时，会运行 `RetryPolicy.OnGiveUp`。Retry event 会
 包含脱敏请求元数据：method、scheme、host 和 path，但不包含 query string 或 body。
+中间 attempt 的可重试响应会在下一次 attempt 前被 drain 并关闭；最终响应体仍由
+调用者负责关闭。
 
 设置 `Logger` 后，`httpx` 会在重试完成后为每个请求记录一行摘要。日志包含
 method、scheme、host、path、status、attempts、duration 和 error。查询字符串

@@ -70,6 +70,9 @@ splits optional/demo modules out of the root module dependency graph.
 
 ### Fixed
 
+- `httpx` retry handling now isolates backoff state per request, stops retry
+  delay timers promptly on context cancellation, and leaves the final response
+  body open for the caller while still closing intermediate retry responses.
 - `httpx` now applies `Options.Limiter` before each retry attempt instead of
   only once before the first request.
 - `httpx` now replays request bodies through `Request.GetBody` on each retry

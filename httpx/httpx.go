@@ -96,8 +96,9 @@ var DefaultRetryOn = func(resp *http.Response, err error) bool {
 func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	start := time.Now()
 	attemptsMade := 0
+	var logResp *http.Response
 	defer func() {
-		t.logRoundTrip(req, start, attemptsMade, resp, err)
+		t.logRoundTrip(req, start, attemptsMade, logResp, err)
 	}()
 
 	if limiterErr := t.waitLimiter(req); limiterErr != nil {
@@ -119,9 +120,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if policy != nil && policy.MaxAttempts > 1 {
 		attempts = policy.MaxAttempts
 	}
-	if policy != nil && policy.Backoff != nil {
-		policy.Backoff.Reset()
-	}
+	attemptBackoff := cloneBackoff(policy)
 
 	var lastErr error
 	for i := 0; i < attempts; i++ {
@@ -140,24 +139,43 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			req.Body = io.NopCloser(bytes.NewReader(body))
 		}
 		resp, lastErr = t.callOnce(req)
+		logResp = resp
 		if !retryOn(resp, lastErr) {
 			return resp, lastErr
 		}
-		if i == attempts-1 || policy == nil || policy.Backoff == nil {
+		if i == attempts-1 || attemptBackoff == nil {
 			t.notifyGiveUp(req, policy, i+1, attempts, resp, lastErr)
-			drain(resp)
 			break
 		}
-		delay := policy.Backoff.Next()
+		delay := attemptBackoff.Next()
 		t.notifyRetry(req, policy, i+1, attempts, resp, lastErr, delay)
 		drain(resp)
-		select {
-		case <-req.Context().Done():
-			return nil, req.Context().Err()
-		case <-time.After(delay):
+		if err := waitRetryDelay(req.Context(), delay); err != nil {
+			return nil, err
 		}
 	}
 	return resp, lastErr
+}
+
+func waitRetryDelay(ctx context.Context, delay time.Duration) error {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
+}
+
+func cloneBackoff(policy *RetryPolicy) *backoff.Backoff {
+	if policy == nil || policy.Backoff == nil {
+		return nil
+	}
+	b := *policy.Backoff
+	b.Reset()
+	return &b
 }
 
 func (t *transport) waitLimiter(req *http.Request) error {
