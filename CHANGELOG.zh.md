@@ -29,6 +29,8 @@ module 从根 module 依赖图中拆出。
 - 新增编译型 `zapctx` 示例，覆盖绑定到 context 的 logger 字段。
 - 新增 root smoke test，确保每个列在 README 中的公开包都保留已编译的
   `Example` 测试。
+- Root smoke tests 现在会防止中文 Markdown 文档在已有中文 release docs 时
+  仍链接到英文 release docs。
 - `httpx.Options.Logger` 会在重试结束后记录一条脱敏请求摘要，包含 status、
   attempts、duration 和 error，不包含 query string 或 body。
 - `httpx.RetryPolicy.OnRetry` 会在下一次请求发送前报告可重试 attempt 的

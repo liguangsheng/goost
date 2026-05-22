@@ -34,6 +34,8 @@ splits optional/demo modules out of the root module dependency graph.
 - A compiled `zapctx` example now covers context-bound logger fields.
 - A root smoke test now ensures every README-listed public package keeps a
   compiled `Example` test.
+- Root smoke tests now prevent localized Chinese Markdown docs from linking
+  English release docs when Chinese release docs exist.
 - `httpx.Options.Logger` logs one sanitized request summary after retries
   finish, including status, attempts, duration, and error without query
   strings or bodies.

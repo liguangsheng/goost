@@ -101,20 +101,28 @@ func TestReadmePackageListMatchesPublicPackages(t *testing.T) {
 	}
 }
 
-func TestChineseReadmeLinksChineseReleaseDocs(t *testing.T) {
+func TestChineseMarkdownLinksLocalizedReleaseDocs(t *testing.T) {
 	root := repoRoot(t)
-	content, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
+	for _, path := range chineseMarkdownFiles(t, root) {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		for _, stale := range []string{"README.md", "CHANGELOG.md", "MIGRATION.md"} {
+			if hasMarkdownLinkTo(string(content), stale) {
+				rel, _ := filepath.Rel(root, path)
+				t.Fatalf("%s links English root doc %s despite localized docs", rel, stale)
+			}
+		}
+	}
+
+	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
 	if err != nil {
 		t.Fatalf("read README.zh.md: %v", err)
 	}
 	for _, want := range []string{"CHANGELOG.zh.md", "MIGRATION.zh.md"} {
-		if !strings.Contains(string(content), want) {
+		if !strings.Contains(string(readmeZH), want) {
 			t.Fatalf("README.zh.md does not link %s", want)
-		}
-	}
-	for _, stale := range []string{"./CHANGELOG.md", "./MIGRATION.md"} {
-		if strings.Contains(string(content), stale) {
-			t.Fatalf("README.zh.md still links English release doc %s", stale)
 		}
 	}
 }
@@ -301,6 +309,56 @@ func packageHasCompiledExample(t *testing.T, dir string) bool {
 		}
 	}
 	return false
+}
+
+func chineseMarkdownFiles(t *testing.T, root string) []string {
+	t.Helper()
+	var files []string
+	var walk func(string)
+	walk = func(dir string) {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatalf("read %s: %v", dir, err)
+		}
+		for _, entry := range entries {
+			path := filepath.Join(dir, entry.Name())
+			if entry.IsDir() {
+				if entry.Name() == ".git" {
+					continue
+				}
+				walk(path)
+				continue
+			}
+			if strings.HasSuffix(entry.Name(), ".zh.md") {
+				files = append(files, path)
+			}
+		}
+	}
+	walk(root)
+	sort.Strings(files)
+	return files
+}
+
+func hasMarkdownLinkTo(content, target string) bool {
+	for {
+		start := strings.Index(content, "](")
+		if start < 0 {
+			return false
+		}
+		content = content[start+2:]
+		end := strings.IndexByte(content, ')')
+		if end < 0 {
+			return false
+		}
+		link := strings.TrimSpace(content[:end])
+		if hash := strings.IndexByte(link, '#'); hash >= 0 {
+			link = link[:hash]
+		}
+		if strings.HasSuffix(link, target) {
+			return true
+		}
+		content = content[end+1:]
+	}
 }
 
 func isOptionalOrNonCorePackage(path string) bool {
