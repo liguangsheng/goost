@@ -47,16 +47,7 @@ jobs:
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - run: go install golang.org/x/vuln/cmd/govulncheck@latest
       - run: go install github.com/securego/gosec/v2/cmd/gosec@latest
-      - name: Check split modules
-        run: |
-          set -euo pipefail
-          find . -mindepth 2 -name go.mod -print0 |
-            while IFS= read -r -d '' mod; do
-              dir="$(dirname "$mod")"
-              echo "::group::$dir"
-              (cd "$dir" && go vet ./... && go test ./... && staticcheck ./... && govulncheck ./... && gosec -exclude=G115,G301,G302,G304 ./...)
-              echo "::endgroup::"
-            done
+      - run: ./scripts/check-split-modules.sh
 
   staticcheck:
     runs-on: ubuntu-latest
