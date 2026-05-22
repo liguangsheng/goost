@@ -28,6 +28,11 @@ func Test_StringDistribution(t *testing.T) {
 	assert.Equal(t, strings.Repeat("A", 100), s)
 }
 
+func Test_SequenceUsesCustomSource(t *testing.T) {
+	s := NewSequence(func() uint64 { return 0 })
+	assert.Equal(t, strings.Repeat("a", 16), s.Next(16, "ab"))
+}
+
 func Test_Race(t *testing.T) {
 	var wg sync.WaitGroup
 	for i := range 1000 {
@@ -48,6 +53,7 @@ func Test_SecureString(t *testing.T) {
 	}
 	assert.Equal(t, "", SecureString(0, Hex))
 	assert.Equal(t, "", SecureString(8, ""))
+	assert.Equal(t, strings.Repeat("A", 32), SecureString(32, "A"))
 }
 
 func Test_SecureStringUniqueness(t *testing.T) {

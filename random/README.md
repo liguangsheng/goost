@@ -19,5 +19,9 @@ s := random.NewSequence(src.Uint64)
 s.Next(8, random.Hex)
 ```
 
-> The generator is suitable for non-security use. For tokens, use
-> `crypto/rand` instead.
+For tokens, salts, and other security-sensitive strings, use `SecureString`,
+which draws from `crypto/rand`:
+
+```go
+token := random.SecureString(32, random.HumanAlphanumeric)
+```

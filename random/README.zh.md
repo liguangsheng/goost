@@ -18,4 +18,8 @@ s := random.NewSequence(src.Uint64)
 s.Next(8, random.Hex)
 ```
 
-> 该生成器适合非安全用途。令牌等安全场景请使用 `crypto/rand`。
+令牌、盐值等安全敏感字符串请使用 `SecureString`，它从 `crypto/rand` 取随机数：
+
+```go
+token := random.SecureString(32, random.HumanAlphanumeric)
+```
