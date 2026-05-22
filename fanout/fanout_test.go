@@ -204,6 +204,49 @@ func Test_StatsReportsClosedState(t *testing.T) {
 	assert.True(t, st.Closed)
 }
 
+func Test_StatsKeepsDropsAfterSubscriberClose(t *testing.T) {
+	b := New[int]().Buffer(1).Build()
+	s := b.Subscribe()
+
+	b.Publish(1)
+	b.Publish(2)
+	b.Publish(3)
+	assert.EqualValues(t, 2, s.Drops())
+	assert.EqualValues(t, 2, b.Stats().Drops)
+
+	s.Close()
+	st := b.Stats()
+	assert.EqualValues(t, 2, st.Drops)
+	assert.Equal(t, 0, st.Subscribers)
+	assert.Equal(t, 0, st.Queued)
+}
+
+func Test_StatsCountsPublishCallsAfterClose(t *testing.T) {
+	b := New[int]().Build()
+	s := b.Subscribe()
+
+	b.Publish(1)
+	b.Close()
+	b.Publish(2)
+
+	st := b.Stats()
+	assert.EqualValues(t, 2, st.Publishes)
+	assert.True(t, st.Closed)
+	select {
+	case v, ok := <-s.C():
+		assert.True(t, ok)
+		assert.Equal(t, 1, v)
+	default:
+		t.Fatal("first publish should remain queued after close")
+	}
+	select {
+	case _, ok := <-s.C():
+		assert.False(t, ok)
+	default:
+		t.Fatal("subscriber channel should be closed after queued value")
+	}
+}
+
 func Test_ConcurrentPublishSubscribeClose(t *testing.T) {
 	b := New[int]().Buffer(4).Build()
 	const subs = 10

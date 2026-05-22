@@ -145,12 +145,19 @@ func (b *Broadcaster[T]) Len() int {
 
 // Stats is a snapshot of Broadcaster counters.
 type Stats struct {
-	Publishes   int64
-	Drops       int64
+	// Publishes is the total number of Publish calls, including calls after Close.
+	Publishes int64
+	// Drops is the aggregate number of messages missed by all subscribers,
+	// including subscribers that have since closed.
+	Drops int64
+	// Subscribers is the number of currently active subscribers.
 	Subscribers int
-	Buffer      int
-	Queued      int
-	Closed      bool
+	// Buffer is the configured per-subscriber channel buffer size.
+	Buffer int
+	// Queued is the total number of messages buffered across active subscribers.
+	Queued int
+	// Closed reports whether Broadcaster.Close has been called.
+	Closed bool
 }
 
 // Stats returns a counter snapshot. Drops is the aggregate across all
