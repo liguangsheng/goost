@@ -3,6 +3,7 @@ set -euo pipefail
 
 mode="full"
 dir="."
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
   cat <<'USAGE'
@@ -51,9 +52,12 @@ if [[ "$mode" != "quick" && "$mode" != "full" ]]; then
   exit 2
 fi
 
-cd "$dir"
+cd "$repo_root/$dir"
 
 go mod tidy -diff
+if [[ "$dir" == "." ]]; then
+  "$repo_root/scripts/check-ci-cache-paths.sh"
+fi
 go vet ./...
 
 if [[ "$mode" == "quick" ]]; then

@@ -28,22 +28,16 @@ splits optional/demo modules out of the root module dependency graph.
 - `examples/`, `lru/benchmark`, `zapctx/zapctxgin`, and `zapctx/zapctxgrpc`
   now have their own `go.mod` files, keeping demo, benchmark, Gin, and gRPC
   dependencies out of the root library module.
-- CI now discovers and checks nested modules explicitly with `go vet`,
-  `go test`, `staticcheck`, `govulncheck`, and `gosec`, since root-level
-  commands do not traverse nested modules.
-- `scripts/check-split-modules.sh` now provides the shared local/CI entry
-  point for nested-module checks.
-- Nested-module checks now include `go mod tidy -diff` so stale `go.mod` or
-  `go.sum` entries fail CI before release.
-- `scripts/check-root.sh` now provides the shared local/CI entry point for the
-  root module gate, including tidy, race tests, lint, static analysis,
-  vulnerability checks, and security scanning.
-- Root and split-module check scripts now support `--quick`, `--full`, and
-  targeted module checks, while CI explicitly runs the full gates.
-- CI tool installation now goes through `scripts/install-ci-tools.sh`, with Go
-  and tool versions declared once in the workflow environment.
-- CI Go module caching now keys off the root and nested module `go.sum` files,
-  so split-module dependency changes refresh the cache explicitly.
+- `scripts/check-root.sh` and `scripts/check-split-modules.sh` now provide the
+  shared local/CI gates for the root and nested modules, with `--quick`,
+  `--full`, and targeted module checks. Full gates cover tidy, vet, tests,
+  lint/static analysis, vulnerability checks, and security scanning.
+- CI now explicitly runs the full root and nested-module gates, installs tools
+  through `scripts/install-ci-tools.sh`, declares Go/tool versions once in the
+  workflow environment, and keys Go module caching off every root and nested
+  module `go.sum` file.
+- Root checks now verify that CI `cache-dependency-path` entries stay aligned
+  with repository `go.sum` files.
 - Examples no longer trip security checks: the HTTP server configures
   `ReadHeaderTimeout`, and the concurrent retry demo uses deterministic
   transient failures instead of `math/rand`.

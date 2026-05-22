@@ -24,20 +24,16 @@ module 从根 module 依赖图中拆出。
 - `examples/`、`lru/benchmark`、`zapctx/zapctxgin` 和 `zapctx/zapctxgrpc`
   现在拥有各自的 `go.mod`，避免 demo、benchmark、Gin 和 gRPC 依赖进入根库
   module。
-- CI 现在会自动发现 nested module，并显式运行 `go vet`、`go test`、
-  `staticcheck`、`govulncheck` 和 `gosec`，因为根部命令不会遍历它们。
-- `scripts/check-split-modules.sh` 现在是 nested module 检查在本地和 CI 中
-  共享的入口。
-- Nested module 检查现在包含 `go mod tidy -diff`，避免陈旧的 `go.mod` 或
-  `go.sum` 进入发布。
-- `scripts/check-root.sh` 现在是 root module gate 在本地和 CI 中共享的入口，
-  覆盖 tidy、race tests、lint、静态分析、漏洞检查和安全扫描。
-- Root 与 split-module 检查脚本现在支持 `--quick`、`--full` 和指定 module
-  检查；CI 会显式运行 full gate。
-- CI 工具安装现在统一走 `scripts/install-ci-tools.sh`，Go 和工具版本集中声明在
-  workflow environment 中。
-- CI 的 Go module cache 现在显式使用 root 与 nested module 的 `go.sum`
-  作为 key，split module 依赖变化会刷新 cache。
+- `scripts/check-root.sh` 和 `scripts/check-split-modules.sh` 现在分别是
+  root 与 nested module 在本地和 CI 中共享的检查入口，支持 `--quick`、
+  `--full` 和指定 module 检查。Full gate 覆盖 tidy、vet、tests、lint/静态分析、
+  漏洞检查和安全扫描。
+- CI 现在显式运行 root 与 nested module 的 full gate，通过
+  `scripts/install-ci-tools.sh` 安装工具，在 workflow environment 中集中声明
+  Go/工具版本，并使用 root 与所有 nested module 的 `go.sum` 作为 Go module
+  cache key。
+- Root 检查现在会验证 CI `cache-dependency-path` 是否与仓库中的 `go.sum`
+  文件保持一致。
 - 示例不再触发安全检查：HTTP server 配置了 `ReadHeaderTimeout`，concurrent
   retry demo 改用确定性的临时失败，不再使用 `math/rand`。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和
