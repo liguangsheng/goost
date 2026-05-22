@@ -17,14 +17,15 @@ if v, ok := c.Get("hello"); ok {
 - `Cap(n)`：最大条目数。`0` 表示不按容量驱逐。
 - `Safe(bool)`：开关内部锁。默认 `true`。
 - `Evict(fn)`：容量驱逐时调用的 hook。
-- `Shards(n, hashFn)`：把缓存分成 `n` 个 shard；使用 `BuildSharded()`
-  而不是 `Build()`，以降低锁竞争。
+- `Shards(n, hashFn)`：把缓存分成至少 `n` 个 shard，数量会向上取到 2 的幂；
+  使用 `BuildSharded()` 而不是 `Build()`，以降低锁竞争。
 
 ### 说明
 
 - `Get` 会驱逐已经过期的条目。
 - `Peek` 返回值但不更新最近使用顺序。
-- `Snapshot` 会报告当前大小、配置容量和 shard 数，便于指标和日志采集，且不会改变最近使用顺序。
+- `Snapshot` 会报告当前大小、容量和 shard 数，便于指标和日志采集，且不会改变最近使用顺序。
+  对分片缓存而言，容量是 shard 数和每 shard 容量取整之后的总和。
 - `Size` / `Clear` 可以安全地从多个 goroutine 调用。
 
 ### 基准
