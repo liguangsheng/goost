@@ -33,6 +33,8 @@ splits optional/demo modules out of the root module dependency graph.
   commands do not traverse nested modules.
 - `scripts/check-split-modules.sh` now provides the shared local/CI entry
   point for nested-module checks.
+- Nested-module checks now include `go mod tidy -diff` so stale `go.mod` or
+  `go.sum` entries fail CI before release.
 - Examples no longer trip security checks: the HTTP server configures
   `ReadHeaderTimeout`, and the concurrent retry demo uses deterministic
   transient failures instead of `math/rand`.

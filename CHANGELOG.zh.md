@@ -28,6 +28,8 @@ module 从根 module 依赖图中拆出。
   `staticcheck`、`govulncheck` 和 `gosec`，因为根部命令不会遍历它们。
 - `scripts/check-split-modules.sh` 现在是 nested module 检查在本地和 CI 中
   共享的入口。
+- Nested module 检查现在包含 `go mod tidy -diff`，避免陈旧的 `go.mod` 或
+  `go.sum` 进入发布。
 - 示例不再触发安全检查：HTTP server 配置了 `ReadHeaderTimeout`，concurrent
   retry demo 改用确定性的临时失败，不再使用 `math/rand`。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和
