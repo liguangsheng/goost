@@ -57,6 +57,9 @@ minor version 迁移说明见 [MIGRATION.md](./MIGRATION.md)。
 
 日常改动先运行 `./scripts/check-root.sh --quick`。
 
+CI 通过 `./scripts/install-ci-tools.sh` 安装所需分析工具，工具版本由 workflow
+environment 统一控制。
+
 发布前运行：
 
 ```sh

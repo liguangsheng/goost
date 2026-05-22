@@ -34,6 +34,8 @@ module 从根 module 依赖图中拆出。
   覆盖 tidy、race tests、lint、静态分析、漏洞检查和安全扫描。
 - Root 与 split-module 检查脚本现在支持 `--quick`、`--full` 和指定 module
   检查；CI 会显式运行 full gate。
+- CI 工具安装现在统一走 `scripts/install-ci-tools.sh`，Go 和工具版本集中声明在
+  workflow environment 中。
 - 示例不再触发安全检查：HTTP server 配置了 `ReadHeaderTimeout`，concurrent
   retry demo 改用确定性的临时失败，不再使用 `math/rand`。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和

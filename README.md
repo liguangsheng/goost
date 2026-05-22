@@ -57,6 +57,10 @@ See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 For day-to-day changes, run `./scripts/check-root.sh --quick`.
 
+CI installs the required analysis tools through
+`./scripts/install-ci-tools.sh`, with tool versions controlled by the workflow
+environment.
+
 Before publishing a release, run:
 
 ```sh
