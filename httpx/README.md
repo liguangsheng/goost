@@ -17,6 +17,9 @@ c := httpx.New(httpx.Options{
             slog.Info("retrying outbound request",
                 "attempt", e.Attempt,
                 "max_attempts", e.MaxAttempts,
+                "method", e.Method,
+                "host", e.Host,
+                "path", e.Path,
                 "status", e.StatusCode,
                 "delay", e.Delay,
                 "error", e.Err)
@@ -36,7 +39,8 @@ resp, err := c.Get("https://api.example.com/users")
 The default retry policy retries on transport errors, HTTP 429, and any
 5xx. Override with `RetryPolicy.RetryOn`. Bodies passed to `Post` are
 buffered so they can be replayed on retry. `RetryPolicy.OnRetry` runs only
-when another attempt will be made.
+when another attempt will be made. Retry events include sanitized request
+metadata: method, scheme, host, and path, but not query strings or bodies.
 
 When `Logger` is set, `httpx` logs one summary line per request after retries
 finish. The log includes method, scheme, host, path, status, attempts,

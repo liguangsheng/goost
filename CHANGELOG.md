@@ -21,7 +21,8 @@ splits optional/demo modules out of the root module dependency graph.
   finish, including status, attempts, duration, and error without query
   strings or bodies.
 - `httpx.RetryPolicy.OnRetry` reports retryable attempts with status, error,
-  attempt count, and next delay before the next request is sent.
+  attempt count, next delay, and sanitized request metadata before the next
+  request is sent.
 
 ### Changed
 

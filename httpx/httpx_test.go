@@ -76,12 +76,31 @@ func Test_OnRetryReportsRetryableAttempts(t *testing.T) {
 		},
 	})
 
-	resp, err := c.Get(s.URL)
+	resp, err := c.Get(s.URL + "/users?token=secret")
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 	assert.Len(t, events, 2)
-	assert.Equal(t, RetryEvent{Attempt: 1, MaxAttempts: 3, StatusCode: http.StatusTooManyRequests, Delay: time.Millisecond}, events[0])
-	assert.Equal(t, RetryEvent{Attempt: 2, MaxAttempts: 3, StatusCode: http.StatusTooManyRequests, Delay: time.Millisecond}, events[1])
+	assert.Equal(t, RetryEvent{
+		Method:      http.MethodGet,
+		Scheme:      "http",
+		Host:        strings.TrimPrefix(s.URL, "http://"),
+		Path:        "/users",
+		Attempt:     1,
+		MaxAttempts: 3,
+		StatusCode:  http.StatusTooManyRequests,
+		Delay:       time.Millisecond,
+	}, events[0])
+	assert.Equal(t, RetryEvent{
+		Method:      http.MethodGet,
+		Scheme:      "http",
+		Host:        strings.TrimPrefix(s.URL, "http://"),
+		Path:        "/users",
+		Attempt:     2,
+		MaxAttempts: 3,
+		StatusCode:  http.StatusTooManyRequests,
+		Delay:       time.Millisecond,
+	}, events[1])
+	assert.NotContains(t, events[0].Path, "token=secret")
 }
 
 func Test_OnRetryReportsTransportError(t *testing.T) {

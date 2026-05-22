@@ -30,6 +30,10 @@ type RetryPolicy struct {
 
 // RetryEvent describes a retryable attempt before httpx waits for the next one.
 type RetryEvent struct {
+	Method      string
+	Scheme      string
+	Host        string
+	Path        string
 	Attempt     int
 	MaxAttempts int
 	StatusCode  int
@@ -143,7 +147,7 @@ func (t *transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 			break
 		}
 		delay := policy.Backoff.Next()
-		t.notifyRetry(policy, i+1, attempts, resp, lastErr, delay)
+		t.notifyRetry(req, policy, i+1, attempts, resp, lastErr, delay)
 		drain(resp)
 		select {
 		case <-req.Context().Done():
@@ -161,7 +165,7 @@ func (t *transport) waitLimiter(req *http.Request) error {
 	return t.opts.Limiter.Wait(req.Context(), 1)
 }
 
-func (t *transport) notifyRetry(policy *RetryPolicy, attempt, maxAttempts int, resp *http.Response, err error, delay time.Duration) {
+func (t *transport) notifyRetry(req *http.Request, policy *RetryPolicy, attempt, maxAttempts int, resp *http.Response, err error, delay time.Duration) {
 	if policy.OnRetry == nil {
 		return
 	}
@@ -170,6 +174,10 @@ func (t *transport) notifyRetry(policy *RetryPolicy, attempt, maxAttempts int, r
 		status = resp.StatusCode
 	}
 	policy.OnRetry(RetryEvent{
+		Method:      req.Method,
+		Scheme:      req.URL.Scheme,
+		Host:        req.URL.Host,
+		Path:        req.URL.Path,
 		Attempt:     attempt,
 		MaxAttempts: maxAttempts,
 		StatusCode:  status,
