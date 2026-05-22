@@ -18,6 +18,7 @@ splits optional/demo modules out of the root module dependency graph.
 - A compiled `httpx` example now covers retry callbacks and request summary
   logging together.
 - Compiled `taskgroup` examples now cover `Group` and `Results[T]` usage.
+- A compiled `rotatingwriter` example now covers size-based file rotation.
 - `httpx.Options.Logger` logs one sanitized request summary after retries
   finish, including status, attempts, duration, and error without query
   strings or bodies.
