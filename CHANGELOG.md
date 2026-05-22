@@ -31,6 +31,8 @@ splits optional/demo modules out of the root module dependency graph.
   limiter state for metrics and logs.
 - `ttlmap.TTLMap.PurgeExpired` removes expired entries on demand, reports the
   removal count, and fires expiration hooks.
+- `lru.Cache.Snapshot` and `lru.ShardedCache.Snapshot` expose read-only size,
+  capacity, and shard-count views for metrics and logs.
 
 ### Changed
 

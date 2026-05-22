@@ -24,6 +24,7 @@ if v, ok := c.Get("hello"); ok {
 
 - `Get` 会驱逐已经过期的条目。
 - `Peek` 返回值但不更新最近使用顺序。
+- `Snapshot` 会报告当前大小、配置容量和 shard 数，便于指标和日志采集，且不会改变最近使用顺序。
 - `Size` / `Clear` 可以安全地从多个 goroutine 调用。
 
 ### 基准

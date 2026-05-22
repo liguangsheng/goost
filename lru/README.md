@@ -24,6 +24,8 @@ if v, ok := c.Get("hello"); ok {
 
 - `Get` evicts entries whose expiration has passed.
 - `Peek` returns a value without updating recency.
+- `Snapshot` reports current size, configured capacity, and shard count for
+  metrics and logs without changing recency.
 - `Size` / `Clear` are safe to call from multiple goroutines.
 
 ### Benchmark

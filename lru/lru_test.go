@@ -85,6 +85,34 @@ func Test_LRUClear(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func Test_LRUSnapshot(t *testing.T) {
+	c := New[string, int]().Cap(3).Build()
+	c.Set("a", 1)
+	c.Set("b", 2)
+
+	assert.Equal(t, Snapshot{Size: 2, Capacity: 3, Shards: 1}, c.Snapshot())
+
+	c.Resize(1)
+	assert.Equal(t, Snapshot{Size: 1, Capacity: 1, Shards: 1}, c.Snapshot())
+}
+
+func Test_LRUSnapshotUnbounded(t *testing.T) {
+	c := New[string, int]().Cap(0).Build()
+	c.Set("a", 1)
+	c.Set("b", 2)
+
+	assert.Equal(t, Snapshot{Size: 2, Capacity: 0, Shards: 1}, c.Snapshot())
+}
+
+func Test_ShardedSnapshot(t *testing.T) {
+	c := New[string, int]().Cap(10).Shards(3, StringHash[string]).BuildSharded()
+	c.Set("a", 1)
+	c.Set("b", 2)
+	c.Set("c", 3)
+
+	assert.Equal(t, Snapshot{Size: 3, Capacity: 12, Shards: 4}, c.Snapshot())
+}
+
 func Test_LRURace(t *testing.T) {
 	c := newTestLRU()
 	var wg sync.WaitGroup

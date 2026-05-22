@@ -64,6 +64,17 @@ func (c *ShardedCache[K, V]) Size() int {
 	return n
 }
 
+// Snapshot returns a point-in-time read-only view aggregated across shards.
+func (c *ShardedCache[K, V]) Snapshot() Snapshot {
+	snap := Snapshot{Shards: len(c.shards)}
+	for _, shard := range c.shards {
+		shardSnap := shard.Snapshot()
+		snap.Size += shardSnap.Size
+		snap.Capacity += shardSnap.Capacity
+	}
+	return snap
+}
+
 // Clear removes all entries from every shard.
 func (c *ShardedCache[K, V]) Clear() {
 	for _, s := range c.shards {

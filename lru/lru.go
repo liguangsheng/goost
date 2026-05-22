@@ -12,9 +12,17 @@ import (
 type EvictHook[K comparable, V any] func(K, V)
 
 type entry[K comparable, V any] struct {
-	key       K
-	value     V
-	expireNs  int64 // 0 means no expiration
+	key      K
+	value    V
+	expireNs int64 // 0 means no expiration
+}
+
+// Snapshot is a point-in-time read-only view of cache size and capacity.
+// Capacity is 0 when capacity-based eviction is disabled.
+type Snapshot struct {
+	Size     int
+	Capacity int
+	Shards   int
 }
 
 // Cache is a generic LRU cache. The zero value is not usable; build one with New.
@@ -112,6 +120,14 @@ func (c *Cache[K, V]) Size() int {
 	n := c.ll.Len()
 	c.lock.Unlock()
 	return n
+}
+
+// Snapshot returns a point-in-time read-only view of the cache.
+func (c *Cache[K, V]) Snapshot() Snapshot {
+	c.lock.Lock()
+	s := Snapshot{Size: c.ll.Len(), Capacity: c.maxEntries, Shards: 1}
+	c.lock.Unlock()
+	return s
 }
 
 // Resize changes the maximum number of entries. If shrinking, the

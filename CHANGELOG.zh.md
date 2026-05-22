@@ -24,6 +24,8 @@ module 从根 module 依赖图中拆出。
 - `ratelimit.Bucket.Snapshot` 和 `ratelimit.Leaky.Snapshot` 提供只读限流器状态，
   便于指标和日志采集。
 - `ttlmap.TTLMap.PurgeExpired` 可按需删除已过期条目，返回删除数量，并触发过期 hook。
+- `lru.Cache.Snapshot` 和 `lru.ShardedCache.Snapshot` 提供只读大小、容量和 shard
+  数视图，便于指标和日志采集。
 
 ### Changed
 
