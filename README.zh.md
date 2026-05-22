@@ -50,8 +50,8 @@ go get github.com/liguangsheng/goost
 ## 稳定性
 
 该 module 仍处于 pre-1.0。API 可能在 minor version 之间变化。
-发布历史见 [CHANGELOG.md](./CHANGELOG.md)。
-minor version 迁移说明见 [MIGRATION.md](./MIGRATION.md)。
+发布历史见 [CHANGELOG.zh.md](./CHANGELOG.zh.md)。
+minor version 迁移说明见 [MIGRATION.zh.md](./MIGRATION.zh.md)。
 
 ## 开发检查
 

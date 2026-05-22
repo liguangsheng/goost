@@ -101,6 +101,24 @@ func TestReadmePackageListMatchesPublicPackages(t *testing.T) {
 	}
 }
 
+func TestChineseReadmeLinksChineseReleaseDocs(t *testing.T) {
+	root := repoRoot(t)
+	content, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
+	if err != nil {
+		t.Fatalf("read README.zh.md: %v", err)
+	}
+	for _, want := range []string{"CHANGELOG.zh.md", "MIGRATION.zh.md"} {
+		if !strings.Contains(string(content), want) {
+			t.Fatalf("README.zh.md does not link %s", want)
+		}
+	}
+	for _, stale := range []string{"./CHANGELOG.md", "./MIGRATION.md"} {
+		if strings.Contains(string(content), stale) {
+			t.Fatalf("README.zh.md still links English release doc %s", stale)
+		}
+	}
+}
+
 func TestPublicPackageReadmesHaveCompiledExamples(t *testing.T) {
 	root := repoRoot(t)
 	for _, name := range publicPackageNames(t, root) {
