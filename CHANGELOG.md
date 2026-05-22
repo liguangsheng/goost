@@ -27,6 +27,8 @@ splits optional/demo modules out of the root module dependency graph.
   transport error when the retry budget is exhausted.
 - `circuitbreaker.Breaker.Snapshot` exposes a read-only state and cooldown
   view for metrics and logs.
+- `ratelimit.Bucket.Snapshot` and `ratelimit.Leaky.Snapshot` expose read-only
+  limiter state for metrics and logs.
 
 ### Changed
 

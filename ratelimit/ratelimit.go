@@ -22,12 +22,20 @@ var ErrLimitExceeded = errors.New("ratelimit: limit exceeded")
 
 // Bucket is a token bucket. The zero value is invalid; use NewBucket.
 type Bucket struct {
-	mu       sync.Mutex
-	rate     float64 // tokens per second
-	burst    float64
-	tokens   float64
-	last     time.Time
-	nowFn    func() time.Time
+	mu     sync.Mutex
+	rate   float64 // tokens per second
+	burst  float64
+	tokens float64
+	last   time.Time
+	nowFn  func() time.Time
+}
+
+// BucketSnapshot is a point-in-time view of a token bucket.
+type BucketSnapshot struct {
+	Rate       float64
+	Burst      float64
+	Tokens     float64
+	LastRefill time.Time
 }
 
 // NewBucket returns a token bucket that refills at rate tokens per second
@@ -105,6 +113,19 @@ func (b *Bucket) Wait(ctx context.Context, n int) error {
 	}
 }
 
+// Snapshot returns a point-in-time view of the bucket for metrics or logs.
+func (b *Bucket) Snapshot() BucketSnapshot {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.refill()
+	return BucketSnapshot{
+		Rate:       b.rate,
+		Burst:      b.burst,
+		Tokens:     b.tokens,
+		LastRefill: b.last,
+	}
+}
+
 func (b *Bucket) refill() {
 	now := b.nowFn()
 	elapsed := now.Sub(b.last).Seconds()
@@ -125,6 +146,13 @@ type Leaky struct {
 	interval time.Duration
 	next     time.Time
 	nowFn    func() time.Time
+}
+
+// LeakySnapshot is a point-in-time view of a leaky bucket.
+type LeakySnapshot struct {
+	Interval    time.Duration
+	Next        time.Time
+	AvailableIn time.Duration
 }
 
 // NewLeaky returns a leaky bucket that allows at most one request per
@@ -181,4 +209,19 @@ func (l *Leaky) Wait(ctx context.Context) error {
 		case <-t.C:
 		}
 	}
+}
+
+// Snapshot returns a point-in-time view of the leaky bucket for metrics or logs.
+func (l *Leaky) Snapshot() LeakySnapshot {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	now := l.nowFn()
+	snap := LeakySnapshot{
+		Interval: l.interval,
+		Next:     l.next,
+	}
+	if now.Before(l.next) {
+		snap.AvailableIn = l.next.Sub(now)
+	}
+	return snap
 }

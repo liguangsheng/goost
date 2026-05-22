@@ -21,6 +21,8 @@ module 从根 module 依赖图中拆出。
 - `httpx.RetryPolicy.OnGiveUp` 会在 retry budget 耗尽时报告最后一次可重试
   response 或 transport error。
 - `circuitbreaker.Breaker.Snapshot` 提供只读状态与冷却时间视图，便于指标和日志采集。
+- `ratelimit.Bucket.Snapshot` 和 `ratelimit.Leaky.Snapshot` 提供只读限流器状态，
+  便于指标和日志采集。
 
 ### Changed
 

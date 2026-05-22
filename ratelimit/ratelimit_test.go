@@ -28,6 +28,31 @@ func Test_BucketRefill(t *testing.T) {
 	assert.True(t, b.Allow())
 }
 
+func Test_BucketSnapshot(t *testing.T) {
+	now := time.Unix(10, 0)
+	b := NewBucket(10, 5)
+	b.SetClock(func() time.Time { return now })
+
+	snap := b.Snapshot()
+	assert.Equal(t, 10.0, snap.Rate)
+	assert.Equal(t, 5.0, snap.Burst)
+	assert.Equal(t, 5.0, snap.Tokens)
+	assert.Equal(t, now, snap.LastRefill)
+
+	assert.True(t, b.AllowN(3))
+	snap = b.Snapshot()
+	assert.Equal(t, 2.0, snap.Tokens)
+
+	now = now.Add(250 * time.Millisecond)
+	snap = b.Snapshot()
+	assert.Equal(t, 4.5, snap.Tokens)
+	assert.Equal(t, now, snap.LastRefill)
+
+	now = now.Add(time.Second)
+	snap = b.Snapshot()
+	assert.Equal(t, 5.0, snap.Tokens)
+}
+
 func Test_BucketWait(t *testing.T) {
 	b := NewBucket(50, 1)
 	assert.True(t, b.Allow())
@@ -81,6 +106,30 @@ func Test_LeakyAllow(t *testing.T) {
 	assert.False(t, l.Allow())
 	now = now.Add(10 * time.Millisecond)
 	assert.True(t, l.Allow())
+}
+
+func Test_LeakySnapshot(t *testing.T) {
+	now := time.Unix(20, 0)
+	l := NewLeaky(10 * time.Millisecond)
+	l.SetClock(func() time.Time { return now })
+
+	snap := l.Snapshot()
+	assert.Equal(t, 10*time.Millisecond, snap.Interval)
+	assert.Equal(t, now, snap.Next)
+	assert.Zero(t, snap.AvailableIn)
+
+	assert.True(t, l.Allow())
+	snap = l.Snapshot()
+	assert.Equal(t, now.Add(10*time.Millisecond), snap.Next)
+	assert.Equal(t, 10*time.Millisecond, snap.AvailableIn)
+
+	now = now.Add(4 * time.Millisecond)
+	snap = l.Snapshot()
+	assert.Equal(t, 6*time.Millisecond, snap.AvailableIn)
+
+	now = now.Add(6 * time.Millisecond)
+	snap = l.Snapshot()
+	assert.Zero(t, snap.AvailableIn)
 }
 
 func Test_LeakyWait(t *testing.T) {

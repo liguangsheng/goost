@@ -18,6 +18,9 @@ if b.Allow() {
 if err := b.Wait(ctx, 1); err == nil {
     handle()
 }
+
+snap := b.Snapshot()
+metrics.RecordTokens(snap.Tokens, snap.Burst)
 ```
 
 ## Leaky bucket
@@ -33,7 +36,12 @@ if l.Allow() {
 if err := l.Wait(ctx); err == nil {
     handle()
 }
+
+snap := l.Snapshot()
+metrics.RecordLimiterDelay(snap.AvailableIn)
 ```
+
+Both limiters expose `Snapshot()` for read-only metrics/logging.
 
 Both limiters expose `SetClock(fn func() time.Time)` for deterministic
 tests. Pair them with [`clock.Mock`](../clock):
