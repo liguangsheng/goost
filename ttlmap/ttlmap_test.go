@@ -47,6 +47,32 @@ func Test_BackgroundSweep(t *testing.T) {
 	assert.Equal(t, 0, m.Len())
 }
 
+func Test_PurgeExpired(t *testing.T) {
+	var fired []string
+	m := New(0, WithOnExpire(func(k string, v int) {
+		fired = append(fired, k+":"+strconv.Itoa(v))
+	}))
+	defer m.Close()
+	m.Set("expired", 1, 10*time.Millisecond)
+	m.Set("live", 2, time.Minute)
+	m.Set("forever", 3, 0)
+
+	time.Sleep(30 * time.Millisecond)
+	assert.Equal(t, 1, m.PurgeExpired())
+	assert.ElementsMatch(t, []string{"expired:1"}, fired)
+	assert.Equal(t, 2, m.Len())
+
+	_, ok := m.Get("expired")
+	assert.False(t, ok)
+	v, ok := m.Get("live")
+	assert.True(t, ok)
+	assert.Equal(t, 2, v)
+	v, ok = m.Get("forever")
+	assert.True(t, ok)
+	assert.Equal(t, 3, v)
+	assert.Equal(t, 0, m.PurgeExpired())
+}
+
 func Test_OnExpireOnGet(t *testing.T) {
 	var fired []string
 	m := New(0, WithOnExpire(func(k string, v int) {

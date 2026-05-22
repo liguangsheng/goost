@@ -23,6 +23,7 @@ module 从根 module 依赖图中拆出。
 - `circuitbreaker.Breaker.Snapshot` 提供只读状态与冷却时间视图，便于指标和日志采集。
 - `ratelimit.Bucket.Snapshot` 和 `ratelimit.Leaky.Snapshot` 提供只读限流器状态，
   便于指标和日志采集。
+- `ttlmap.TTLMap.PurgeExpired` 可按需删除已过期条目，返回删除数量，并触发过期 hook。
 
 ### Changed
 

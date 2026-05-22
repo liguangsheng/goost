@@ -113,6 +113,12 @@ func (m *TTLMap[K, V]) Len() int {
 	return n
 }
 
+// PurgeExpired removes entries whose TTL has elapsed and returns how many
+// entries were removed. OnExpire fires for each removed entry.
+func (m *TTLMap[K, V]) PurgeExpired() int {
+	return m.sweep(time.Now().UnixNano())
+}
+
 // Close stops the sweep goroutine. Subsequent calls are no-ops. The map
 // remains usable; entries are still expired on access.
 func (m *TTLMap[K, V]) Close() {
@@ -132,12 +138,13 @@ func (m *TTLMap[K, V]) sweepLoop(every time.Duration) {
 	}
 }
 
-func (m *TTLMap[K, V]) sweep(nowNs int64) {
+func (m *TTLMap[K, V]) sweep(nowNs int64) int {
 	type expired struct {
 		k K
 		v V
 	}
 	var fired []expired
+	removed := 0
 
 	m.mu.Lock()
 	for k, e := range m.data {
@@ -146,6 +153,7 @@ func (m *TTLMap[K, V]) sweep(nowNs int64) {
 				fired = append(fired, expired{k, e.value})
 			}
 			delete(m.data, k)
+			removed++
 		}
 	}
 	m.mu.Unlock()
@@ -153,4 +161,5 @@ func (m *TTLMap[K, V]) sweep(nowNs int64) {
 	for _, x := range fired {
 		m.onExpire(x.k, x.v)
 	}
+	return removed
 }
