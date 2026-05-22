@@ -6,6 +6,10 @@
 `slogctx/slogctxotel` 和 `zapctx/zapctxotel`。这些窄场景请改用标准库或
 应用内 helper。`zapctx/zapctxgin` 和 `zapctx/zapctxgrpc` 现在是相同 import
 path 下的独立 module。
+`rotatingwriter` 现在会用 `0750` 权限创建新的日志目录，并在 umask 作用前用
+`0600` 权限创建新的日志文件和备份文件。已有文件不会被 chmod。如果部署环境
+要求 group-readable logs，请在 `rotatingwriter` 创建后由外部设置目录或文件权限，
+或者提前用期望权限创建日志路径。
 
 - `bytesconv`：除非应用明确需要 unsafe helper，否则使用普通
   `[]byte(s)` / `string(b)` 转换。
