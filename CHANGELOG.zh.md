@@ -14,6 +14,9 @@ module 从根 module 依赖图中拆出。
 - 新增 consumer dependency smoke test：自动发现核心包集合，并防止核心包导入
   可选的 Gin、gRPC 或 OpenTelemetry 集成依赖。
 - 新增编译型 `httpx` 示例，同时覆盖 retry callback 和请求摘要日志。
+- 新增编译型 `zapctx` 示例，覆盖绑定到 context 的 logger 字段。
+- 新增 root smoke test，确保每个列在 README 中的公开包都保留已编译的
+  `Example` 测试。
 - `httpx.Options.Logger` 会在重试结束后记录一条脱敏请求摘要，包含 status、
   attempts、duration 和 error，不包含 query string 或 body。
 - `httpx.RetryPolicy.OnRetry` 会在下一次请求发送前报告可重试 attempt 的

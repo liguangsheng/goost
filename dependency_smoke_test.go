@@ -101,6 +101,19 @@ func TestReadmePackageListMatchesPublicPackages(t *testing.T) {
 	}
 }
 
+func TestPublicPackageReadmesHaveCompiledExamples(t *testing.T) {
+	root := repoRoot(t)
+	for _, name := range publicPackageNames(t, root) {
+		dir := filepath.Join(root, filepath.FromSlash(name))
+		if _, err := os.Stat(filepath.Join(dir, "README.md")); err != nil {
+			t.Fatalf("%s: missing README.md: %v", name, err)
+		}
+		if !packageHasCompiledExample(t, dir) {
+			t.Fatalf("%s: README-covered public package has no compiled Example test", name)
+		}
+	}
+}
+
 func TestRemovedPackagesStayOutOfActiveDocs(t *testing.T) {
 	root := repoRoot(t)
 	files := []string{
@@ -249,6 +262,27 @@ func readmePackageNames(t *testing.T, path string) []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+func packageHasCompiledExample(t *testing.T, dir string) bool {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read %s: %v", dir, err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		content, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			t.Fatalf("read %s: %v", filepath.Join(dir, entry.Name()), err)
+		}
+		if strings.Contains(string(content), "func Example") {
+			return true
+		}
+	}
+	return false
 }
 
 func isOptionalOrNonCorePackage(path string) bool {

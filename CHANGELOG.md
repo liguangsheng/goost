@@ -31,6 +31,9 @@ splits optional/demo modules out of the root module dependency graph.
 - A compiled `pool` example now covers queued task execution and shutdown
   stats.
 - A compiled `shutdown` example now covers ordered, idempotent cleanup hooks.
+- A compiled `zapctx` example now covers context-bound logger fields.
+- A root smoke test now ensures every README-listed public package keeps a
+  compiled `Example` test.
 - `httpx.Options.Logger` logs one sanitized request summary after retries
   finish, including status, attempts, duration, and error without query
   strings or bodies.

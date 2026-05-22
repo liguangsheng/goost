@@ -57,6 +57,8 @@ minor version 迁移说明见 [MIGRATION.md](./MIGRATION.md)。
 
 日常 root module 改动先运行 `./scripts/check-root.sh --quick`。Nested modules
 是独立 Go modules，root 检查不会遍历它们。
+Root gate 也会验证每个列在 README 中的公开包都有已编译的 `Example` 测试；
+`examples/` 中的可运行程序则由 split-module gate 覆盖。
 
 CI 通过 `./scripts/install-ci-tools.sh` 安装所需分析工具，工具版本由 workflow
 environment 统一控制。

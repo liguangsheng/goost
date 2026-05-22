@@ -57,6 +57,9 @@ See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 For day-to-day root-module changes, run `./scripts/check-root.sh --quick`.
 Nested modules are separate Go modules, so root checks do not traverse them.
+The root gate also verifies that every README-listed public package has a
+compiled `Example` test; runnable programs in `examples/` are covered by the
+split-module gate instead.
 
 CI installs the required analysis tools through
 `./scripts/install-ci-tools.sh`, with tool versions controlled by the workflow
