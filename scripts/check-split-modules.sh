@@ -12,6 +12,8 @@ Options:
   --quick       Run tidy, vet, ordinary tests, and staticcheck.
   --full        Run the full split-module gate, including vulnerability and security checks.
   --module DIR  Check only the nested module at DIR.
+
+Without --module, nested modules are discovered by scripts/list-nested-modules.sh.
 USAGE
 }
 
@@ -78,8 +80,7 @@ if [[ -n "$module" ]]; then
   exit 0
 fi
 
-find . -mindepth 2 -name go.mod -print0 |
-  while IFS= read -r -d '' mod; do
-    dir="$(dirname "$mod")"
+"$(dirname "${BASH_SOURCE[0]}")/list-nested-modules.sh" |
+  while IFS= read -r dir; do
     check_module "$dir"
   done

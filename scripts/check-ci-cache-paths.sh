@@ -2,6 +2,9 @@
 set -euo pipefail
 
 workflow=".github/workflows/ci.yml"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+cd "$repo_root"
 
 if [[ ! -f "$workflow" ]]; then
   echo "$workflow does not exist" >&2
@@ -12,9 +15,22 @@ expected="$(mktemp)"
 actual="$(mktemp)"
 trap 'rm -f "$expected" "$actual"' EXIT
 
-find . -name go.sum -printf '%P\n' | sort >"$expected"
+find . \
+  -path './.git' -prune -o \
+  -path './.agents' -prune -o \
+  -name go.sum \
+  -print |
+  while IFS= read -r sum; do
+    printf '%s\n' "${sum#./}"
+  done |
+  sort >"$expected"
 
 awk '
+  /cache-dependency-path: [^|]/ {
+    sub(/^.*cache-dependency-path: /, "")
+    print
+    next
+  }
   /cache-dependency-path: \|/ { in_block = 1; next }
   in_block && /^            / {
     sub(/^            /, "")
