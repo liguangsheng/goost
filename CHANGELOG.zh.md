@@ -90,6 +90,8 @@ module 从根 module 依赖图中拆出。
 
 ### Fixed
 
+- `debounce.Stop` 现在会在 `emit` 的 channel 发送期间持锁，修复了 `Stop` 关闭
+  output channel 时 timer 驱动的 `emit` 仍在写入的 data race。
 - `httpx` retry handling 现在会为每个 request 隔离 backoff 状态，在 context
   cancellation 时及时停止 retry delay timer，并保持最终 response body 由调用者
   关闭，同时仍会关闭中间 retry response。

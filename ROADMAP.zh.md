@@ -61,7 +61,7 @@ v1.0 之前，项目应具备：
 
 ## Next Execution Slices
 
-11-20 切片已完成。下表是下一轮的当前执行队列。
+11-20 切片已完成。下表是 next execution slices 的当前队列。
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
@@ -74,3 +74,5 @@ v1.0 之前，项目应具备：
 | 27 | package doc parity | 为 `caseconv` 和 `random` 添加 doc.go | `go vet ./caseconv ./random` |
 | 28 | stress gate refresh | 21-27 切片后重新运行并记录 `./scripts/check-stress.sh` | `./scripts/check-stress.sh` |
 | 29 | release gate refresh | 21-28 切片后重新运行并记录 `./scripts/check-release.sh` | `./scripts/check-release.sh` |
+| 30 | `debounce` race fix | 修复 `emit()` 与 `Stop()` 之间的 close-channel race | `go test -race ./debounce` |
+| 31 | examples module gate | 重新运行并记录 examples 的 split-module gate | `./scripts/check-split-modules.sh --quick --module ./examples` |

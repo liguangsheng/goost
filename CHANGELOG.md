@@ -101,6 +101,9 @@ splits optional/demo modules out of the root module dependency graph.
 
 ### Fixed
 
+- `debounce.Stop` now holds its lock through channel sends in `emit`,
+  preventing a data race when `Stop` closes the output channel while a
+  timer-driven emit is still writing to it.
 - `httpx` retry handling now isolates backoff state per request, stops retry
   delay timers promptly on context cancellation, and leaves the final response
   body open for the caller while still closing intermediate retry responses.

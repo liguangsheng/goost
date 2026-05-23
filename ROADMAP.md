@@ -85,3 +85,5 @@ round.
 | 27 | package doc parity | Add doc.go for `caseconv` and `random` | `go vet ./caseconv ./random` |
 | 28 | stress gate refresh | Re-run and record `./scripts/check-stress.sh` after slices 21-27 | `./scripts/check-stress.sh` |
 | 29 | release gate refresh | Re-run and record `./scripts/check-release.sh` after slices 21-28 | `./scripts/check-release.sh` |
+| 30 | `debounce` race fix | Fix close-channel race between `emit()` and `Stop()` | `go test -race ./debounce` |
+| 31 | examples module gate | Re-run and record split-module gate for examples | `./scripts/check-split-modules.sh --quick --module ./examples` |
