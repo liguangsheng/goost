@@ -121,7 +121,10 @@ func CamelJoin(parts []string, upper bool) string {
 	return buf.String()
 }
 
+// UpperCamelJoin joins parts with the first letter of each word capitalized.
 func UpperCamelJoin(parts []string) string { return CamelJoin(parts, true) }
+
+// LowerCamelJoin joins parts with the first word in lowercase.
 func LowerCamelJoin(parts []string) string { return CamelJoin(parts, false) }
 
 // PascalSplit is an alias of CamelSplit kept for readability.

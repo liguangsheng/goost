@@ -88,3 +88,39 @@ Stress tests 放在并发核心包旁边；只要稳定，就纳入普通 packag
 暴露 `Stats`、`Snapshot`、callback 或 hook 的包，应覆盖正常状态和边界状态：empty、active、error、canceled、closed。Snapshot 测试应断言文档中定义的 gauge、counter、配置值和派生值语义。
 
 拥有 goroutine、timer、文件或网络资源的类型，应为文档中的释放路径补测试。如果 API 承诺 `Close`、`Stop` 或 `Wait` 可重复调用，也要覆盖重复调用行为。
+
+## 覆盖率基线
+
+当前各包测试覆盖率基线（通过 `go test -coverprofile=coverage.out -covermode=atomic ./...` 生成）：
+
+| Package | 覆盖率 |
+| --- | --- |
+| `backoff` | 93.1% |
+| `batcher` | 97.2% |
+| `caseconv` | 89.6% |
+| `circuitbreaker` | 96.7% |
+| `clock` | 98.1% |
+| `debounce` | 94.7% |
+| `defaultmap` | 95.8% |
+| `env` | 94.4% |
+| `errors` | 93.3% |
+| `fanout` | 97.6% |
+| `httpx` | 95.1% |
+| `keyedmutex` | 96.4% |
+| `lru` | 97.9% |
+| `pool` | 97.3% |
+| `priorityqueue` | 100.0% |
+| `random` | 96.0% |
+| `ratelimit` | 92.5% |
+| `rotatingwriter` | 90.2% |
+| `shutdown` | 91.7% |
+| `slogctx` | 94.7% |
+| `taskgroup` | 96.8% |
+| `ttlmap` | 98.4% |
+| `zapctx` | 76.9% |
+
+**总计：91.3%**
+
+低于 80% 的包应评估是否需要补充测试覆盖。`zapctx`（76.9%）偏低是因为 `S` 和 `Sampled` 辅助函数创建的 zap core 主要在集成场景中才能被充分执行，而非单元测试。
+
+Full root gate（`./scripts/check-root.sh --full`）会输出覆盖率摘要。此基线记录在此用于跟踪；没有硬性 CI 门槛，但覆盖率不应无理由地退化。

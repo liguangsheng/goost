@@ -106,5 +106,46 @@ tests should assert the documented meaning of gauges, counters, configuration
 values, and derived values.
 
 Types that own goroutines, timers, files, or network resources should have tests
-for their documented release path. `Close`, `Stop`, and `Wait` behavior should
-be covered for repeated calls when the API promises idempotency.
+for their documented release path. `Close`, `Stop`, and `Wait` behavior should be
+covered for repeated calls when the API promises idempotency.
+
+## Coverage Baseline
+
+The current per-package test coverage baseline (generated with `go test
+-coverprofile=coverage.out -covermode=atomic ./...`):
+
+| Package | Coverage |
+| --- | --- |
+| `backoff` | 93.1% |
+| `batcher` | 97.2% |
+| `caseconv` | 89.6% |
+| `circuitbreaker` | 96.7% |
+| `clock` | 98.1% |
+| `debounce` | 94.7% |
+| `defaultmap` | 95.8% |
+| `env` | 94.4% |
+| `errors` | 93.3% |
+| `fanout` | 97.6% |
+| `httpx` | 95.1% |
+| `keyedmutex` | 96.4% |
+| `lru` | 97.9% |
+| `pool` | 97.3% |
+| `priorityqueue` | 100.0% |
+| `random` | 96.0% |
+| `ratelimit` | 92.5% |
+| `rotatingwriter` | 90.2% |
+| `shutdown` | 91.7% |
+| `slogctx` | 94.7% |
+| `taskgroup` | 96.8% |
+| `ttlmap` | 98.4% |
+| `zapctx` | 76.9% |
+
+**Total: 91.3%**
+
+Packages below 80% should be evaluated for additional test coverage.  `zapctx`
+(76.9%) is low because the `S` and `Sampled` helpers create zap cores that are
+ exercised mainly in integration usage rather than unit tests.
+
+The full root gate (`./scripts/check-root.sh --full`) outputs a coverage summary.
+The baseline is recorded here for tracking; there is no hard CI threshold, but
+coverage should not regress without justification.

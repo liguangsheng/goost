@@ -2,7 +2,7 @@
 
 可复制的迁移片段见 [MIGRATION_EXAMPLES.zh.md](./MIGRATION_EXAMPLES.zh.md)。
 
-## Unreleased
+## v0.4.0
 
 已移除低价值公开包：`bytesconv`、`itertools`、`redact`、
 `slogctx/slogctxotel` 和 `zapctx/zapctxotel`。这些窄场景请改用标准库或

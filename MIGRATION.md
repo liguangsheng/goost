@@ -2,7 +2,7 @@
 
 For copyable migration snippets, see [MIGRATION_EXAMPLES.md](./MIGRATION_EXAMPLES.md).
 
-## Unreleased
+## v0.4.0
 
 The low-value public packages `bytesconv`, `itertools`, `redact`,
 `slogctx/slogctxotel`, and `zapctx/zapctxotel` have been removed.

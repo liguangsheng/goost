@@ -21,6 +21,8 @@ type DailyRotater struct {
 	rolloverAt int64
 }
 
+// NewDailyRotater creates a daily-file rotater. Files are stored in dir
+// using the given time format. At most maxBackup historical files are kept.
 func NewDailyRotater(dir, format string, maxBackup int) *DailyRotater {
 	return &DailyRotater{
 		dir:       dir,

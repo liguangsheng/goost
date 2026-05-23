@@ -3,10 +3,11 @@
 本文件记录该项目的显著变更。格式遵循
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)。
 
-## [Unreleased]
+## [v0.4.0] — 2026-05-24
 
-该版本计划作为 v0.4.0 发布，因为它移除了低价值公开包，并把可选/demo
-module 从根 module 依赖图中拆出。
+v0.4.0 移除了低价值公开包，将可选/demo module 从根 module 依赖图中拆出，
+并增加了质量基础设施，包括测试覆盖率基线、集成测试、consumer contract
+tests、依赖自动更新和 benchmark CI。
 
 ### Added
 
@@ -52,6 +53,20 @@ module 从根 module 依赖图中拆出。
 - `pool.Stats` 现在包含 worker 容量、队列容量和关闭状态，便于运行态观测。
 - `scripts/check-stress.sh` 现在记录并检查 stress-focused package set：
   `batcher`、`fanout`、`keyedmutex`、`pool` 和 `ttlmap`。
+- 测试覆盖率基线已记录在 `TESTING.zh.md`（总计 91.3%）。
+- `scripts/check-doc-links.sh` 校验所有文档中的相对 markdown 链接。
+- Consumer contract tests 验证 `rotatingwriter`、`clock`、`httpx.Limiter`
+  和 `ratelimit` 的编译时接口满足。
+- 跨包集成测试覆盖 `backoff`+`circuitbreaker`、`pool`+`shutdown`、
+  `ratelimit`+`httpx`、`lru`+`ttlmap`、`batcher`+`fanout` 和
+  `taskgroup` 错误传播。
+- 所有 exported sentinel errors 添加了 `errors.Is` 兼容性测试。
+- `scripts/check-release.sh` 现在包含 CHANGELOG 格式校验和文档链接检查。
+- CI 现在包含可选的 benchmark job（仅 PR、不阻断）和 examples 编译冒烟 job。
+- Dependabot 配置覆盖 Go modules 和 GitHub Actions。
+- Go 版本策略和 hotfix 流程已记录在 `CONTRIBUTING.zh.md`。
+- 为缺少 doc comment 的 exported symbols 补齐了注释（`caseconv`、
+  `rotatingwriter`、`zapctxgin`、`zapctxgrpc`）。
 
 ### Changed
 

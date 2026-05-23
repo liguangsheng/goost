@@ -71,19 +71,20 @@ addition criteria.
 
 ## Next Execution Slices
 
-Slices 11-20 are complete. The table below is the current queue for the next
-round.
+Slices 11-42 are complete. The table below is the completed queue.
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
-| 21 | `lru` observability wording | Normalize Snapshot wording for `lru` and `ShardedCache` | `./scripts/check-root.sh --quick` |
-| 22 | `circuitbreaker` observability wording | Normalize Snapshot wording for consecutive counters and timestamps | `./scripts/check-root.sh --quick` |
-| 23 | `ratelimit` stress tests | Add concurrent Wait stress tests for Bucket and Leaky | `go test -race ./ratelimit` |
-| 24 | `debounce` concurrent tests | Add concurrent Trigger + Stop stress test | `go test -race ./debounce` |
-| 25 | `pool` cancellation tests | Add Schedule/ScheduleTimeout with pre-cancelled context | `go test -race ./pool` |
-| 26 | `fanout` concurrent edge tests | Add subscribe/close during concurrent publish tests | `go test -race ./fanout` |
-| 27 | package doc parity | Add doc.go for `caseconv` and `random` | `go vet ./caseconv ./random` |
-| 28 | stress gate refresh | Re-run and record `./scripts/check-stress.sh` after slices 21-27 | `./scripts/check-stress.sh` |
-| 29 | release gate refresh | Re-run and record `./scripts/check-release.sh` after slices 21-28 | `./scripts/check-release.sh` |
-| 30 | `debounce` race fix | Fix close-channel race between `emit()` and `Stop()` | `go test -race ./debounce` |
-| 31 | examples module gate | Re-run and record split-module gate for examples | `./scripts/check-split-modules.sh --quick --module ./examples` |
+| 32 | v0.4.0 release | CHANGELOG finalized, tag pending approval | `./scripts/check-release.sh` |
+| 33 | godoc rendering audit | All exported symbols have doc comments | `go doc ./...` and check for empty entries |
+| 34 | test coverage baseline | Per-package coverage recorded in TESTING.md (total 91.3%) | `go test -coverprofile=coverage.out ./...` |
+| 35 | error chain audit | errors.Is tests for all sentinels | `./scripts/check-root.sh --quick` |
+| 36 | consumer contract tests | Compile-time interface checks and API surface tests | `go test ./... -run Consumer` |
+| 37 | `httpx` hook panic safety | Hook panic recovery verified | `go test -race ./httpx` |
+| 38 | constructor validation tests | Invalid-input tests for all constructors | `./scripts/check-root.sh --quick` |
+| 39 | doc link checker | check-doc-links.sh in release gate | `./scripts/check-release.sh` |
+| 40 | release gate refresh | Full gate passes after all slices | `./scripts/check-release.sh` |
+| 41 | `sync` primitive audit | WaitGroup/Once/Map usage verified correct | `go vet ./...` |
+| 42 | examples smoke gate | Split-module gate passes for examples | `./scripts/check-split-modules.sh --quick --module ./examples` |
+
+The next slices will be planned after the v0.4.0 release.

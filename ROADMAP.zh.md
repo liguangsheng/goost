@@ -59,20 +59,22 @@ v1.0 之前，项目应具备：
 
 复审后，应排序下一轮 10 到 20 个具体执行切片。每个切片都要有负责的改动面、预期制品和验证命令。宽泛想法必须先通过项目政策中的新增准入标准，才能进入 roadmap。
 
-## Next Execution Slices
+## next execution slices
 
-11-20 切片已完成。下表是 next execution slices 的当前队列。
+11-42 切片已完成。下表是已完成的队列。
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
-| 21 | `lru` observability wording | 统一 `lru` 和 `ShardedCache` 的 Snapshot 表述 | `./scripts/check-root.sh --quick` |
-| 22 | `circuitbreaker` observability wording | 统连续计数器和时间戳的 Snapshot 表述 | `./scripts/check-root.sh --quick` |
-| 23 | `ratelimit` stress tests | 为 Bucket 和 Leaky 添加并发 Wait stress tests | `go test -race ./ratelimit` |
-| 24 | `debounce` concurrent tests | 添加并发 Trigger + Stop stress test | `go test -race ./debounce` |
-| 25 | `pool` cancellation tests | 添加 pre-cancelled context 下的 Schedule/ScheduleTimeout 测试 | `go test -race ./pool` |
-| 26 | `fanout` concurrent edge tests | 添加并发 publish 期间 subscribe/close 测试 | `go test -race ./fanout` |
-| 27 | package doc parity | 为 `caseconv` 和 `random` 添加 doc.go | `go vet ./caseconv ./random` |
-| 28 | stress gate refresh | 21-27 切片后重新运行并记录 `./scripts/check-stress.sh` | `./scripts/check-stress.sh` |
-| 29 | release gate refresh | 21-28 切片后重新运行并记录 `./scripts/check-release.sh` | `./scripts/check-release.sh` |
-| 30 | `debounce` race fix | 修复 `emit()` 与 `Stop()` 之间的 close-channel race | `go test -race ./debounce` |
-| 31 | examples module gate | 重新运行并记录 examples 的 split-module gate | `./scripts/check-split-modules.sh --quick --module ./examples` |
+| 32 | v0.4.0 发布 | CHANGELOG 定稿，tag 待确认 | `./scripts/check-release.sh` |
+| 33 | godoc 渲染审计 | 所有 exported symbols 有 doc comment | `go doc ./...` 并检查空白项 |
+| 34 | 测试覆盖率基线 | 各包覆盖率已记录到 TESTING.md（总计 91.3%） | `go test -coverprofile=coverage.out ./...` |
+| 35 | 错误链审计 | 所有 sentinel 添加 errors.Is 测试 | `./scripts/check-root.sh --quick` |
+| 36 | consumer contract tests | 编译时接口检查和 API 表面测试 | `go test ./... -run Consumer` |
+| 37 | `httpx` hook panic 安全性 | Hook panic recovery 已验证 | `go test -race ./httpx` |
+| 38 | 构造函数验证测试 | 所有构造函数的无效输入测试 | `./scripts/check-root.sh --quick` |
+| 39 | 文档链接检查器 | check-doc-links.sh 集成到 release gate | `./scripts/check-release.sh` |
+| 40 | release gate 刷新 | 全部切片后 full gate 通过 | `./scripts/check-release.sh` |
+| 41 | `sync` 原语审计 | WaitGroup/Once/Map 使用已验证正确 | `go vet ./...` |
+| 42 | examples 冒烟 gate | examples 的 split-module gate 通过 | `./scripts/check-split-modules.sh --quick --module ./examples` |
+
+下一轮切片将在 v0.4.0 发布后规划。

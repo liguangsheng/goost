@@ -28,6 +28,8 @@ type RotatingWriter struct {
 	mu      sync.Mutex
 }
 
+// NewRotatingWriter creates a RotatingWriter that delegates rotation
+// decisions to the given Rotater.
 func NewRotatingWriter(rotater Rotater) *RotatingWriter {
 	return &RotatingWriter{rotater: rotater}
 }

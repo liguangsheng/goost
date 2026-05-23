@@ -3,10 +3,12 @@
 All notable changes to this project will be documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [v0.4.0] — 2026-05-24
 
-This is planned as v0.4.0 because it removes low-value public packages and
-splits optional/demo modules out of the root module dependency graph.
+v0.4.0 removes low-value public packages, splits optional/demo modules out of
+the root module dependency graph, and adds quality infrastructure including
+test coverage baselines, integration tests, consumer contract tests, automated
+dependency updates, and benchmark CI.
 
 ### Added
 
@@ -63,6 +65,23 @@ splits optional/demo modules out of the root module dependency graph.
   for runtime observability.
 - `scripts/check-stress.sh` documents and gates the stress-focused package set:
   `batcher`, `fanout`, `keyedmutex`, `pool`, and `ttlmap`.
+- Test coverage baseline recorded in `TESTING.md` (total 91.3%).
+- `scripts/check-doc-links.sh` validates relative markdown links in all
+  documentation files.
+- Consumer contract tests verify compile-time interface satisfaction for
+  `rotatingwriter`, `clock`, `httpx.Limiter`, and `ratelimit`.
+- Cross-package integration tests cover `backoff`+`circuitbreaker`,
+  `pool`+`shutdown`, `ratelimit`+`httpx`, `lru`+`ttlmap`,
+  `batcher`+`fanout`, and `taskgroup` error propagation.
+- `errors.Is` compatibility tests for all exported sentinel errors.
+- `scripts/check-release.sh` now includes CHANGELOG format validation and
+  doc link checking.
+- CI now includes an optional benchmark job (PR-only, non-blocking) and an
+  examples compilation smoke job.
+- Dependabot configuration for Go modules and GitHub Actions.
+- Go version policy and hotfix process documented in `CONTRIBUTING.md`.
+- Doc comments added to all exported symbols that were missing them
+  (`caseconv`, `rotatingwriter`, `zapctxgin`, `zapctxgrpc`).
 
 ### Changed
 

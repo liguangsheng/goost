@@ -42,3 +42,26 @@ Before publishing a release:
 ```sh
 ./scripts/check-release.sh
 ```
+
+## Go Version Policy
+
+The minimum supported Go version is declared in the `go` directive of each
+`go.mod` file. CI runs on the latest stable Go release. The two may differ:
+`go.mod` sets the floor, CI sets the ceiling.
+
+When upgrading Go, update all `go.mod` files, the CI `GO_VERSION` environment
+variable, and `scripts/install-ci-tools.sh` in the same change.
+
+## Hotfix Process
+
+For urgent fixes on the current release:
+
+1. Create a branch from the released tag (e.g., `v0.4.0`).
+2. Make the minimal fix.
+3. Run the quick gate for affected packages, plus `go test -race` on those
+   packages.
+4. Bump the patch version (e.g., `v0.4.1`) in CHANGELOG.md and CHANGELOG.zh.md.
+5. Tag and push.
+
+A full release gate is recommended but not required for patch releases when the
+change is small and scoped to a single package.

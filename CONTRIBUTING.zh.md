@@ -33,3 +33,21 @@ Root module 改动：
 ```sh
 ./scripts/check-release.sh
 ```
+
+## Go 版本策略
+
+最低支持的 Go 版本由每个 `go.mod` 文件的 `go` 指令声明。CI 运行在最新稳定版 Go 上。两者可以不同：`go.mod` 设定下限，CI 设定上限。
+
+升级 Go 时，需同时更新所有 `go.mod` 文件、CI `GO_VERSION` 环境变量和 `scripts/install-ci-tools.sh`。
+
+## Hotfix 流程
+
+对当前发布版本进行紧急修复：
+
+1. 从已发布 tag（如 `v0.4.0`）创建分支。
+2. 做最小修复。
+3. 对受影响的包运行 quick gate，并加跑 `go test -race`。
+4. 在 CHANGELOG.md 和 CHANGELOG.zh.md 中升级 patch 版本（如 `v0.4.1`）。
+5. 打 tag 并推送。
+
+当修复范围小且仅涉及单个包时，patch release 不强制要求 full release gate，但建议执行。
