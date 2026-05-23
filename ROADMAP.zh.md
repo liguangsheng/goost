@@ -59,13 +59,13 @@ v1.0 之前，项目应具备：
 
 复审后，应排序下一轮 10 到 20 个具体执行切片。每个切片都要有负责的改动面、预期制品和验证命令。宽泛想法必须先通过项目政策中的新增准入标准，才能进入 roadmap。
 
-## next execution slices
+## 已完成 release 切片
 
 11-43 切片已完成。下表是已完成的队列。
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
-| 32 | v0.4.0 发布 | CHANGELOG 定稿，tag 待确认 | `./scripts/check-release.sh` |
+| 32 | v0.4.0 发布 | CHANGELOG 定稿，tag 和 GitHub Release 已发布 | `./scripts/check-release.sh` |
 | 33 | godoc 渲染审计 | 所有 exported symbols 有 doc comment | `go doc ./...` 并检查空白项 |
 | 34 | 测试覆盖率基线 | 各包覆盖率已记录到 TESTING.md（总计 91.7%） | `go test -coverprofile=coverage.out ./...` |
 | 35 | 错误链审计 | 所有 sentinel 添加 errors.Is 测试 | `./scripts/check-root.sh --quick` |
@@ -78,4 +78,19 @@ v1.0 之前，项目应具备：
 | 42 | examples 冒烟 gate | examples 的 split-module gate 通过 | `./scripts/check-split-modules.sh --quick --module ./examples` |
 | 43 | Go 1.26 兼容性探针 | 允许失败的 root smoke job 使用 Go 1.26.3 运行 | GitHub Actions `go-next-root-smoke` |
 
-下一轮切片将在 v0.4.0 发布后规划。
+## next execution slices
+
+这些是 v0.4.0 发布后的下一轮具体队列。它们是候选工作，不是日期承诺。
+
+| Slice | Surface | Artifact | Validation |
+| --- | --- | --- | --- |
+| 44 | optional module contracts | nested module import path 和依赖边界的 consumer tests | `./scripts/check-split-modules.sh --full` |
+| 45 | benchmark history | JSON benchmark artifact，或记录继续只保留 summary output 的决策 | PR benchmark job summary |
+| 46 | release checklist | tag、changelog、migration、docs 和 gates 的脚本化 release evidence report | `./scripts/check-release.sh` |
+| 47 | coverage drift review | 刷新 coverage baseline，并在 TESTING.md 解释 package-level 变化 | `./scripts/check-root.sh --full` |
+| 48 | Go workspace evaluation | 对 repo-local `go.work` workflow 作出 keep/reject 书面决策 | `./scripts/check-split-modules.sh --full` |
+| 49 | optional tracing review | 决定是否把 OpenTelemetry tracing 作为 nested module | `./scripts/check-root.sh --quick` |
+| 50 | custom lint review | 决定是否增加项目 API conventions 的专用 static checks | `./scripts/check-root.sh --full` |
+| 51 | examples runtime smoke | 对可安全退出的 examples 增加 timeout-bounded `go run` smoke | `./scripts/check-split-modules.sh --quick --module ./examples` |
+| 52 | package docs refresh | 根据 v0.4.0 用户反馈复查 README/package doc parity | `go doc ./...` 和 `./scripts/check-doc-links.sh` |
+| 53 | dependency update cadence | 复审 Dependabot 输出，并记录 patch/minor/major 处理结果 | merged dependency PR gates |

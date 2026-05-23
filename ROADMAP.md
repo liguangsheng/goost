@@ -69,13 +69,13 @@ should have an owner surface, expected artifact, and validation command. Do not
 promote broad ideas into the roadmap until they pass the project policy's
 addition criteria.
 
-## Next Execution Slices
+## Completed Release Slices
 
 Slices 11-43 are complete. The table below is the completed queue.
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
-| 32 | v0.4.0 release | CHANGELOG finalized, tag pending approval | `./scripts/check-release.sh` |
+| 32 | v0.4.0 release | CHANGELOG finalized, tag and GitHub Release published | `./scripts/check-release.sh` |
 | 33 | godoc rendering audit | All exported symbols have doc comments | `go doc ./...` and check for empty entries |
 | 34 | test coverage baseline | Per-package coverage recorded in TESTING.md (total 91.7%) | `go test -coverprofile=coverage.out ./...` |
 | 35 | error chain audit | errors.Is tests for all sentinels | `./scripts/check-root.sh --quick` |
@@ -88,4 +88,20 @@ Slices 11-43 are complete. The table below is the completed queue.
 | 42 | examples smoke gate | Split-module gate passes for examples | `./scripts/check-split-modules.sh --quick --module ./examples` |
 | 43 | Go 1.26 compatibility probe | Allow-failure root smoke job runs on Go 1.26.3 | GitHub Actions `go-next-root-smoke` |
 
-The next slices will be planned after the v0.4.0 release.
+## Next Execution Slices
+
+These slices are the next concrete queue after the v0.4.0 release. They are
+candidate work, not a date commitment.
+
+| Slice | Surface | Artifact | Validation |
+| --- | --- | --- | --- |
+| 44 | optional module contracts | Consumer tests for nested module import paths and dependency boundaries | `./scripts/check-split-modules.sh --full` |
+| 45 | benchmark history | JSON benchmark artifact or documented decision to keep summary-only output | PR benchmark job summary |
+| 46 | release checklist | Scripted release evidence report for tag, changelog, migration, docs, and gates | `./scripts/check-release.sh` |
+| 47 | coverage drift review | Coverage baseline refresh with package-level changes explained in TESTING.md | `./scripts/check-root.sh --full` |
+| 48 | Go workspace evaluation | Documented keep/reject decision for a repo-local `go.work` workflow | `./scripts/check-split-modules.sh --full` |
+| 49 | optional tracing review | Scope decision for OpenTelemetry tracing as a nested module | `./scripts/check-root.sh --quick` |
+| 50 | custom lint review | Decision on project-specific static checks for API conventions | `./scripts/check-root.sh --full` |
+| 51 | examples runtime smoke | Timeout-bounded `go run` smoke for examples that can exit safely | `./scripts/check-split-modules.sh --quick --module ./examples` |
+| 52 | package docs refresh | README/package doc parity check after v0.4.0 user feedback | `go doc ./...` and `./scripts/check-doc-links.sh` |
+| 53 | dependency update cadence | Review Dependabot output and document patch/minor/major handling results | merged dependency PR gates |
