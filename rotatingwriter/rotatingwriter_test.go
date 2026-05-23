@@ -237,8 +237,8 @@ func Test_ConcurrentWriteDoesNotCorruptOutput(t *testing.T) {
 			defer wg.Done()
 			for i := range 100 {
 				msg := fmt.Sprintf("g=%d i=%d\n", g, i)
-				n, err := w.Write([]byte(msg))
-				assert.NoError(t, err)
+				n, writeErr := w.Write([]byte(msg))
+				assert.NoError(t, writeErr)
 				assert.Equal(t, len(msg), n)
 			}
 		}(g)
