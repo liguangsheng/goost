@@ -13,6 +13,7 @@
 
 # Local agent planning and scratch files
 .agents/
+.sisyphus/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
