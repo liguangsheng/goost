@@ -1,6 +1,8 @@
 package debounce
 
 import (
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -162,4 +164,60 @@ func Test_RealClockE2E(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("real-clock debouncer did not emit")
 	}
+}
+
+func Test_StressConcurrentTriggerAndStop(t *testing.T) {
+	d := New[int](10 * time.Millisecond)
+
+	var wg sync.WaitGroup
+	for g := range 4 {
+		wg.Add(1)
+		go func(g int) {
+			defer wg.Done()
+			for i := range 100 {
+				d.Trigger(g*100 + i)
+			}
+		}(g)
+	}
+	wg.Wait()
+
+	assert.NotPanics(t, func() { d.Stop() })
+	_, ok := <-d.C()
+	assert.False(t, ok, "channel must be closed after Stop")
+}
+
+func Test_StressConcurrentTriggerAndRead(t *testing.T) {
+	d := New[int](5 * time.Millisecond)
+
+	var received atomic.Int64
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for {
+			_, ok := <-d.C()
+			if !ok {
+				return
+			}
+			received.Add(1)
+		}
+	}()
+
+	var wg sync.WaitGroup
+	for range 4 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for i := range 50 {
+				d.Trigger(i)
+				time.Sleep(time.Millisecond)
+			}
+		}()
+	}
+	wg.Wait()
+
+	time.Sleep(10 * time.Millisecond)
+	d.Stop()
+	<-done
+
+	assert.Greater(t, received.Load(), int64(0), "reader must have received at least one value")
 }

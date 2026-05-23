@@ -108,31 +108,31 @@ func (d *Debouncer[T]) Stop() {
 
 func (d *Debouncer[T]) emit(g int64) {
 	d.mu.Lock()
+	defer d.mu.Unlock()
 	if d.closed || !d.has || g != d.gen {
 		// Outdated firing: a fresh Trigger superseded this timer
 		// before clean cancellation could prevent it.
-		d.mu.Unlock()
 		return
 	}
 	v := d.pending
 	d.has = false
 	d.timer = nil
-	out := d.out
-	d.mu.Unlock()
 
 	// Latest-wins on slow consumer: try direct send, fall back to
-	// replacing whatever stale value is still buffered.
+	// replacing whatever stale value is still buffered. All sends are
+	// non-blocking so holding the lock is safe; it prevents Stop from
+	// closing the channel concurrently.
 	select {
-	case out <- v:
+	case d.out <- v:
 		return
 	default:
 	}
 	select {
-	case <-out:
+	case <-d.out:
 	default:
 	}
 	select {
-	case out <- v:
+	case d.out <- v:
 	default:
 	}
 }
