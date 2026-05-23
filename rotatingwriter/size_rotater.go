@@ -77,6 +77,16 @@ func (r *SizeRotater) DoRollover(now time.Time) error {
 	return nil
 }
 
+// Close closes the current active file, if any.
+func (r *SizeRotater) Close() error {
+	if r.file == nil {
+		return nil
+	}
+	err := r.file.Close()
+	r.file = nil
+	return err
+}
+
 func (r *SizeRotater) shiftBackups(now time.Time) error {
 	ext := ""
 	if r.gzipBak {

@@ -21,6 +21,10 @@ type Rotater interface {
 	DoRollover(time.Time) error
 }
 
+type closeRotater interface {
+	Close() error
+}
+
 // RotatingWriter wraps a Rotater and serializes Write calls so the rollover
 // check and the write itself are atomic.
 type RotatingWriter struct {
@@ -44,6 +48,17 @@ func (w *RotatingWriter) Write(p []byte) (int, error) {
 		}
 	}
 	return w.rotater.Writer().Write(p)
+}
+
+// Close closes the current underlying file when the rotater owns one.
+// It is safe to call Close on rotaters that do not expose a close path.
+func (w *RotatingWriter) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if c, ok := w.rotater.(closeRotater); ok {
+		return c.Close()
+	}
+	return nil
 }
 
 // NewDailyRotatingWriter is a convenience constructor for the common

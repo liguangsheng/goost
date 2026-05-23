@@ -237,7 +237,7 @@ func TestScriptSelfCheckIsPartOfReleaseGate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("missing scripts/check-scripts.sh: %v", err)
 	}
-	if info.Mode().Perm()&0o111 == 0 {
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0o111 == 0 {
 		t.Fatal("scripts/check-scripts.sh is not executable")
 	}
 
@@ -268,7 +268,7 @@ func TestStressGateIsDocumentedAndScripted(t *testing.T) {
 	if err != nil {
 		t.Fatalf("missing scripts/check-stress.sh: %v", err)
 	}
-	if info.Mode().Perm()&0o111 == 0 {
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0o111 == 0 {
 		t.Fatal("scripts/check-stress.sh is not executable")
 	}
 	markdownMustContain(t, path, []string{

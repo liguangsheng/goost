@@ -77,7 +77,7 @@ Slices 11-43 are complete. The table below is the completed queue.
 | --- | --- | --- | --- |
 | 32 | v0.4.0 release | CHANGELOG finalized, tag pending approval | `./scripts/check-release.sh` |
 | 33 | godoc rendering audit | All exported symbols have doc comments | `go doc ./...` and check for empty entries |
-| 34 | test coverage baseline | Per-package coverage recorded in TESTING.md (total 91.8%) | `go test -coverprofile=coverage.out ./...` |
+| 34 | test coverage baseline | Per-package coverage recorded in TESTING.md (total 91.7%) | `go test -coverprofile=coverage.out ./...` |
 | 35 | error chain audit | errors.Is tests for all sentinels | `./scripts/check-root.sh --quick` |
 | 36 | consumer contract tests | Compile-time interface checks and API surface tests | `go test ./... -run Consumer` |
 | 37 | `httpx` hook panic safety | Hook panic recovery verified | `go test -race ./httpx` |

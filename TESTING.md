@@ -157,14 +157,14 @@ The current per-package test coverage baseline (generated with `go test
 | `priorityqueue` | 100.0% |
 | `random` | 97.6% |
 | `ratelimit` | 92.8% |
-| `rotatingwriter` | 85.3% |
+| `rotatingwriter` | 84.8% |
 | `shutdown` | 91.7% |
 | `slogctx` | 94.7% |
 | `taskgroup` | 96.8% |
 | `ttlmap` | 100.0% |
 | `zapctx` | 88.5% |
 
-**Total: 91.8%**
+**Total: 91.7%**
 
 Packages below 80% should be evaluated for additional test coverage. No package
 is currently below that threshold.

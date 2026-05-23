@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -16,6 +17,7 @@ func Test_DailyRotater_Write(t *testing.T) {
 	dir := t.TempDir()
 	w, err := NewDailyRotatingWriter(dir, "2006-01-02.log", 0)
 	assert.NoError(t, err)
+	defer func() { assert.NoError(t, w.Close()) }()
 
 	n, err := w.Write([]byte("hello"))
 	assert.NoError(t, err)
@@ -41,6 +43,7 @@ func Test_DailyRotater_MaxBackup(t *testing.T) {
 
 	w, err := NewDailyRotatingWriter(dir, format, 2)
 	assert.NoError(t, err)
+	defer func() { assert.NoError(t, w.Close()) }()
 	_, err = w.Write([]byte("hello"))
 	assert.NoError(t, err)
 
@@ -58,6 +61,9 @@ func Test_DailyRotater_MaxBackup(t *testing.T) {
 }
 
 func Test_DailyRotater_MkdirAll(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX mode bits are not meaningful on Windows")
+	}
 	dir := filepath.Join(t.TempDir(), "a", "b", "c")
 	_, err := NewDailyRotatingWriter(dir, "2006-01-02.log", 0)
 	assert.NoError(t, err)
@@ -72,6 +78,7 @@ func Test_SizeRotater_RotatesAtLimit(t *testing.T) {
 	base := filepath.Join(dir, "app.log")
 	w, err := NewSizeRotatingWriter(base, 10, 3, false)
 	assert.NoError(t, err)
+	defer func() { assert.NoError(t, w.Close()) }()
 
 	for range 5 {
 		_, werr := w.Write([]byte("0123456789"))
@@ -109,6 +116,7 @@ func Test_DailyRotater_MaxAge(t *testing.T) {
 	// MaxAge = 7 days: only today-1 and today-5 survive; today-30 is dropped.
 	r := NewDailyRotater(dir, format, 0).WithMaxAge(7 * 24 * time.Hour)
 	w := NewRotatingWriter(r)
+	defer func() { assert.NoError(t, w.Close()) }()
 	_, err := w.Write([]byte("hello"))
 	assert.NoError(t, err)
 
@@ -141,6 +149,7 @@ func Test_DailyRotater_MaxAgeAndMaxBackup(t *testing.T) {
 	// > today-4 days. Intersection: today + today-1..today-3 = 4 files.
 	r := NewDailyRotater(dir, format, 3).WithMaxAge(4 * 24 * time.Hour)
 	w := NewRotatingWriter(r)
+	defer func() { assert.NoError(t, w.Close()) }()
 	_, err := w.Write([]byte("x"))
 	assert.NoError(t, err)
 
@@ -175,6 +184,7 @@ func Test_SizeRotater_MaxAge(t *testing.T) {
 	//   3. rename base → base.1
 	// Final: base, base.1 (just rotated), base.3 (was the fresh one)
 	w := NewRotatingWriter(r)
+	defer func() { assert.NoError(t, w.Close()) }()
 	_, _ = w.Write([]byte("0123456789"))
 	_, _ = w.Write([]byte("0123456789"))
 
@@ -187,6 +197,7 @@ func Test_SizeRotater_Gzip(t *testing.T) {
 	base := filepath.Join(dir, "app.log")
 	w, err := NewSizeRotatingWriter(base, 10, 2, true)
 	assert.NoError(t, err)
+	defer func() { assert.NoError(t, w.Close()) }()
 
 	for range 4 {
 		_, werr := w.Write([]byte("xxxxxxxxxx"))
@@ -199,14 +210,20 @@ func Test_SizeRotater_Gzip(t *testing.T) {
 
 	info, err := os.Stat(files[0])
 	assert.NoError(t, err)
-	assert.Zero(t, info.Mode().Perm()&0o077, "created gzip backups should not be group/world-accessible")
+	if runtime.GOOS != "windows" {
+		assert.Zero(t, info.Mode().Perm()&0o077, "created gzip backups should not be group/world-accessible")
+	}
 }
 
 func Test_RotatingWriter_FilePermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX mode bits are not meaningful on Windows")
+	}
 	dir := t.TempDir()
 
 	daily, err := NewDailyRotatingWriter(dir, "2006-01-02.log", 0)
 	assert.NoError(t, err)
+	defer func() { assert.NoError(t, daily.Close()) }()
 	_, err = daily.Write([]byte("hello"))
 	assert.NoError(t, err)
 
@@ -217,6 +234,7 @@ func Test_RotatingWriter_FilePermissions(t *testing.T) {
 	base := filepath.Join(dir, "app.log")
 	sized, err := NewSizeRotatingWriter(base, 10, 1, false)
 	assert.NoError(t, err)
+	defer func() { assert.NoError(t, sized.Close()) }()
 	_, err = sized.Write([]byte("hello"))
 	assert.NoError(t, err)
 
@@ -229,6 +247,7 @@ func Test_ConcurrentWriteDoesNotCorruptOutput(t *testing.T) {
 	dir := t.TempDir()
 	w, err := NewDailyRotatingWriter(dir, "2006-01-02.log", 0)
 	assert.NoError(t, err)
+	defer func() { assert.NoError(t, w.Close()) }()
 
 	var wg sync.WaitGroup
 	for g := range 8 {

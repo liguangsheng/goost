@@ -68,6 +68,16 @@ func (r *DailyRotater) DoRollover(current time.Time) error {
 	return nil
 }
 
+// Close closes the current active file, if any.
+func (r *DailyRotater) Close() error {
+	if r.file == nil {
+		return nil
+	}
+	err := r.file.Close()
+	r.file = nil
+	return err
+}
+
 func (r *DailyRotater) deleteExpiredFiles(current time.Time) {
 	entries, err := os.ReadDir(r.dir)
 	if err != nil {
