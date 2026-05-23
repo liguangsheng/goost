@@ -48,7 +48,8 @@ type Config struct {
 	// IsFailure decides which errors count as failures. Defaults to
 	// "any non-nil error". Return false for, e.g., context.Canceled.
 	IsFailure func(error) bool
-	// OnStateChange is invoked whenever the breaker transitions states.
+	// OnStateChange is invoked synchronously whenever the breaker transitions
+	// states. Panics are recovered and do not affect the transition.
 	OnStateChange func(from, to State)
 	// Now overrides the clock; useful for tests.
 	Now func() time.Time
@@ -204,7 +205,14 @@ func (b *Breaker) transition(from, to State) bool {
 		return false
 	}
 	if b.cfg.OnStateChange != nil {
-		b.cfg.OnStateChange(from, to)
+		safeStateChangeHook(b.cfg.OnStateChange, from, to)
 	}
 	return true
+}
+
+func safeStateChangeHook(fn func(from, to State), from, to State) {
+	defer func() {
+		_ = recover()
+	}()
+	fn(from, to)
 }

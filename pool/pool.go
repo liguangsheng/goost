@@ -54,8 +54,9 @@ type Pool struct {
 // Option configures a Pool at construction time.
 type Option func(*Pool)
 
-// WithPanicHandler installs a callback to run after a task panics. If not
-// set, panics are silently recovered so workers stay alive.
+// WithPanicHandler installs a callback to run after a task panics. The callback
+// runs on the worker goroutine; callback panics are recovered so workers stay
+// alive. If not set, task panics are silently recovered.
 func WithPanicHandler(fn PanicHandler) Option {
 	return func(p *Pool) {
 		if fn == nil {
@@ -213,9 +214,16 @@ func (p *Pool) safeRun(task func()) {
 		if r := recover(); r != nil {
 			p.panics.Add(1)
 			if h := p.onPanic.Load(); h != nil {
-				(*h)(r)
+				safePanicHandler(*h, r)
 			}
 		}
 	}()
 	task()
+}
+
+func safePanicHandler(fn PanicHandler, panicVal any) {
+	defer func() {
+		_ = recover()
+	}()
+	fn(panicVal)
 }

@@ -61,13 +61,13 @@ v1.0 之前，项目应具备：
 
 ## next execution slices
 
-11-42 切片已完成。下表是已完成的队列。
+11-43 切片已完成。下表是已完成的队列。
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
 | 32 | v0.4.0 发布 | CHANGELOG 定稿，tag 待确认 | `./scripts/check-release.sh` |
 | 33 | godoc 渲染审计 | 所有 exported symbols 有 doc comment | `go doc ./...` 并检查空白项 |
-| 34 | 测试覆盖率基线 | 各包覆盖率已记录到 TESTING.md（总计 91.3%） | `go test -coverprofile=coverage.out ./...` |
+| 34 | 测试覆盖率基线 | 各包覆盖率已记录到 TESTING.md（总计 91.8%） | `go test -coverprofile=coverage.out ./...` |
 | 35 | 错误链审计 | 所有 sentinel 添加 errors.Is 测试 | `./scripts/check-root.sh --quick` |
 | 36 | consumer contract tests | 编译时接口检查和 API 表面测试 | `go test ./... -run Consumer` |
 | 37 | `httpx` hook panic 安全性 | Hook panic recovery 已验证 | `go test -race ./httpx` |
@@ -76,5 +76,6 @@ v1.0 之前，项目应具备：
 | 40 | release gate 刷新 | 全部切片后 full gate 通过 | `./scripts/check-release.sh` |
 | 41 | `sync` 原语审计 | WaitGroup/Once/Map 使用已验证正确 | `go vet ./...` |
 | 42 | examples 冒烟 gate | examples 的 split-module gate 通过 | `./scripts/check-split-modules.sh --quick --module ./examples` |
+| 43 | Go 1.26 兼容性探针 | 允许失败的 root smoke job 使用 Go 1.26.3 运行 | GitHub Actions `go-next-root-smoke` |
 
 下一轮切片将在 v0.4.0 发布后规划。

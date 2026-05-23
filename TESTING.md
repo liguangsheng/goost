@@ -109,6 +109,30 @@ Types that own goroutines, timers, files, or network resources should have tests
 for their documented release path. `Close`, `Stop`, and `Wait` behavior should be
 covered for repeated calls when the API promises idempotency.
 
+## Test Style
+
+Prefer table-driven tests for pure input/output behavior and small validation
+matrices. Keep direct scenario tests for concurrency, lifecycle, ordering,
+timing, and smoke checks where a table would hide the sequence being exercised.
+
+The repository intentionally mixes standard-library assertions with
+`testify/assert` and a small amount of `testify/require`: use `assert` for most
+package-level expectations, `require` for setup preconditions that make the rest
+of a test meaningless, and `t.Fatal`/`t.Errorf` for smoke tests, fuzz tests, and
+select-based concurrency assertions. Helper names should describe their role
+directly, such as `testResponse`, `newCapturingLogger`, or `fakeLimiter`.
+
+## Structured Logging Tests
+
+Logging tests should assert field names and field values, not just that some
+text was written. Use stable in-memory loggers such as `slog.Handler` test
+doubles or zap's observer core so assertions are independent of timestamps,
+random IDs, and formatter changes.
+
+HTTP and payload logging tests must assert that query strings, request bodies,
+tokens, passwords, and other sensitive values are not emitted unless the package
+explicitly documents that behavior.
+
 ## Coverage Baseline
 
 The current per-package test coverage baseline (generated with `go test
@@ -116,35 +140,34 @@ The current per-package test coverage baseline (generated with `go test
 
 | Package | Coverage |
 | --- | --- |
-| `backoff` | 93.1% |
-| `batcher` | 97.2% |
-| `caseconv` | 89.6% |
-| `circuitbreaker` | 96.7% |
-| `clock` | 98.1% |
-| `debounce` | 94.7% |
-| `defaultmap` | 95.8% |
-| `env` | 94.4% |
-| `errors` | 93.3% |
-| `fanout` | 97.6% |
-| `httpx` | 95.1% |
-| `keyedmutex` | 96.4% |
-| `lru` | 97.9% |
-| `pool` | 97.3% |
+| `backoff` | 86.0% |
+| `batcher` | 93.8% |
+| `caseconv` | 83.2% |
+| `circuitbreaker` | 96.0% |
+| `clock` | 91.5% |
+| `debounce` | 95.3% |
+| `defaultmap` | 95.0% |
+| `env` | 89.2% |
+| `errors` | 88.8% |
+| `fanout` | 98.0% |
+| `httpx` | 96.5% |
+| `keyedmutex` | 95.7% |
+| `lru` | 86.1% |
+| `pool` | 95.9% |
 | `priorityqueue` | 100.0% |
-| `random` | 96.0% |
-| `ratelimit` | 92.5% |
-| `rotatingwriter` | 90.2% |
+| `random` | 97.6% |
+| `ratelimit` | 92.8% |
+| `rotatingwriter` | 85.3% |
 | `shutdown` | 91.7% |
 | `slogctx` | 94.7% |
 | `taskgroup` | 96.8% |
-| `ttlmap` | 98.4% |
-| `zapctx` | 76.9% |
+| `ttlmap` | 100.0% |
+| `zapctx` | 88.5% |
 
-**Total: 91.3%**
+**Total: 91.8%**
 
-Packages below 80% should be evaluated for additional test coverage.  `zapctx`
-(76.9%) is low because the `S` and `Sampled` helpers create zap cores that are
- exercised mainly in integration usage rather than unit tests.
+Packages below 80% should be evaluated for additional test coverage. No package
+is currently below that threshold.
 
 The full root gate (`./scripts/check-root.sh --full`) outputs a coverage summary.
 The baseline is recorded here for tracking; there is no hard CI threshold, but

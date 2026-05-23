@@ -89,38 +89,50 @@ Stress tests 放在并发核心包旁边；只要稳定，就纳入普通 packag
 
 拥有 goroutine、timer、文件或网络资源的类型，应为文档中的释放路径补测试。如果 API 承诺 `Close`、`Stop` 或 `Wait` 可重复调用，也要覆盖重复调用行为。
 
+## 测试风格
+
+纯输入/输出行为和小型验证矩阵优先使用 table-driven tests。并发、生命周期、顺序、计时和 smoke checks 可以保留直接场景测试；这类测试改成表格反而容易隐藏被验证的执行顺序。
+
+本仓库有意混用标准库断言、`testify/assert` 和少量 `testify/require`：package-level expectations 默认用 `assert`；测试前置条件失败后其余断言没有意义时用 `require`；smoke tests、fuzz tests 和 select-based concurrency assertions 使用 `t.Fatal`/`t.Errorf`。Helper 名称应直接说明角色，例如 `testResponse`、`newCapturingLogger` 或 `fakeLimiter`。
+
+## 结构化日志测试
+
+日志测试应断言字段名和字段值，而不是只检查写出过某段文本。优先使用稳定的内存 logger，例如 `slog.Handler` test double 或 zap observer core，让断言不依赖时间戳、随机 ID 或 formatter 变化。
+
+HTTP 和 payload logging 测试必须断言 query string、request body、token、password 和其他敏感值不会被写出，除非对应包明确把这种行为写进文档。
+
 ## 覆盖率基线
 
 当前各包测试覆盖率基线（通过 `go test -coverprofile=coverage.out -covermode=atomic ./...` 生成）：
 
 | Package | 覆盖率 |
 | --- | --- |
-| `backoff` | 93.1% |
-| `batcher` | 97.2% |
-| `caseconv` | 89.6% |
-| `circuitbreaker` | 96.7% |
-| `clock` | 98.1% |
-| `debounce` | 94.7% |
-| `defaultmap` | 95.8% |
-| `env` | 94.4% |
-| `errors` | 93.3% |
-| `fanout` | 97.6% |
-| `httpx` | 95.1% |
-| `keyedmutex` | 96.4% |
-| `lru` | 97.9% |
-| `pool` | 97.3% |
+| `backoff` | 86.0% |
+| `batcher` | 93.8% |
+| `caseconv` | 83.2% |
+| `circuitbreaker` | 96.0% |
+| `clock` | 91.5% |
+| `debounce` | 95.3% |
+| `defaultmap` | 95.0% |
+| `env` | 89.2% |
+| `errors` | 88.8% |
+| `fanout` | 98.0% |
+| `httpx` | 96.5% |
+| `keyedmutex` | 95.7% |
+| `lru` | 86.1% |
+| `pool` | 95.9% |
 | `priorityqueue` | 100.0% |
-| `random` | 96.0% |
-| `ratelimit` | 92.5% |
-| `rotatingwriter` | 90.2% |
+| `random` | 97.6% |
+| `ratelimit` | 92.8% |
+| `rotatingwriter` | 85.3% |
 | `shutdown` | 91.7% |
 | `slogctx` | 94.7% |
 | `taskgroup` | 96.8% |
-| `ttlmap` | 98.4% |
-| `zapctx` | 76.9% |
+| `ttlmap` | 100.0% |
+| `zapctx` | 88.5% |
 
-**总计：91.3%**
+**总计：91.8%**
 
-低于 80% 的包应评估是否需要补充测试覆盖。`zapctx`（76.9%）偏低是因为 `S` 和 `Sampled` 辅助函数创建的 zap core 主要在集成场景中才能被充分执行，而非单元测试。
+低于 80% 的包应评估是否需要补充测试覆盖。当前没有包低于该阈值。
 
 Full root gate（`./scripts/check-root.sh --full`）会输出覆盖率摘要。此基线记录在此用于跟踪；没有硬性 CI 门槛，但覆盖率不应无理由地退化。

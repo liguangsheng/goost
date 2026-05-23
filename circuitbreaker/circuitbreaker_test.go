@@ -139,6 +139,21 @@ func Test_OnStateChange(t *testing.T) {
 	assert.Equal(t, transition{StateClosed, StateOpen}, got[0])
 }
 
+func Test_OnStateChangePanicDoesNotBlockTransition(t *testing.T) {
+	b := New(Config{
+		FailureThreshold: 1,
+		CooldownPeriod:   time.Millisecond,
+		OnStateChange: func(from, to State) {
+			panic("state change hook failed")
+		},
+	})
+
+	err := b.Do(context.Background(), func(_ context.Context) error { return errors.New("x") })
+	assert.Error(t, err)
+	assert.Equal(t, StateOpen, b.State())
+	assert.ErrorIs(t, b.Do(context.Background(), func(_ context.Context) error { return nil }), ErrOpen)
+}
+
 func Test_HalfOpenSingleProbe(t *testing.T) {
 	now := time.Unix(0, 0)
 	b := New(Config{

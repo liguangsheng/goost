@@ -31,7 +31,17 @@
 
 ## 错误与 panic
 
+- Sentinel errors 使用 `Err` 前缀（例如 `ErrPoolClosed`、`ErrOpen`）。
+- Sentinel error message 使用包名前缀（例如 `"pool: closed"`、
+  `"circuitbreaker: open"`），方便在日志中识别来源。
 - Sentinel errors 应兼容标准库 `errors.Is`。
-- Wrapped errors 应保留 `errors.Is` / `errors.As` 行为。
+- Wrapped errors 应通过 `fmt.Errorf("pkg: %w", err)` 保留
+  `errors.Is` / `errors.As` 行为。
 - 如果包会 recover panic，必须记录这个边界，并通过 error 或 callback value 暴露恢复到的 panic。
 - 如果 context cancellation 是公开操作的一部分，应作为普通 error 返回。
+
+## Hook 与 Callback
+
+- Hook 和 callback 函数会同步运行在调用方 goroutine 或包内部 goroutine 上；每个包必须说明具体位置。
+- Hook 内部的 panic 不能导致宿主操作崩溃。包应 recover hook panic，并保持宿主操作的正常结果。
+- 可能阻塞进度的 hook 必须记录阻塞风险，方便调用方决定是否自行转交到 goroutine。

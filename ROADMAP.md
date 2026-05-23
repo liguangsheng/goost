@@ -71,13 +71,13 @@ addition criteria.
 
 ## Next Execution Slices
 
-Slices 11-42 are complete. The table below is the completed queue.
+Slices 11-43 are complete. The table below is the completed queue.
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
 | 32 | v0.4.0 release | CHANGELOG finalized, tag pending approval | `./scripts/check-release.sh` |
 | 33 | godoc rendering audit | All exported symbols have doc comments | `go doc ./...` and check for empty entries |
-| 34 | test coverage baseline | Per-package coverage recorded in TESTING.md (total 91.3%) | `go test -coverprofile=coverage.out ./...` |
+| 34 | test coverage baseline | Per-package coverage recorded in TESTING.md (total 91.8%) | `go test -coverprofile=coverage.out ./...` |
 | 35 | error chain audit | errors.Is tests for all sentinels | `./scripts/check-root.sh --quick` |
 | 36 | consumer contract tests | Compile-time interface checks and API surface tests | `go test ./... -run Consumer` |
 | 37 | `httpx` hook panic safety | Hook panic recovery verified | `go test -race ./httpx` |
@@ -86,5 +86,6 @@ Slices 11-42 are complete. The table below is the completed queue.
 | 40 | release gate refresh | Full gate passes after all slices | `./scripts/check-release.sh` |
 | 41 | `sync` primitive audit | WaitGroup/Once/Map usage verified correct | `go vet ./...` |
 | 42 | examples smoke gate | Split-module gate passes for examples | `./scripts/check-split-modules.sh --quick --module ./examples` |
+| 43 | Go 1.26 compatibility probe | Allow-failure root smoke job runs on Go 1.26.3 | GitHub Actions `go-next-root-smoke` |
 
 The next slices will be planned after the v0.4.0 release.

@@ -25,8 +25,8 @@ type RetryPolicy struct {
 	MaxAttempts int              // 0 = no retry
 	Backoff     *backoff.Backoff // required when MaxAttempts > 0
 	RetryOn     func(*http.Response, error) bool
-	OnRetry     func(RetryEvent)
-	OnGiveUp    func(RetryEvent)
+	OnRetry     func(RetryEvent) // called synchronously; panics are recovered
+	OnGiveUp    func(RetryEvent) // called synchronously; panics are recovered
 }
 
 // RetryEvent describes a retryable attempt before httpx waits for the next one.
@@ -186,17 +186,24 @@ func (t *transport) waitLimiter(req *http.Request) error {
 }
 
 func (t *transport) notifyRetry(req *http.Request, policy *RetryPolicy, attempt, maxAttempts int, resp *http.Response, err error, delay time.Duration) {
-	if policy.OnRetry == nil {
+	if policy == nil || policy.OnRetry == nil {
 		return
 	}
-	policy.OnRetry(newRetryEvent(req, attempt, maxAttempts, resp, err, delay))
+	safeRetryHook(policy.OnRetry, newRetryEvent(req, attempt, maxAttempts, resp, err, delay))
 }
 
 func (t *transport) notifyGiveUp(req *http.Request, policy *RetryPolicy, attempt, maxAttempts int, resp *http.Response, err error) {
 	if policy == nil || policy.OnGiveUp == nil {
 		return
 	}
-	policy.OnGiveUp(newRetryEvent(req, attempt, maxAttempts, resp, err, 0))
+	safeRetryHook(policy.OnGiveUp, newRetryEvent(req, attempt, maxAttempts, resp, err, 0))
+}
+
+func safeRetryHook(fn func(RetryEvent), event RetryEvent) {
+	defer func() {
+		_ = recover()
+	}()
+	fn(event)
 }
 
 func newRetryEvent(req *http.Request, attempt, maxAttempts int, resp *http.Response, err error, delay time.Duration) RetryEvent {

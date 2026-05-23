@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -130,6 +131,32 @@ func Test_OnRetryReportsTransportError(t *testing.T) {
 	assert.Equal(t, time.Millisecond, events[0].Delay)
 }
 
+func Test_OnRetryPanicDoesNotStopRetry(t *testing.T) {
+	var calls atomic.Int64
+	c := New(Options{
+		Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			status := http.StatusOK
+			if calls.Add(1) == 1 {
+				status = http.StatusBadGateway
+			}
+			return testResponse(req, status, stringBody("")), nil
+		}),
+		Retry: &RetryPolicy{
+			MaxAttempts: 2,
+			Backoff:     &backoff.Backoff{Initial: time.Nanosecond},
+			OnRetry: func(RetryEvent) {
+				panic("retry hook failed")
+			},
+		},
+	})
+
+	resp, err := c.Get("https://api.example.com/users")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.EqualValues(t, 2, calls.Load())
+	assert.NoError(t, resp.Body.Close())
+}
+
 func Test_RetryGivesUp(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadGateway)
@@ -220,6 +247,29 @@ func Test_OnGiveUpReportsFinalTransportError(t *testing.T) {
 	assert.Equal(t, 0, giveUps[0].StatusCode)
 	assert.ErrorIs(t, giveUps[0].Err, want)
 	assert.Zero(t, giveUps[0].Delay)
+}
+
+func Test_OnGiveUpPanicDoesNotChangeFinalResult(t *testing.T) {
+	c := New(Options{
+		Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			return testResponse(req, http.StatusBadGateway, stringBody("fail")), nil
+		}),
+		Retry: &RetryPolicy{
+			MaxAttempts: 1,
+			Backoff:     &backoff.Backoff{Initial: time.Nanosecond},
+			OnGiveUp: func(RetryEvent) {
+				panic("giveup hook failed")
+			},
+		},
+	})
+
+	resp, err := c.Get("https://api.example.com/users")
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusBadGateway, resp.StatusCode)
+	body, err := io.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	assert.Equal(t, "fail", string(body))
+	assert.NoError(t, resp.Body.Close())
 }
 
 func Test_OnRetryRunsBeforeIntermediateResponseIsClosed(t *testing.T) {
@@ -714,6 +764,42 @@ func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
 
+type recordingSlogHandler struct {
+	level slog.Level
+	msg   string
+	attrs map[string]any
+}
+
+func (h *recordingSlogHandler) Enabled(_ context.Context, level slog.Level) bool {
+	return level >= h.level
+}
+
+func (h *recordingSlogHandler) Handle(_ context.Context, r slog.Record) error {
+	h.msg = r.Message
+	if h.attrs == nil {
+		h.attrs = make(map[string]any)
+	}
+	r.Attrs(func(a slog.Attr) bool {
+		h.attrs[a.Key] = a.Value.Any()
+		return true
+	})
+	return nil
+}
+
+func (h *recordingSlogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	next := *h
+	next.attrs = make(map[string]any, len(h.attrs)+len(attrs))
+	for k, v := range h.attrs {
+		next.attrs[k] = v
+	}
+	for _, a := range attrs {
+		next.attrs[a.Key] = a.Value.Any()
+	}
+	return &next
+}
+
+func (h *recordingSlogHandler) WithGroup(string) slog.Handler { return h }
+
 func Test_BodyResnapshotForRetry(t *testing.T) {
 	var calls atomic.Int64
 	var lastBody atomic.Value
@@ -884,6 +970,37 @@ func Test_LoggerRecordsFinalRequestSummary(t *testing.T) {
 	assert.Contains(t, out, "status=201")
 	assert.Contains(t, out, "attempts=2")
 	assert.NotContains(t, out, "token=secret")
+}
+
+func Test_LoggerRecordsStructuredRequestFields(t *testing.T) {
+	var calls atomic.Int64
+	handler := &recordingSlogHandler{level: slog.LevelInfo}
+	c := New(Options{
+		Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return testResponse(req, http.StatusAccepted, stringBody("")), nil
+		}),
+		Logger: slog.New(handler),
+	})
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.example.com/users?token=secret", strings.NewReader("password=secret"))
+	assert.NoError(t, err)
+	resp, err := c.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusAccepted, resp.StatusCode)
+	assert.NoError(t, resp.Body.Close())
+
+	assert.Equal(t, "httpx request", handler.msg)
+	assert.Equal(t, http.MethodPost, handler.attrs["method"])
+	assert.Equal(t, "https", handler.attrs["scheme"])
+	assert.Equal(t, "api.example.com", handler.attrs["host"])
+	assert.Equal(t, "/users", handler.attrs["path"])
+	assert.Equal(t, int64(http.StatusAccepted), handler.attrs["status"])
+	assert.Equal(t, int64(1), handler.attrs["attempts"])
+	for _, v := range handler.attrs {
+		assert.NotContains(t, fmt.Sprint(v), "token=secret")
+		assert.NotContains(t, fmt.Sprint(v), "password=secret")
+	}
 }
 
 func Test_LoggerRecordsRetryGiveUpSummary(t *testing.T) {

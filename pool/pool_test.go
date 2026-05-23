@@ -71,6 +71,28 @@ func Test_PanicRecover(t *testing.T) {
 	assert.Equal(t, "boom", got.Load())
 }
 
+func Test_PanicHandlerPanicKeepsWorkerAlive(t *testing.T) {
+	p, err := NewPool(2, 0, 0, WithPanicHandler(func(any) {
+		panic("panic handler failed")
+	}))
+	assert.NoError(t, err)
+	defer p.Close()
+
+	assert.NoError(t, p.Schedule(func() { panic("boom") }))
+
+	done := make(chan struct{})
+	assert.NoError(t, p.Schedule(func() { close(done) }))
+
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("worker did not stay alive after panic handler panic")
+	}
+	assert.Eventually(t, func() bool {
+		return p.Stats().Panics == 1
+	}, time.Second, time.Millisecond)
+}
+
 func Test_Close(t *testing.T) {
 	p, err := NewPool(2, 4, 1)
 	assert.NoError(t, err)

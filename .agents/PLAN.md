@@ -487,7 +487,7 @@ PROJECT_POLICY.md 记录范围边界。ROADMAP.md 当前且与代码同步。
 
 ### 阶段 51 - v0.4.0 发布执行
 
-待用户确认后执行 git tag 和 GitHub Release。
+`./scripts/check-release.sh` 已通过。`v0.4.0` 本地 tag、远程 tag 和 GitHub Release 已创建，均指向 `89fc4e9`（`chore: prepare v0.4.0 release with quality infrastructure (phases 51-70)`）。GitHub Release：`https://github.com/liguangsheng/goost/releases/tag/v0.4.0`，发布时间 `2026-05-23T18:07:07Z`。
 
 ### 阶段 52 - godoc 渲染质量审查
 
@@ -495,7 +495,7 @@ PROJECT_POLICY.md 记录范围边界。ROADMAP.md 当前且与代码同步。
 
 ### 阶段 53 - 测试覆盖率门槛建立
 
-总体覆盖率 91.3%。最低 zapctx 76.9%（S/Sampled 辅助函数在单元测试中覆盖低）。覆盖率基线记录在 TESTING.md 和 TESTING.zh.md。
+总体覆盖率 91.8%。当前没有 root 包低于 80%。覆盖率基线记录在 TESTING.md 和 TESTING.zh.md。
 
 ### 阶段 54 - 错误链与 Sentinel 审计
 
@@ -527,11 +527,11 @@ PROJECT_POLICY.md 记录范围边界。ROADMAP.md 当前且与代码同步。
 
 ### 阶段 61-67 - 代码质量测试
 
-Phase 61（hook panic safety）和 Phase 65（constructor validation）和 Phase 67（sync 审计）委托给子代理执行。审查确认：httpx/circuitbreaker/pool 的 hook 已有适当 panic recovery；构造函数验证模式一致（pool 返回 error，ratelimit panic）；sync 原语使用正确（WaitGroup Add/Done 配对，Once 用于初始化）。
+Phase 61（hook panic safety）补齐为当前代码事实：`httpx` 的 OnRetry/OnGiveUp、`circuitbreaker` 的 OnStateChange、`pool` 的 PanicHandler 都同步执行但会 recover callback panic，不改变宿主操作结果；API_CONVENTIONS 中英文同步记录 hook 约定。新增测试覆盖 callback panic 后主流程继续。Phase 65（constructor validation）和 Phase 67（sync 审计）已审查确认：构造函数验证模式一致（pool 返回 error，ratelimit panic）；sync 原语使用正确（WaitGroup Add/Done 配对，Once 用于初始化）。验证：`go test ./httpx ./circuitbreaker ./pool`，`./scripts/check-root.sh --quick`。
 
 ### 阶段 62-63 - 表驱动测试和日志测试
 
-跳过。现有测试风格已足够一致，强行统一收益低。
+完成审查并补齐可验证证据。Phase 62：扫描 85 个 `_test.go`，未发现值得机械改写的长 if/else 测试；保留并发、生命周期、select、fuzz 和 smoke checks 的直接场景写法，在 TESTING.md / TESTING.zh.md 记录实际约定（纯输入输出优先 table-driven，package-level expectations 用 assert，前置条件用 require，smoke/fuzz/select 用 t.Fatal/t.Errorf，helper 名称直接描述角色）。Phase 63：`httpx` 增加结构化 `slog.Handler` 测试，断言 method/scheme/host/path/status/attempts 字段值且不泄露 query/body secret；`zapctx` 增加 zap observer 字段值和 sampled 行为测试；`slogctx` 已有字段输出测试。验证：`go test ./httpx ./zapctx ./slogctx`。
 
 ### 阶段 64 - 跨包组合集成测试
 
@@ -547,8 +547,8 @@ Phase 61（hook panic safety）和 Phase 65（constructor validation）和 Phase
 
 ### 阶段 69 - Go 1.26+ 兼容性分析
 
-Go 1.26 尚未发布。当前代码使用标准库 API 无弃用风险。待 Go 1.26 发布后重新评估。
+Go 1.26 已发布（官方 release notes：`https://go.dev/doc/go1.26`），当前最新下载元数据为 go1.26.3（`https://go.dev/dl/?mode=json`）。保留 `go.mod` 的 `go 1.25.10` 作为当前主支持/最低本地工具链，CI 新增允许失败的 `go-next-root-smoke` job，用 Go 1.26.3 跑 `./scripts/check-root.sh --quick`，用于提前发现语言、标准库、timer/channel、平台支持和 toolchain 兼容性漂移。README/README.zh 和 ROADMAP/ROADMAP.zh 已同步记录 Go 1.26.3 compatibility probe。
 
 ### 阶段 70 - 长期路线图复审
 
-ROADMAP.md slices 32-42 已执行。PLAN.md 审查记录更新。quick gate 0 issues。
+ROADMAP.md slices 32-43 已执行。PLAN.md 审查记录更新。`./scripts/check-release.sh` 和 `./scripts/check-root.sh --quick` 通过。

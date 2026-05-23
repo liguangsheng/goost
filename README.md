@@ -55,8 +55,9 @@ See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 ## Development Checks
 
-The supported Go toolchain version is `1.25.10`, matching every `go.mod` file
-and the CI `GO_VERSION` setting.
+The primary supported Go toolchain version is `1.25.10`, matching every
+`go.mod` file and the CI `GO_VERSION` setting. CI also runs an allow-failure
+root smoke check on Go `1.26.3` to catch upcoming compatibility issues early.
 
 For day-to-day root-module changes, run `./scripts/check-root.sh --quick`.
 Nested modules are separate Go modules, so root checks do not traverse them.

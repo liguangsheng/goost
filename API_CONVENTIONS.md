@@ -47,9 +47,22 @@ These rules guide new public APIs and cleanup before v1.0.
 
 ## Errors and Panics
 
+- Sentinel errors use the `Err` prefix (e.g., `ErrPoolClosed`, `ErrOpen`).
+- Sentinel error messages use a package-name prefix (e.g., `"pool: closed"`,
+  `"circuitbreaker: open"`) so the source is clear in logs.
 - Sentinel errors should be compatible with standard `errors.Is`.
-- Wrapped errors should preserve `errors.Is` / `errors.As` behavior.
+- Wrapped errors should preserve `errors.Is` / `errors.As` behavior via
+  `fmt.Errorf("pkg: %w", err)`.
 - If a package recovers panics, document that boundary and expose the recovered
   panic as an error or callback value.
 - Context cancellation should be returned as a normal error when cancellation is
   part of the public operation.
+
+## Hooks and Callbacks
+
+- Hook and callback functions run synchronously on the caller's goroutine or the
+  package's internal goroutine.  Each package must document which.
+- Panics inside hooks must not crash the host operation. Packages should recover
+  hook panics and keep the host operation's normal result.
+- Hooks that may block progress must document the blocking risk so callers can
+  decide whether to delegate to a goroutine.

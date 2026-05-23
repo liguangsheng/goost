@@ -55,8 +55,9 @@ minor version 迁移说明见 [MIGRATION.zh.md](./MIGRATION.zh.md)。
 
 ## 开发检查
 
-当前支持的 Go toolchain version 是 `1.25.10`，并与每个 `go.mod` 文件以及 CI
-中的 `GO_VERSION` 设置保持一致。
+当前主支持 Go toolchain version 是 `1.25.10`，并与每个 `go.mod` 文件以及 CI
+中的 `GO_VERSION` 设置保持一致。CI 也会用 Go `1.26.3` 运行一个允许失败的
+root smoke check，用于提前发现兼容性问题。
 
 日常 root module 改动先运行 `./scripts/check-root.sh --quick`。Nested modules
 是独立 Go modules，root 检查不会遍历它们。
