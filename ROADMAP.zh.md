@@ -59,19 +59,18 @@ v1.0 之前，项目应具备：
 
 复审后，应排序下一轮 10 到 20 个具体执行切片。每个切片都要有负责的改动面、预期制品和验证命令。宽泛想法必须先通过项目政策中的新增准入标准，才能进入 roadmap。
 
-## next execution slices
+## Next Execution Slices
 
-这些切片是第一轮 v1.0 package audit 和 release dry-run 之后当前公开的执行队列。每个切片都刻意控制在能用明确制品和验证命令收口的范围内。
+11-20 切片已完成。下表是下一轮的当前执行队列。
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
-| 11 | observability wording | 统一 `batcher`、`fanout`、`pool`、`ratelimit` 的 Stats/Snapshot 表述 | `./scripts/check-root.sh --quick` |
-| 12 | stress coverage notes | 说明 `scripts/check-stress.sh` 覆盖哪些包以及覆盖理由 | `go test .` |
-| 13 | `httpx` body replay fixtures | 为可 replay 和不可 replay 的 request body 增加编译/运行覆盖 | `go test ./httpx` |
-| 14 | `ratelimit` cancellation | 收紧等待期间 context cancellation 的文档和测试 | `go test ./ratelimit` |
-| 15 | `pool` shutdown semantics | 明确 submit、close、wait 和 stats 在 shutdown 附近的行为 | `go test ./pool` |
-| 16 | `taskgroup` panic behavior | 对齐 README、example 和 panic recovery/error propagation 测试 | `go test ./taskgroup` |
-| 17 | examples smoke output | 保持 runnable example 输出稳定并记录 | `./scripts/check-split-modules.sh --quick --module ./examples` |
-| 18 | CI cache drift guard | 用 nested module discovery 复查 GitHub Actions cache paths | `go test .` |
-| 19 | release docs parity | 在下一批变更后复审 changelog、migration guide 和 localized links | `./scripts/check-root.sh --quick` |
-| 20 | release gate repeatability | 11-19 切片后重新运行并记录 `./scripts/check-release.sh` | `./scripts/check-release.sh` |
+| 21 | `lru` observability wording | 统一 `lru` 和 `ShardedCache` 的 Snapshot 表述 | `./scripts/check-root.sh --quick` |
+| 22 | `circuitbreaker` observability wording | 统连续计数器和时间戳的 Snapshot 表述 | `./scripts/check-root.sh --quick` |
+| 23 | `ratelimit` stress tests | 为 Bucket 和 Leaky 添加并发 Wait stress tests | `go test -race ./ratelimit` |
+| 24 | `debounce` concurrent tests | 添加并发 Trigger + Stop stress test | `go test -race ./debounce` |
+| 25 | `pool` cancellation tests | 添加 pre-cancelled context 下的 Schedule/ScheduleTimeout 测试 | `go test -race ./pool` |
+| 26 | `fanout` concurrent edge tests | 添加并发 publish 期间 subscribe/close 测试 | `go test -race ./fanout` |
+| 27 | package doc parity | 为 `caseconv` 和 `random` 添加 doc.go | `go vet ./caseconv ./random` |
+| 28 | stress gate refresh | 21-27 切片后重新运行并记录 `./scripts/check-stress.sh` | `./scripts/check-stress.sh` |
+| 29 | release gate refresh | 21-28 切片后重新运行并记录 `./scripts/check-release.sh` | `./scripts/check-release.sh` |

@@ -71,19 +71,17 @@ addition criteria.
 
 ## Next Execution Slices
 
-These slices are the current public queue after the first v1.0 package audit
-and release dry-run. Each slice is intentionally small enough to land with a
-clear artifact and validation command.
+Slices 11-20 are complete. The table below is the current queue for the next
+round.
 
 | Slice | Surface | Artifact | Validation |
 | --- | --- | --- | --- |
-| 11 | observability wording | Normalize Stats/Snapshot wording for `batcher`, `fanout`, `pool`, and `ratelimit` | `./scripts/check-root.sh --quick` |
-| 12 | stress coverage notes | Document which packages are covered by `scripts/check-stress.sh` and why | `go test .` |
-| 13 | `httpx` body replay fixtures | Add compile/runtime coverage for replayable and non-replayable request bodies | `go test ./httpx` |
-| 14 | `ratelimit` cancellation | Tighten docs and tests for context cancellation while waiting | `go test ./ratelimit` |
-| 15 | `pool` shutdown semantics | Clarify submit, close, wait, and stats behavior around shutdown | `go test ./pool` |
-| 16 | `taskgroup` panic behavior | Align README, example, and tests for panic recovery and error propagation | `go test ./taskgroup` |
-| 17 | examples smoke output | Keep runnable example outputs deterministic and documented | `./scripts/check-split-modules.sh --quick --module ./examples` |
-| 18 | CI cache drift guard | Recheck nested module discovery against GitHub Actions cache paths | `go test .` |
-| 19 | release docs parity | Re-audit changelog, migration guide, and localized links after the next changes | `./scripts/check-root.sh --quick` |
-| 20 | release gate repeatability | Re-run and record `./scripts/check-release.sh` after slices 11-19 | `./scripts/check-release.sh` |
+| 21 | `lru` observability wording | Normalize Snapshot wording for `lru` and `ShardedCache` | `./scripts/check-root.sh --quick` |
+| 22 | `circuitbreaker` observability wording | Normalize Snapshot wording for consecutive counters and timestamps | `./scripts/check-root.sh --quick` |
+| 23 | `ratelimit` stress tests | Add concurrent Wait stress tests for Bucket and Leaky | `go test -race ./ratelimit` |
+| 24 | `debounce` concurrent tests | Add concurrent Trigger + Stop stress test | `go test -race ./debounce` |
+| 25 | `pool` cancellation tests | Add Schedule/ScheduleTimeout with pre-cancelled context | `go test -race ./pool` |
+| 26 | `fanout` concurrent edge tests | Add subscribe/close during concurrent publish tests | `go test -race ./fanout` |
+| 27 | package doc parity | Add doc.go for `caseconv` and `random` | `go vet ./caseconv ./random` |
+| 28 | stress gate refresh | Re-run and record `./scripts/check-stress.sh` after slices 21-27 | `./scripts/check-stress.sh` |
+| 29 | release gate refresh | Re-run and record `./scripts/check-release.sh` after slices 21-28 | `./scripts/check-release.sh` |
