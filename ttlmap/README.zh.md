@@ -16,6 +16,8 @@ if s, ok := m.Get(token); ok {
 
 传 `0` 给 `New` 可禁用后台扫描；过期条目仍会在访问时删除。
 
+`Close` 会停止后台 sweep goroutine，并且可以重复调用。它不会清空 map，也不会让 map 不可用：`Set`、`Get`、`Delete`、`Len` 和 `PurgeExpired` 在 `Close` 后仍可使用。过期条目仍会被 `Get` 懒删除，或由 `PurgeExpired` 显式删除。
+
 `Len` 报告当前存储的条目数，包括已经过期但尚未被读取或扫描清理的条目。
 
 后台扫描禁用时，或需要在统计大小前主动限制陈旧条目时，可使用

@@ -41,7 +41,16 @@ snap := l.Snapshot()
 metrics.RecordLimiterDelay(snap.AvailableIn)
 ```
 
-Both limiters expose `Snapshot()` for read-only metrics/logging.
+Both limiters expose `Snapshot()` for read-only metrics/logging. The returned
+value is a point-in-time snapshot. Bucket `Rate` and `Burst`, and leaky
+`Interval`, are configuration values copied into the snapshot for metrics labels
+and logs. Bucket `Tokens` / `LastRefill`, and leaky `Next` / `AvailableIn`, are
+current values at the time of the call.
+
+`Wait` methods respect context cancellation while waiting. A canceled wait
+returns `ctx.Err()` and does not reserve or consume a future token or leaky-bucket
+slot; later callers can still use the limiter normally when capacity becomes
+available.
 
 Both limiters expose `SetClock(fn func() time.Time)` for deterministic
 tests. Pair them with [`clock.Mock`](../clock):

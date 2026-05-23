@@ -17,6 +17,11 @@ if s, ok := m.Get(token); ok {
 Pass `0` to `New` to disable background sweeping; expired entries are still
 removed on access.
 
+`Close` stops the background sweep goroutine and is safe to call more than
+once. It does not clear the map and does not make the map unusable: `Set`,
+`Get`, `Delete`, `Len`, and `PurgeExpired` still work after `Close`. Expired
+entries continue to be removed lazily by `Get` or explicitly by `PurgeExpired`.
+
 `Len` reports the number of stored entries, including expired entries that have
 not yet been read or swept.
 

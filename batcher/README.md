@@ -55,6 +55,11 @@ s := b.Stats()
 // s.MaxWait      — configured maximum wait for an open window
 ```
 
+The returned value is a point-in-time, read-only snapshot. `Batches`, `Loads`,
+`Coalesced`, and `MaxBatchSize` are cumulative counters. `PendingKeys` and
+`InFlight` are current values at the time of the call. `MaxBatch` and `MaxWait`
+are configuration values copied into the snapshot for metrics labels and logs.
+
 If `Coalesced` stays near zero, your windows are too short for the
 arrival rate; raise `MaxWait`. If `MaxBatchSize` constantly hits
 `MaxBatch`, raise the cap or your downstream is the bottleneck.

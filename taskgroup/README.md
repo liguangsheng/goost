@@ -19,9 +19,11 @@ if err := g.Wait(); err != nil {
 ```
 
 The first non-nil error cancels the group's context so sibling tasks can
-exit early; subsequent errors are dropped. `Wait` cancels the context before
-returning even on success, and `Cause()` reports the first task error when
-there was one.
+exit early; subsequent errors are dropped. A task panic follows the same path:
+it is recovered, converted to an error with a `taskgroup: panic:` prefix,
+cancels siblings, and is returned by `Wait` if it is the first failure. `Wait`
+cancels the context before returning even on success, and `Cause()` reports the
+first task error or recovered panic when there was one.
 
 Use `Results[T]` when each task returns a value:
 
@@ -36,5 +38,6 @@ for _, item := range items {
 values, err := g.Wait() // values are in completion order
 ```
 
-Like `Group`, `Results[T]` cancels its context on the first task error or when
-`Wait` returns, and `Cause()` reports the first task error when there was one.
+Like `Group`, `Results[T]` cancels its context on the first task error or
+recovered panic, returns values that completed before cancellation, and
+`Cause()` reports the first task error or panic error when there was one.

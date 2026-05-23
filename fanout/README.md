@@ -36,6 +36,11 @@ b.Stats().Drops  // aggregate across all subs (alive and closed)
 buffer size, queued messages across active subscribers, and whether the
 broadcaster is closed.
 
+The returned value is a point-in-time, read-only snapshot. `Publishes` and
+`Drops` are cumulative counters. `Subscribers`, `Queued`, and `Closed` are
+current values at the time of the call. `Buffer` belongs to configuration values:
+the per-subscriber buffer size copied into the snapshot for metrics labels and logs.
+
 If you cannot tolerate drops, set `Buffer` high enough to absorb your
 expected burst.
 

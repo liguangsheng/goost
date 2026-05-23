@@ -26,6 +26,20 @@ func main() {
 除非请求被标记为 sampled，`zapctx.Sampled(ctx)` 会返回 no-op logger，
 适合控制冗长的单请求日志。
 
+## 与 slogctx 的共享模型
+
+`zapctx` 和 `slogctx` 使用同一套 context logging 模型：
+
+| Concept | zapctx | slogctx equivalent |
+| --- | --- | --- |
+| Attach logger | `ToContext(ctx, *zap.Logger)` | `slogctx.ToContext(ctx, *slog.Logger)` |
+| Extract state | `Extract(ctx)` | `slogctx.Extract(ctx)` |
+| Add request data | `AddFields(...)` | `AddAttrs(...)` |
+| Log normally | `L(ctx)` / `S(ctx)` | `slogctx.L(ctx)` |
+| Sample-gated logs | `Sampled(ctx)` | `slogctx.Sampled(ctx)` |
+
+Framework integrations 保留在 nested modules 中；核心包只负责通过 `context.Context` 携带 logger state。
+
 ## 中间件
 
 ```go

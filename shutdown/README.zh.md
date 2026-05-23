@@ -26,6 +26,13 @@ m.Add(func() { /* ... */ })
 sig := m.Wait(ctx) // ctx 取消时返回 nil
 ```
 
+## 可移植性
+
+默认 manager 监听 `SIGINT` 和 `SIGTERM`。传给 `NewManager` 的自定义信号取决于
+平台：`SIGUSR1`、`SIGUSR2` 这类 Unix-only signal 不能移植到 Windows。测试、库
+代码和跨平台程序应优先用 `Cleanup` 直接触发清理，或取消传给 `Wait` 的 context；
+context 取消时，`Wait` 会运行清理并返回 `nil`。
+
 hook 会按注册顺序运行。`Cleanup` 是幂等的；如果想不等待信号而直接触发关闭，
 也可以直接调用它。
 

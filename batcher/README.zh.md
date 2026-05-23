@@ -53,6 +53,10 @@ s := b.Stats()
 // s.MaxWait      - 配置的窗口最大等待时间
 ```
 
+返回值是调用时刻的只读 snapshot。`Batches`、`Loads`、`Coalesced` 和
+`MaxBatchSize` 是累计 counter。`PendingKeys` 和 `InFlight` 是调用时刻的当前值。
+`MaxBatch` 和 `MaxWait` 是复制到 snapshot 中的配置值，便于作为 metrics label 或日志字段。
+
 如果 `Coalesced` 长期接近 0，说明窗口相对于到达速率太短，可以提高
 `MaxWait`。如果 `MaxBatchSize` 经常打满 `MaxBatch`，可以提高上限，
 或者下游已经成为瓶颈。

@@ -52,5 +52,15 @@ type Rotater interface {
 
 `RotatingWriter.Write` is safe for concurrent use.
 
+## Portability
+
+Paths are handled with Go's `filepath` package, so callers should pass ordinary
+platform-local paths rather than hard-coded separators. Daily rotation stores
+files in the configured directory; size rotation stores backups beside the base
+file.
+
 Created log directories use restrictive permissions (`0750` before umask);
-created log files and gzip backups use `0600` before umask.
+created log files and gzip backups use `0600` before umask. Unix permission bits
+are enforced by tests on platforms that expose them; Windows does not have the
+same permission-bit semantics, so applications that need a Windows ACL policy
+should pre-create directories or files with the required access controls.

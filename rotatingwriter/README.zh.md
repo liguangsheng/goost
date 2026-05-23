@@ -49,5 +49,9 @@ type Rotater interface {
 
 `RotatingWriter.Write` 可并发安全调用。
 
+## 可移植性
+
+路径通过 Go 的 `filepath` package 处理，因此调用方应传入普通的本地平台路径，避免硬编码路径分隔符。Daily rotation 会把文件写入配置目录；size rotation 会把备份放在 base file 旁边。
+
 自动创建的日志目录使用较收敛的权限（受 umask 影响前为 `0750`）；
-自动创建的日志文件和 gzip 备份使用 `0600`（受 umask 影响前）。
+自动创建的日志文件和 gzip 备份使用 `0600`（受 umask 影响前）。Unix permission bits 会在支持这些语义的平台上由测试覆盖；Windows 没有相同的 permission-bit 语义，因此需要 Windows ACL policy 的应用应预先创建目录或文件，并设置所需访问控制。

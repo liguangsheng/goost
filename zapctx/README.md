@@ -27,6 +27,21 @@ func main() {
 `zapctx.Sampled(ctx)` returns a no-op logger unless the request is marked
 sampled, useful for verbose per-request logs.
 
+## Shared Model with slogctx
+
+`zapctx` and `slogctx` use the same context logging model:
+
+| Concept | zapctx | slogctx equivalent |
+| --- | --- | --- |
+| Attach logger | `ToContext(ctx, *zap.Logger)` | `slogctx.ToContext(ctx, *slog.Logger)` |
+| Extract state | `Extract(ctx)` | `slogctx.Extract(ctx)` |
+| Add request data | `AddFields(...)` | `AddAttrs(...)` |
+| Log normally | `L(ctx)` / `S(ctx)` | `slogctx.L(ctx)` |
+| Sample-gated logs | `Sampled(ctx)` | `slogctx.Sampled(ctx)` |
+
+Framework integrations stay in nested modules; the core package only carries
+logger state through `context.Context`.
+
 ## Middleware
 
 ```go
