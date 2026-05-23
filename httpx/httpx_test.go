@@ -677,6 +677,11 @@ type errLimiter struct{ err error }
 
 func (e errLimiter) Wait(_ context.Context, _ int) error { return e.err }
 
+type errReadCloser struct{ err error }
+
+func (e errReadCloser) Read([]byte) (int, error) { return 0, e.err }
+func (e errReadCloser) Close() error             { return nil }
+
 func stringBody(s string) io.ReadCloser {
 	return io.NopCloser(strings.NewReader(s))
 }
@@ -730,6 +735,38 @@ func Test_BodyResnapshotForRetry(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, "payload", lastBody.Load())
+}
+
+func Test_BodySnapshotClosesOriginalBodyAndReplays(t *testing.T) {
+	original := trackingBody("payload")
+	var bodies []string
+
+	c := New(Options{
+		Base: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			body, err := io.ReadAll(req.Body)
+			if err != nil {
+				return nil, err
+			}
+			bodies = append(bodies, string(body))
+			status := http.StatusOK
+			if len(bodies) == 1 {
+				status = http.StatusBadGateway
+			}
+			return testResponse(req, status, stringBody("")), nil
+		}),
+		Retry: &RetryPolicy{MaxAttempts: 2, Backoff: &backoff.Backoff{Initial: time.Nanosecond}},
+	})
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.example.com/users", nil)
+	assert.NoError(t, err)
+	req.Body = original
+
+	resp, err := c.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, []string{"payload", "payload"}, bodies)
+	assert.True(t, original.closed.Load(), "snapshotBody must close the caller's original body")
+	assert.NoError(t, resp.Body.Close())
 }
 
 func Test_BodyGetBodyReplayForRetry(t *testing.T) {
@@ -795,6 +832,27 @@ func Test_BodyGetBodyErrorStopsRetryAfterFirstAttempt(t *testing.T) {
 	assert.ErrorIs(t, err, want)
 	assert.EqualValues(t, 1, calls.Load())
 	assert.Equal(t, []string{"payload"}, bodies)
+}
+
+func Test_BodySnapshotErrorStopsBeforeFirstAttempt(t *testing.T) {
+	want := errors.New("cannot snapshot body")
+	var calls atomic.Int64
+	c := New(Options{
+		Base: roundTripperFunc(func(*http.Request) (*http.Response, error) {
+			calls.Add(1)
+			return testResponse(nil, http.StatusNoContent, stringBody("")), nil
+		}),
+		Retry: &RetryPolicy{MaxAttempts: 2, Backoff: &backoff.Backoff{Initial: time.Millisecond}},
+	})
+
+	req, err := http.NewRequest(http.MethodPost, "https://api.example.com/users", nil)
+	assert.NoError(t, err)
+	req.Body = errReadCloser{err: want}
+
+	resp, err := c.Do(req)
+	assert.Nil(t, resp)
+	assert.ErrorIs(t, err, want)
+	assert.EqualValues(t, 0, calls.Load())
 }
 
 func Test_LoggerRecordsFinalRequestSummary(t *testing.T) {

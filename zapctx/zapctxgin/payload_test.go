@@ -45,6 +45,31 @@ func Test_PayloadGinMiddleware_LogsBodies(t *testing.T) {
 	}
 }
 
+func Test_PayloadGinMiddleware_MaxBodyTruncatesLogsOnly(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	logger, logs := newObservedLogger()
+
+	e := gin.New()
+	e.Use(Middleware(logger))
+	e.Use(PayloadMiddleware(logger, WithMaxBody(4)))
+	e.POST("/echo", func(c *gin.Context) {
+		body, _ := c.GetRawData()
+		c.Data(http.StatusCreated, "text/plain", body)
+	})
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/echo", bytes.NewBufferString("hello world"))
+	e.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, "hello world", w.Body.String())
+	if assert.Equal(t, 1, logs.Len()) {
+		fields := logs.All()[0].ContextMap()
+		assert.Equal(t, "hell", fields["request_body"])
+		assert.Equal(t, "hell", fields["response_body"])
+	}
+}
+
 func Test_PayloadGinMiddleware_Sampling(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	logger, logs := newObservedLogger()

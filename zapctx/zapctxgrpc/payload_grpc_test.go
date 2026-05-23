@@ -39,6 +39,43 @@ func Test_PayloadUnaryServerInterceptor_Success(t *testing.T) {
 	assert.Equal(t, "pong", fields["response"])
 }
 
+func Test_PayloadUnaryServerInterceptor_MaxBodyTruncatesMessages(t *testing.T) {
+	core, logs := observer.New(zapcore.InfoLevel)
+	logger := zap.New(core)
+
+	resp, err := PayloadUnaryServerInterceptor(logger, GRPCWithBody(true), GRPCWithMaxBody(4))(
+		zapctx.ToContext(context.Background(), logger), "hello world",
+		&grpc.UnaryServerInfo{FullMethod: "/svc/Ping"},
+		func(ctx context.Context, req any) (any, error) { return "pong pong", nil },
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, "pong pong", resp)
+
+	if assert.Equal(t, 1, logs.Len()) {
+		fields := logs.All()[0].ContextMap()
+		assert.Equal(t, "hell", fields["request"])
+		assert.Equal(t, "pong", fields["response"])
+	}
+}
+
+func Test_PayloadUnaryServerInterceptor_MaxBodyZeroDisablesMessages(t *testing.T) {
+	core, logs := observer.New(zapcore.InfoLevel)
+	logger := zap.New(core)
+
+	_, err := PayloadUnaryServerInterceptor(logger, GRPCWithBody(true), GRPCWithMaxBody(0))(
+		zapctx.ToContext(context.Background(), logger), "secret",
+		&grpc.UnaryServerInfo{FullMethod: "/svc/Ping"},
+		func(ctx context.Context, req any) (any, error) { return "response", nil },
+	)
+	assert.NoError(t, err)
+
+	if assert.Equal(t, 1, logs.Len()) {
+		fields := logs.All()[0].ContextMap()
+		assert.NotContains(t, fields, "request")
+		assert.NotContains(t, fields, "response")
+	}
+}
+
 func Test_PayloadUnaryServerInterceptor_Error(t *testing.T) {
 	core, logs := observer.New(zapcore.InfoLevel)
 	logger := zap.New(core)

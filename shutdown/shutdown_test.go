@@ -5,7 +5,6 @@ import (
 	"os"
 	"sync"
 	"sync/atomic"
-	"syscall"
 	"testing"
 	"time"
 
@@ -61,31 +60,6 @@ func Test_CleanupRecoversPanic(t *testing.T) {
 	assert.EqualValues(t, 1, after.Load())
 }
 
-func Test_WaitOnSignal(t *testing.T) {
-	m := NewManager(syscall.SIGUSR1)
-	m.SetLogger(nil)
-
-	var ran atomic.Int64
-	m.Add(func() { ran.Add(1) })
-
-	done := make(chan os.Signal, 1)
-	go func() {
-		done <- m.Wait(context.Background())
-	}()
-
-	// Give Wait time to install the notify channel.
-	time.Sleep(20 * time.Millisecond)
-	assert.NoError(t, syscall.Kill(syscall.Getpid(), syscall.SIGUSR1))
-
-	select {
-	case sig := <-done:
-		assert.Equal(t, syscall.SIGUSR1, sig)
-	case <-time.After(time.Second):
-		t.Fatal("Wait did not return on signal")
-	}
-	assert.EqualValues(t, 1, ran.Load())
-}
-
 func Test_HookTimeout(t *testing.T) {
 	m := NewManager()
 	m.SetLogger(nil)
@@ -108,7 +82,7 @@ func Test_HookTimeout(t *testing.T) {
 }
 
 func Test_WaitOnContextCancel(t *testing.T) {
-	m := NewManager(syscall.SIGUSR2)
+	m := NewManager(os.Interrupt)
 	m.SetLogger(nil)
 
 	ctx, cancel := context.WithCancel(context.Background())

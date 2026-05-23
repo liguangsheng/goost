@@ -78,6 +78,49 @@ func Test_Close(t *testing.T) {
 
 	err = p.Schedule(func() {})
 	assert.True(t, errors.Is(err, ErrPoolClosed))
+	err = p.ScheduleTimeout(time.Millisecond, func() {})
+	assert.True(t, errors.Is(err, ErrPoolClosed))
+	p.Close()
+}
+
+func Test_CloseDrainsAcceptedQueuedTasks(t *testing.T) {
+	p, err := NewPool(1, 2, 1)
+	assert.NoError(t, err)
+
+	start := make(chan struct{})
+	var completed atomic.Int64
+	assert.NoError(t, p.Schedule(func() {
+		<-start
+		completed.Add(1)
+	}))
+	assert.NoError(t, p.Schedule(func() { completed.Add(1) }))
+	assert.NoError(t, p.Schedule(func() { completed.Add(1) }))
+
+	closed := make(chan struct{})
+	go func() {
+		p.Close()
+		close(closed)
+	}()
+
+	select {
+	case <-closed:
+		t.Fatal("Close returned before accepted tasks drained")
+	case <-time.After(20 * time.Millisecond):
+	}
+
+	close(start)
+	select {
+	case <-closed:
+	case <-time.After(time.Second):
+		t.Fatal("Close did not return after queued tasks drained")
+	}
+
+	assert.EqualValues(t, 3, completed.Load())
+	stats := p.Stats()
+	assert.True(t, stats.Closed)
+	assert.EqualValues(t, 3, stats.Completed)
+	assert.Equal(t, 0, stats.Queued)
+	assert.Equal(t, 0, stats.InFlight)
 }
 
 func Test_ScheduleN(t *testing.T) {

@@ -47,6 +47,23 @@ func Test_BackgroundSweep(t *testing.T) {
 	assert.Equal(t, 0, m.Len())
 }
 
+func Test_CloseStopsSweepButMapRemainsUsable(t *testing.T) {
+	m := New[string, int](10 * time.Millisecond)
+	m.Close()
+
+	m.Set("expired", 1, 10*time.Millisecond)
+	m.Set("live", 2, time.Minute)
+	time.Sleep(40 * time.Millisecond)
+
+	assert.Equal(t, 2, m.Len(), "closed map should not keep sweeping in the background")
+	_, ok := m.Get("expired")
+	assert.False(t, ok, "expired entries should still be removed lazily on access")
+	assert.Equal(t, 1, m.Len())
+	v, ok := m.Get("live")
+	assert.True(t, ok)
+	assert.Equal(t, 2, v)
+}
+
 func Test_PurgeExpired(t *testing.T) {
 	var fired []string
 	m := New(0, WithOnExpire(func(k string, v int) {

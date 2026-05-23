@@ -72,6 +72,20 @@ func Test_BucketWaitCancel(t *testing.T) {
 	assert.ErrorIs(t, b.Wait(ctx, 1), context.DeadlineExceeded)
 }
 
+func Test_BucketWaitCancelDoesNotReserveToken(t *testing.T) {
+	now := time.Unix(0, 0)
+	b := NewBucket(1, 1)
+	b.SetClock(func() time.Time { return now })
+	assert.True(t, b.Allow())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	assert.ErrorIs(t, b.Wait(ctx, 1), context.Canceled)
+
+	now = now.Add(time.Second)
+	assert.True(t, b.Allow(), "canceled Wait must not reserve the next token")
+}
+
 func Test_BucketParallel(t *testing.T) {
 	// 8 goroutines compete; with a fixed clock and a finite burst, total
 	// successes must equal exactly burst.
@@ -146,4 +160,18 @@ func Test_LeakyWaitCancel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 	defer cancel()
 	assert.ErrorIs(t, l.Wait(ctx), context.DeadlineExceeded)
+}
+
+func Test_LeakyWaitCancelDoesNotReserveSlot(t *testing.T) {
+	now := time.Unix(0, 0)
+	l := NewLeaky(time.Second)
+	l.SetClock(func() time.Time { return now })
+	assert.True(t, l.Allow())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	assert.ErrorIs(t, l.Wait(ctx), context.Canceled)
+
+	now = now.Add(time.Second)
+	assert.True(t, l.Allow(), "canceled Wait must not reserve the next slot")
 }

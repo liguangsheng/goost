@@ -110,4 +110,29 @@ func Test_ResultsPanic(t *testing.T) {
 	_, err := g.Wait()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "panic")
+	assert.ErrorIs(t, g.Cause(), err)
+}
+
+func Test_ResultsPanicCancelsSiblingsAndKeepsCompletedValues(t *testing.T) {
+	g := NewResults[int](context.Background())
+	var canceled atomic.Bool
+
+	g.Run(func(_ context.Context) (int, error) { return 1, nil })
+	g.Run(func(_ context.Context) (int, error) { panic("boom") })
+	g.Run(func(ctx context.Context) (int, error) {
+		select {
+		case <-ctx.Done():
+			canceled.Store(true)
+		case <-time.After(time.Second):
+		}
+		return 2, nil
+	})
+
+	values, err := g.Wait()
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "taskgroup: panic: boom")
+	assert.ErrorIs(t, g.Cause(), err)
+	assert.True(t, canceled.Load(), "panic should cancel sibling tasks")
+	sort.Ints(values)
+	assert.Subset(t, []int{1, 2}, values)
 }

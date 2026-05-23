@@ -17,6 +17,7 @@ type GRPCPayloadOption func(*grpcPayloadConfig)
 
 type grpcPayloadConfig struct {
 	logBody     bool
+	maxBody     int
 	sampleEvery int64
 	skip        func(method string) bool
 }
@@ -25,6 +26,12 @@ type grpcPayloadConfig struct {
 // Bodies are formatted by fmt.Sprintf("%+v", msg).
 func GRPCWithBody(on bool) GRPCPayloadOption {
 	return func(c *grpcPayloadConfig) { c.logBody = on }
+}
+
+// GRPCWithMaxBody caps the number of formatted bytes logged per request and
+// response message. 0 means do not log message bodies. Defaults to 4096.
+func GRPCWithMaxBody(n int) GRPCPayloadOption {
+	return func(c *grpcPayloadConfig) { c.maxBody = n }
 }
 
 // GRPCWithSampling logs every n-th RPC. Defaults to 1.
@@ -47,7 +54,7 @@ func GRPCWithSkipper(fn func(method string) bool) GRPCPayloadOption {
 // and (optionally) the request/response messages, using the context-bound
 // logger if one was attached upstream by UnaryServerInterceptor.
 func PayloadUnaryServerInterceptor(logger *zap.Logger, opts ...GRPCPayloadOption) grpc.UnaryServerInterceptor {
-	cfg := &grpcPayloadConfig{sampleEvery: 1}
+	cfg := &grpcPayloadConfig{maxBody: 4096, sampleEvery: 1}
 	for _, o := range opts {
 		o(cfg)
 	}
@@ -70,10 +77,10 @@ func PayloadUnaryServerInterceptor(logger *zap.Logger, opts ...GRPCPayloadOption
 			zap.String("code", code),
 			zap.Duration("latency", time.Since(start)),
 		}
-		if cfg.logBody {
+		if cfg.logBody && cfg.maxBody > 0 {
 			fields = append(fields,
-				zap.Stringer("request", stringerFunc{v: req}),
-				zap.Stringer("response", stringerFunc{v: resp}),
+				zap.Stringer("request", stringerFunc{v: req, max: cfg.maxBody}),
+				zap.Stringer("response", stringerFunc{v: resp, max: cfg.maxBody}),
 			)
 		}
 		if err != nil {
@@ -90,11 +97,18 @@ func PayloadUnaryServerInterceptor(logger *zap.Logger, opts ...GRPCPayloadOption
 
 // stringerFunc is a lazy Stringer that fmt-formats the wrapped value.
 // Avoids allocating "%+v" output for skipped log levels.
-type stringerFunc struct{ v any }
+type stringerFunc struct {
+	v   any
+	max int
+}
 
 func (s stringerFunc) String() string {
 	if s.v == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("%+v", s.v)
+	out := fmt.Sprintf("%+v", s.v)
+	if s.max > 0 && len(out) > s.max {
+		return out[:s.max]
+	}
+	return out
 }
