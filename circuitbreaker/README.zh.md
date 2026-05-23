@@ -32,6 +32,10 @@ metrics.RecordBreakerState(snap.State.String(), snap.Failures, snap.CooldownRema
 - `IsFailure` 可把 `context.Canceled` 这类预期错误排除在失败计数之外。
 - `OnStateChange` 会在每次状态切换时触发，可用于指标或日志。
 - `Snapshot` 会返回当前状态、失败计数、打开时间和剩余冷却时间，可用于指标或日志。
+  返回值是调用时刻的只读 snapshot。`State` 是调用时刻的当前状态。
+  `Failures` 和 `HalfOpenSuccesses` 是连续计数器，会在状态切换时重置。
+  `OpenedAt` 是熔断器打开时的时间戳（closed 状态下为零值）。
+  `CooldownRemaining` 是到下一次 half-open 切换的剩余时间。
 - `Now` 可替换时钟，方便确定性测试；可配合 [`clock.Mock`](../clock)：
 
 ```go

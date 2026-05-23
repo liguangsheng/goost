@@ -37,7 +37,12 @@ metrics.RecordBreakerState(snap.State.String(), snap.Failures, snap.CooldownRema
   from the failure count.
 - `OnStateChange` fires on every transition for metrics/logging.
 - `Snapshot` returns the current state, failure counters, open time, and
-  cooldown remaining for metrics/logging.
+  cooldown remaining for metrics/logging. The returned value is a
+  point-in-time, read-only snapshot. `State` is the current state at the
+  time of the call. `Failures` and `HalfOpenSuccesses` are consecutive
+  counters that reset on state transition. `OpenedAt` is the timestamp
+  when the breaker opened (zero in closed state). `CooldownRemaining` is
+  the computed time until the next half-open transition.
 - `Now` overrides the clock for deterministic tests; pair with
   [`clock.Mock`](../clock):
 

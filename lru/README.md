@@ -26,8 +26,11 @@ if v, ok := c.Get("hello"); ok {
 - `Get` evicts entries whose expiration has passed.
 - `Peek` returns a value without updating recency.
 - `Snapshot` reports current size, capacity, and shard count for metrics and
-  logs without changing recency. For sharded caches, capacity is the aggregate
-  per-shard capacity after shard-count and per-shard rounding.
+  logs without changing recency. The returned value is a point-in-time,
+  read-only snapshot. `Size` is the current entry count at the time of the
+  call. `Capacity` and `Shards` are configuration values copied into the
+  snapshot for metrics labels and logs. For sharded caches, capacity is the
+  aggregate per-shard capacity after shard-count and per-shard rounding.
 - `Size` / `Clear` are safe to call from multiple goroutines.
 
 ### Benchmark

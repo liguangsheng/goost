@@ -25,6 +25,8 @@ if v, ok := c.Get("hello"); ok {
 - `Get` 会驱逐已经过期的条目。
 - `Peek` 返回值但不更新最近使用顺序。
 - `Snapshot` 会报告当前大小、容量和 shard 数，便于指标和日志采集，且不会改变最近使用顺序。
+  返回值是调用时刻的只读 snapshot。`Size` 是调用时刻的当前条目数。
+  `Capacity` 和 `Shards` 是复制到 snapshot 中的配置值，便于作为 metrics label 或日志字段。
   对分片缓存而言，容量是 shard 数和每 shard 容量取整之后的总和。
 - `Size` / `Clear` 可以安全地从多个 goroutine 调用。
 
