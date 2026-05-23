@@ -1,5 +1,7 @@
 # 迁移指南
 
+可复制的迁移片段见 [MIGRATION_EXAMPLES.zh.md](./MIGRATION_EXAMPLES.zh.md)。
+
 ## Unreleased
 
 已移除低价值公开包：`bytesconv`、`itertools`、`redact`、

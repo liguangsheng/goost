@@ -55,6 +55,9 @@ See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 ## Development Checks
 
+The supported Go toolchain version is `1.25.10`, matching every `go.mod` file
+and the CI `GO_VERSION` setting.
+
 For day-to-day root-module changes, run `./scripts/check-root.sh --quick`.
 Nested modules are separate Go modules, so root checks do not traverse them.
 The root gate also verifies that every README-listed public package has a
@@ -65,11 +68,22 @@ CI installs the required analysis tools through
 `./scripts/install-ci-tools.sh`, with tool versions controlled by the workflow
 environment.
 
+Contribution guidance lives in [CONTRIBUTING.md](./CONTRIBUTING.md).
+Long-lived scope, terminology, and deprecation rules live in
+[PROJECT_POLICY.md](./PROJECT_POLICY.md).
+Security-sensitive logging and file-permission guidance lives in
+[SECURITY.md](./SECURITY.md).
+Public API shape, zero-value, generic, and error conventions live in
+[API_CONVENTIONS.md](./API_CONVENTIONS.md).
+Testing, fuzzing, benchmark, stress, and release-gate guidance lives in
+[TESTING.md](./TESTING.md).
+Long-term v1.0 readiness and maintenance checkpoints live in
+[ROADMAP.md](./ROADMAP.md).
+
 Before publishing a release, run:
 
 ```sh
-./scripts/check-root.sh --full
-./scripts/check-split-modules.sh --full
+./scripts/check-release.sh
 ```
 
 For day-to-day nested-module changes, run the split-module gate against the

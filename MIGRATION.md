@@ -1,5 +1,7 @@
 # Migration Guide
 
+For copyable migration snippets, see [MIGRATION_EXAMPLES.md](./MIGRATION_EXAMPLES.md).
+
 ## Unreleased
 
 The low-value public packages `bytesconv`, `itertools`, `redact`,

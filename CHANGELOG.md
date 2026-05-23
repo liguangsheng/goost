@@ -34,6 +34,9 @@ splits optional/demo modules out of the root module dependency graph.
 - A compiled `zapctx` example now covers context-bound logger fields.
 - A root smoke test now ensures every README-listed public package keeps a
   compiled `Example` test.
+- Root smoke tests now run the non-server runnable examples and assert stable smoke output for package-combination demos.
+- Migration examples for moved `zapctx` integrations are now backed by
+  compile-checked fixtures under `testdata/migration`.
 - Root smoke tests now prevent localized Chinese Markdown docs from linking
   English release docs when Chinese release docs exist.
 - `httpx.Options.Logger` logs one sanitized request summary after retries
@@ -58,6 +61,8 @@ splits optional/demo modules out of the root module dependency graph.
   state for runtime observability.
 - `pool.Stats` now includes worker capacity, queue capacity, and closed state
   for runtime observability.
+- `scripts/check-stress.sh` documents and gates the stress-focused package set:
+  `batcher`, `fanout`, `keyedmutex`, `pool`, and `ttlmap`.
 
 ### Changed
 
@@ -77,9 +82,13 @@ splits optional/demo modules out of the root module dependency graph.
   module `go.sum` file.
 - Root checks now verify that CI `cache-dependency-path` entries stay aligned
   with repository `go.sum` files.
+- CI cache drift checks now parse both block and single-line
+  `cache-dependency-path` workflow entries.
 - Examples no longer trip security checks: the HTTP server configures
   `ReadHeaderTimeout`, and the concurrent retry demo uses deterministic
   transient failures instead of `math/rand`.
+- Runnable examples now avoid nondeterministic smoke output from wall-clock
+  durations, current timestamps, and goroutine scheduling order.
 - CI now uses Node 24-native `actions/checkout@v6` and `actions/setup-go@v6`.
 - CI now uses Node 24-native `codecov/codecov-action@v6`.
 
@@ -99,6 +108,14 @@ splits optional/demo modules out of the root module dependency graph.
   only once before the first request.
 - `httpx` now replays request bodies through `Request.GetBody` on each retry
   attempt instead of relying on a previously consumed body.
+- `httpx` now returns body snapshot read errors before sending an attempt,
+  making non-replayable request body failures explicit.
+- `ratelimit.Wait` cancellation now leaves future token and leaky-bucket slots
+  unreserved so later callers can proceed when capacity returns.
+- `pool.Close` semantics are now covered for queued task drain, repeated close,
+  closed-state stats, and `ScheduleTimeout` after close.
+- `taskgroup` panic behavior is now documented and tested for both `Group` and
+  `Results[T]`, including sibling cancellation, `Cause()`, and partial results.
 - `batcher.Stats().MaxBatchSize` now remains monotonic under overlapping batch
   executions.
 - `rotatingwriter.DailyRotater` now treats `maxBackup` as the number of

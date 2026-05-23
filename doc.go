@@ -27,6 +27,8 @@
 //   - ttlmap:          concurrent map with per-entry TTL and OnExpire
 //   - zapctx:          *zap.Logger and structured fields via context.Context
 //
-// See CHANGELOG.md for release notes and the examples/ directory for
+// See README.md for the package index, MIGRATION.md for breaking-change
+// guidance, SECURITY.md for security-sensitive logging and file-permission
+// notes, PROJECT_POLICY.md for scope and deprecation policy, and examples/ for
 // end-to-end programs that combine several packages.
 package goost

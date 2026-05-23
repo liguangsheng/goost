@@ -55,6 +55,9 @@ minor version 迁移说明见 [MIGRATION.zh.md](./MIGRATION.zh.md)。
 
 ## 开发检查
 
+当前支持的 Go toolchain version 是 `1.25.10`，并与每个 `go.mod` 文件以及 CI
+中的 `GO_VERSION` 设置保持一致。
+
 日常 root module 改动先运行 `./scripts/check-root.sh --quick`。Nested modules
 是独立 Go modules，root 检查不会遍历它们。
 Root gate 也会验证每个列在 README 中的公开包都有已编译的 `Example` 测试；
@@ -63,11 +66,17 @@ Root gate 也会验证每个列在 README 中的公开包都有已编译的 `Exa
 CI 通过 `./scripts/install-ci-tools.sh` 安装所需分析工具，工具版本由 workflow
 environment 统一控制。
 
+贡献说明见 [CONTRIBUTING.zh.md](./CONTRIBUTING.zh.md)。
+长期范围、术语和弃用规则见 [PROJECT_POLICY.zh.md](./PROJECT_POLICY.zh.md)。
+安全相关的日志与文件权限说明见 [SECURITY.zh.md](./SECURITY.zh.md)。
+公开 API 形状、zero-value、泛型和错误约定见 [API_CONVENTIONS.zh.md](./API_CONVENTIONS.zh.md)。
+测试、fuzz、benchmark、stress 和发布 gate 说明见 [TESTING.zh.md](./TESTING.zh.md)。
+长期 v1.0 readiness 和维护检查点见 [ROADMAP.zh.md](./ROADMAP.zh.md)。
+
 发布前运行：
 
 ```sh
-./scripts/check-root.sh --full
-./scripts/check-split-modules.sh --full
+./scripts/check-release.sh
 ```
 
 日常 nested module 改动则针对改过的 module 运行 split-module gate：

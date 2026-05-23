@@ -29,6 +29,9 @@ module 从根 module 依赖图中拆出。
 - 新增编译型 `zapctx` 示例，覆盖绑定到 context 的 logger 字段。
 - 新增 root smoke test，确保每个列在 README 中的公开包都保留已编译的
   `Example` 测试。
+- Root smoke tests 现在会运行非 server 类 runnable examples，并断言包组合 demo 的 stable smoke output。
+- 移动后的 `zapctx` 集成迁移示例现在由 `testdata/migration` 下的可编译 fixture
+  校验。
 - Root smoke tests 现在会防止中文 Markdown 文档在已有中文 release docs 时
   仍链接到英文 release docs。
 - `httpx.Options.Logger` 会在重试结束后记录一条脱敏请求摘要，包含 status、
@@ -47,6 +50,8 @@ module 从根 module 依赖图中拆出。
   便于调优和观测。
 - `fanout.Stats` 现在包含缓冲区大小、排队消息数量和关闭状态，便于运行态观测。
 - `pool.Stats` 现在包含 worker 容量、队列容量和关闭状态，便于运行态观测。
+- `scripts/check-stress.sh` 现在记录并检查 stress-focused package set：
+  `batcher`、`fanout`、`keyedmutex`、`pool` 和 `ttlmap`。
 
 ### Changed
 
@@ -66,8 +71,12 @@ module 从根 module 依赖图中拆出。
   cache key。
 - Root 检查现在会验证 CI `cache-dependency-path` 是否与仓库中的 `go.sum`
   文件保持一致。
+- CI cache drift 检查现在同时解析 workflow 中 block 和 single-line
+  `cache-dependency-path` 写法。
 - 示例不再触发安全检查：HTTP server 配置了 `ReadHeaderTimeout`，concurrent
   retry demo 改用确定性的临时失败，不再使用 `math/rand`。
+- Runnable examples 现在避免 wall-clock duration、当前时间戳和 goroutine 调度顺序
+  造成的非确定性 smoke output。
 - CI 现在使用 Node 24-native 的 `actions/checkout@v6` 和
   `actions/setup-go@v6`。
 - CI 现在使用 Node 24-native 的 `codecov/codecov-action@v6`。
@@ -88,6 +97,14 @@ module 从根 module 依赖图中拆出。
   第一次请求前执行一次。
 - `httpx` 现在会通过 `Request.GetBody` 为 retry attempt 回放请求 body，
   而不是依赖已经被消费过的 body。
+- `httpx` 现在会在发送 attempt 前返回 body snapshot 读取错误，让不可 replay 的
+  request body 失败路径更明确。
+- `ratelimit.Wait` 取消后不会预留未来 token 或 leaky-bucket slot，容量恢复后
+  后续调用者仍可继续通过。
+- `pool.Close` 语义现在覆盖已排队任务 drain、重复 close、关闭状态 stats，以及
+  close 后的 `ScheduleTimeout`。
+- `taskgroup` panic 行为现在对 `Group` 和 `Results[T]` 都有文档和测试覆盖，包含
+  sibling cancellation、`Cause()` 和 partial results。
 - `batcher.Stats().MaxBatchSize` 现在会在重叠 batch executions 下保持单调。
 - `rotatingwriter.DailyRotater` 现在把 `maxBackup` 视为要保留的历史 backup
   文件数量，与按大小轮转保持一致。
