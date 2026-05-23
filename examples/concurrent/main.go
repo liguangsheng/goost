@@ -9,6 +9,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"sync"
 	"time"
 
 	"github.com/liguangsheng/goost/backoff"
@@ -29,6 +31,8 @@ func main() {
 	defer cancel()
 
 	g := taskgroup.New(ctx).WithLimit(4)
+	var mu sync.Mutex
+	var items []string
 	for i := range 20 {
 		g.Go(func(ctx context.Context) error {
 			b := &backoff.Backoff{
@@ -44,7 +48,9 @@ func main() {
 				if err != nil {
 					return err
 				}
-				fmt.Println(v)
+				mu.Lock()
+				items = append(items, v)
+				mu.Unlock()
 				return nil
 			})
 		})
@@ -52,5 +58,8 @@ func main() {
 
 	if err := g.Wait(); err != nil {
 		fmt.Println("group error:", err)
+		return
 	}
+	sort.Strings(items)
+	fmt.Printf("processed=%d first=%s last=%s\n", len(items), items[0], items[len(items)-1])
 }

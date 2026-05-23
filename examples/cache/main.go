@@ -55,8 +55,7 @@ func main() {
 	wg.Wait()
 	fmt.Printf("loads after herd: %d (expected 1)\n", loads.Load())
 
-	// warm cache hit costs almost nothing.
-	start := time.Now()
-	_, _ = get("hot-key")
-	fmt.Printf("warm hit took %s\n", time.Since(start))
+	if v, _ := get("hot-key"); v == "value-of-hot-key" {
+		fmt.Println("warm hit reused cached value")
+	}
 }

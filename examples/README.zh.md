@@ -5,6 +5,8 @@
 | 示例 | 演示内容 |
 | --- | --- |
 | [`httpserver`](./httpserver) | `zapctx` + `zapctxgin` Gin 中间件 + `shutdown` |
+| [`resilientclient`](./resilientclient) | `httpx` + `ratelimit` + `circuitbreaker`：为 outbound HTTP 提供 retry、节奏控制和 breaker 保护 |
+| [`configlayers`](./configlayers) | `env` + `defaultmap`：加载基础配置，再按租户懒构建派生配置 |
 | [`concurrent`](./concurrent) | `taskgroup` + `backoff`：在并发限制下重试不稳定任务 |
 | [`cache`](./cache) | `lru` + `x/sync/singleflight`：把惊群请求折叠到一次上游调用 |
 | [`eventbus`](./eventbus) | `debounce` + `fanout`：嘈杂生产者把突发事件合并成一个事件，并分发给多个订阅者 |

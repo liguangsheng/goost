@@ -52,7 +52,7 @@ func main() {
 	go func() {
 		defer wg.Done()
 		for ev := range subs[1].C() {
-			fmt.Printf("[audit] config changed: %s at %s\n", ev.Path, ev.When.Format("15:04:05.000"))
+			fmt.Printf("[audit] config changed: %s\n", ev.Path)
 			audits.Add(1)
 		}
 	}()

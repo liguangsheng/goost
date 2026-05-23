@@ -1,0 +1,17 @@
+package main
+
+import (
+	"context"
+
+	"github.com/gin-gonic/gin"
+	"github.com/liguangsheng/goost/zapctx"
+	"github.com/liguangsheng/goost/zapctx/zapctxgin"
+	"go.uber.org/zap"
+)
+
+func main() {
+	engine := gin.New()
+	engine.Use(zapctxgin.Middleware(zap.NewNop()))
+	engine.Use(zapctxgin.PayloadMiddleware(zap.NewNop(), zapctxgin.WithMaxBody(1024)))
+	zapctx.L(context.Background()).Info("handled")
+}

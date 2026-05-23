@@ -1,0 +1,13 @@
+package main
+
+import (
+	"github.com/liguangsheng/goost/zapctx/zapctxgrpc"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+)
+
+func main() {
+	_ = grpc.NewServer(
+		grpc.UnaryInterceptor(zapctxgrpc.UnaryServerInterceptor(zap.NewNop())),
+	)
+}
