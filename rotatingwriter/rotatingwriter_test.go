@@ -1,8 +1,11 @@
 package rotatingwriter
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -133,10 +136,10 @@ func Test_DailyRotater_MaxAgeAndMaxBackup(t *testing.T) {
 		_ = f.Close()
 	}
 
-	// MaxBackup counts total files (active included): MaxBackup=4 keeps
-	// 4 newest. MaxAge=4 days keeps anything dated > today-4 days.
-	// Intersection: today + today-1..today-3 = 4 files.
-	r := NewDailyRotater(dir, format, 4).WithMaxAge(4 * 24 * time.Hour)
+	// MaxBackup counts backup files (active excluded): MaxBackup=3 keeps
+	// 3 backups + the active file. MaxAge=4 days drops anything dated
+	// > today-4 days. Intersection: today + today-1..today-3 = 4 files.
+	r := NewDailyRotater(dir, format, 3).WithMaxAge(4 * 24 * time.Hour)
 	w := NewRotatingWriter(r)
 	_, err := w.Write([]byte("x"))
 	assert.NoError(t, err)
@@ -220,4 +223,34 @@ func Test_RotatingWriter_FilePermissions(t *testing.T) {
 	sizeInfo, err := os.Stat(base)
 	assert.NoError(t, err)
 	assert.Zero(t, sizeInfo.Mode().Perm()&0o077, "created size logs should not be group/world-accessible")
+}
+
+func Test_ConcurrentWriteDoesNotCorruptOutput(t *testing.T) {
+	dir := t.TempDir()
+	w, err := NewDailyRotatingWriter(dir, "2006-01-02.log", 0)
+	assert.NoError(t, err)
+
+	var wg sync.WaitGroup
+	for g := range 8 {
+		wg.Add(1)
+		go func(g int) {
+			defer wg.Done()
+			for i := range 100 {
+				msg := fmt.Sprintf("g=%d i=%d\n", g, i)
+				n, err := w.Write([]byte(msg))
+				assert.NoError(t, err)
+				assert.Equal(t, len(msg), n)
+			}
+		}(g)
+	}
+	wg.Wait()
+
+	files, err := os.ReadDir(dir)
+	assert.NoError(t, err)
+	assert.Len(t, files, 1)
+
+	content, err := os.ReadFile(filepath.Join(dir, files[0].Name()))
+	assert.NoError(t, err)
+	lines := strings.Count(string(content), "\n")
+	assert.Equal(t, 800, lines, "every goroutine write must produce one line")
 }
