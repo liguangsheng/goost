@@ -50,8 +50,6 @@ go get github.com/liguangsheng/goost
 ## 稳定性
 
 该 module 仍处于 pre-1.0。API 可能在 minor version 之间变化。
-发布历史见 [CHANGELOG.zh.md](./CHANGELOG.zh.md)。
-minor version 迁移说明见 [MIGRATION.zh.md](./MIGRATION.zh.md)。
 
 ## 开发检查
 
@@ -66,12 +64,6 @@ Root gate 也会验证每个列在 README 中的公开包都有已编译的 `Exa
 
 CI 通过 `./scripts/install-ci-tools.sh` 安装所需分析工具，工具版本由 workflow
 environment 统一控制。
-
-贡献说明见 [CONTRIBUTING.zh.md](./CONTRIBUTING.zh.md)。
-长期范围、术语和弃用规则见 [PROJECT_POLICY.zh.md](./PROJECT_POLICY.zh.md)。
-安全相关的日志与文件权限说明见 [SECURITY.zh.md](./SECURITY.zh.md)。
-公开 API 形状、zero-value、泛型和错误约定见 [API_CONVENTIONS.zh.md](./API_CONVENTIONS.zh.md)。
-测试、fuzz、benchmark、stress 和发布 gate 说明见 [TESTING.zh.md](./TESTING.zh.md)。
 
 发布前运行：
 

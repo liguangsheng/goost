@@ -22,6 +22,6 @@ engine.Use(zapctxgin.PayloadMiddleware(zap.L(), zapctxgin.WithMaxBody(1024)))
 `PayloadMiddleware` logs bounded HTTP payload summaries with skipper and
 sampling options.
 
-Payload logging can record request and response bodies. See
-[../../SECURITY.md](../../SECURITY.md) before enabling it on routes that may
-carry secrets or personal data.
+Payload logging can record request and response bodies. Avoid enabling it on
+routes that may carry secrets or personal data unless those fields are
+redacted before logging.

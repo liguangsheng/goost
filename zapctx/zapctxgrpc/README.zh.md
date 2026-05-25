@@ -20,4 +20,4 @@ server := grpc.NewServer(
 
 `UnaryServerInterceptor` 会把请求级 zap logger 放入 RPC context。需要记录有大小限制的 request/response body 时，可以使用 payload interceptors。使用 `GRPCWithBody(true)` 启用 message 记录，并用 `GRPCWithMaxBody(n)` 限制格式化后的 request 和 response 字符串长度。
 
-Payload logging 可能记录 request 和 response body。对可能包含 secret 或个人数据的 RPC 启用前，请先阅读 [../../SECURITY.zh.md](../../SECURITY.zh.md)。
+Payload logging 可能记录 request 和 response body。对可能包含 secret 或个人数据的 RPC，除非这些字段会在写日志前被脱敏，否则不要启用。

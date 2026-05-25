@@ -290,58 +290,6 @@ func TestStressGateIsDocumentedAndScripted(t *testing.T) {
 	if strings.Join(packages, "\n") != strings.Join([]string{"batcher", "fanout", "keyedmutex", "pool", "ttlmap"}, "\n") {
 		t.Fatalf("unexpected stress package list: %v", packages)
 	}
-	for _, doc := range []string{"TESTING.md", "TESTING.zh.md"} {
-		rows := readmeSectionNames(t, filepath.Join(root, doc), "## Stress and Race Tests", "## Stress 与 race tests")
-		if strings.Join(rows, "\n") != strings.Join(packages, "\n") {
-			t.Fatalf("%s stress coverage table mismatch\ndoc:\n%s\nscript:\n%s", doc, strings.Join(rows, "\n"), strings.Join(packages, "\n"))
-		}
-		markdownMustContain(t, filepath.Join(root, doc), []string{
-			"stress coverage",
-			"queue pressure",
-			"timer cleanup",
-			"shutdown",
-		})
-	}
-}
-
-func TestReadmesLinkLocalizedContributingDocs(t *testing.T) {
-	root := repoRoot(t)
-	for _, name := range []string{"CONTRIBUTING.md", "CONTRIBUTING.zh.md"} {
-		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-
-	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
-	if err != nil {
-		t.Fatalf("read README.md: %v", err)
-	}
-	if !strings.Contains(string(readme), "CONTRIBUTING.md") {
-		t.Fatal("README.md does not link CONTRIBUTING.md")
-	}
-
-	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
-	if err != nil {
-		t.Fatalf("read README.zh.md: %v", err)
-	}
-	if !strings.Contains(string(readmeZH), "CONTRIBUTING.zh.md") {
-		t.Fatal("README.zh.md does not link CONTRIBUTING.zh.md")
-	}
-
-	contributingMustDocument(t, filepath.Join(root, "CONTRIBUTING.md"), []string{
-		".github/pull_request_template.md",
-		".github/ISSUE_TEMPLATE/",
-		"API impact",
-		"dependency impact",
-		"validation",
-	})
-	contributingMustDocument(t, filepath.Join(root, "CONTRIBUTING.zh.md"), []string{
-		".github/pull_request_template.md",
-		".github/ISSUE_TEMPLATE/",
-		"API 影响",
-		"依赖影响",
-		"验证命令",
-	})
 }
 
 func TestGitHubTemplatesCaptureContributionBoundaries(t *testing.T) {
@@ -370,88 +318,8 @@ func TestGitHubTemplatesCaptureContributionBoundaries(t *testing.T) {
 	})
 }
 
-func TestReadmesLinkLocalizedProjectPolicyDocs(t *testing.T) {
-	root := repoRoot(t)
-	for _, name := range []string{"PROJECT_POLICY.md", "PROJECT_POLICY.zh.md"} {
-		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-
-	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
-	if err != nil {
-		t.Fatalf("read README.md: %v", err)
-	}
-	if !strings.Contains(string(readme), "PROJECT_POLICY.md") {
-		t.Fatal("README.md does not link PROJECT_POLICY.md")
-	}
-
-	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
-	if err != nil {
-		t.Fatalf("read README.zh.md: %v", err)
-	}
-	if !strings.Contains(string(readmeZH), "PROJECT_POLICY.zh.md") {
-		t.Fatal("README.zh.md does not link PROJECT_POLICY.zh.md")
-	}
-
-	contributing, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.md: %v", err)
-	}
-	if !strings.Contains(string(contributing), "PROJECT_POLICY.md") {
-		t.Fatal("CONTRIBUTING.md does not link PROJECT_POLICY.md")
-	}
-
-	contributingZH, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.zh.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.zh.md: %v", err)
-	}
-	if !strings.Contains(string(contributingZH), "PROJECT_POLICY.zh.md") {
-		t.Fatal("CONTRIBUTING.zh.md does not link PROJECT_POLICY.zh.md")
-	}
-
-	projectPolicyMustDocument(t, filepath.Join(root, "PROJECT_POLICY.md"), []string{
-		"Addition Criteria",
-		"Naming",
-		"Payload logging",
-		"Retry budget",
-		"web framework",
-		"injection container",
-	})
-	projectPolicyMustDocument(t, filepath.Join(root, "PROJECT_POLICY.zh.md"), []string{
-		"新增准入",
-		"命名",
-		"Payload logging",
-		"Retry budget",
-		"web framework",
-		"依赖注入容器",
-	})
-}
-
 func TestReadmesLinkLocalizedSecurityDocs(t *testing.T) {
 	root := repoRoot(t)
-	for _, name := range []string{"SECURITY.md", "SECURITY.zh.md"} {
-		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-
-	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
-	if err != nil {
-		t.Fatalf("read README.md: %v", err)
-	}
-	if !strings.Contains(string(readme), "SECURITY.md") {
-		t.Fatal("README.md does not link SECURITY.md")
-	}
-
-	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
-	if err != nil {
-		t.Fatalf("read README.zh.md: %v", err)
-	}
-	if !strings.Contains(string(readmeZH), "SECURITY.zh.md") {
-		t.Fatal("README.zh.md does not link SECURITY.zh.md")
-	}
-
 	for _, path := range []string{
 		"zapctx/zapctxgin/README.md",
 		"zapctx/zapctxgrpc/README.md",
@@ -460,8 +328,8 @@ func TestReadmesLinkLocalizedSecurityDocs(t *testing.T) {
 		if err != nil {
 			t.Fatalf("read %s: %v", path, err)
 		}
-		if !strings.Contains(string(content), "SECURITY.md") {
-			t.Fatalf("%s does not link SECURITY.md", path)
+		if !strings.Contains(string(content), "Payload logging") {
+			t.Fatalf("%s does not document payload logging risk", path)
 		}
 	}
 
@@ -473,252 +341,10 @@ func TestReadmesLinkLocalizedSecurityDocs(t *testing.T) {
 		if err != nil {
 			t.Fatalf("read %s: %v", path, err)
 		}
-		if !strings.Contains(string(content), "SECURITY.zh.md") {
-			t.Fatalf("%s does not link SECURITY.zh.md", path)
+		if !strings.Contains(string(content), "Payload logging") {
+			t.Fatalf("%s does not document payload logging risk", path)
 		}
 	}
-}
-
-func TestReadmesLinkLocalizedAPIConventionDocs(t *testing.T) {
-	root := repoRoot(t)
-	for _, name := range []string{"API_CONVENTIONS.md", "API_CONVENTIONS.zh.md"} {
-		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-
-	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
-	if err != nil {
-		t.Fatalf("read README.md: %v", err)
-	}
-	if !strings.Contains(string(readme), "API_CONVENTIONS.md") {
-		t.Fatal("README.md does not link API_CONVENTIONS.md")
-	}
-
-	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
-	if err != nil {
-		t.Fatalf("read README.zh.md: %v", err)
-	}
-	if !strings.Contains(string(readmeZH), "API_CONVENTIONS.zh.md") {
-		t.Fatal("README.zh.md does not link API_CONVENTIONS.zh.md")
-	}
-
-	contributing, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.md: %v", err)
-	}
-	if !strings.Contains(string(contributing), "API_CONVENTIONS.md") {
-		t.Fatal("CONTRIBUTING.md does not link API_CONVENTIONS.md")
-	}
-
-	contributingZH, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.zh.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.zh.md: %v", err)
-	}
-	if !strings.Contains(string(contributingZH), "API_CONVENTIONS.zh.md") {
-		t.Fatal("CONTRIBUTING.zh.md does not link API_CONVENTIONS.zh.md")
-	}
-
-	apiConventionsMustDocument(t, filepath.Join(root, "API_CONVENTIONS.md"), []string{
-		"Context, Cancellation, and Lifecycle",
-		"Observability",
-		"Stats",
-		"Snapshot",
-		"Close",
-		"Stop",
-	})
-	apiConventionsMustDocument(t, filepath.Join(root, "API_CONVENTIONS.zh.md"), []string{
-		"Context、取消与生命周期",
-		"观测能力",
-		"Stats",
-		"Snapshot",
-		"Close",
-		"Stop",
-	})
-}
-
-func TestReadmesLinkLocalizedTestingDocs(t *testing.T) {
-	root := repoRoot(t)
-	for _, name := range []string{"TESTING.md", "TESTING.zh.md"} {
-		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-
-	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
-	if err != nil {
-		t.Fatalf("read README.md: %v", err)
-	}
-	if !strings.Contains(string(readme), "TESTING.md") {
-		t.Fatal("README.md does not link TESTING.md")
-	}
-
-	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
-	if err != nil {
-		t.Fatalf("read README.zh.md: %v", err)
-	}
-	if !strings.Contains(string(readmeZH), "TESTING.zh.md") {
-		t.Fatal("README.zh.md does not link TESTING.zh.md")
-	}
-
-	contributing, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.md: %v", err)
-	}
-	if !strings.Contains(string(contributing), "TESTING.md") {
-		t.Fatal("CONTRIBUTING.md does not link TESTING.md")
-	}
-
-	contributingZH, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.zh.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.zh.md: %v", err)
-	}
-	if !strings.Contains(string(contributingZH), "TESTING.zh.md") {
-		t.Fatal("CONTRIBUTING.zh.md does not link TESTING.zh.md")
-	}
-
-	testingDocMustDocument(t, filepath.Join(root, "TESTING.md"), []string{
-		"Cross-Platform Smoke",
-		"Windows root smoke",
-		"./scripts/check-scripts.sh",
-		"scripts/check-ci-cache-paths.sh",
-		"single-line `cache-dependency-path`",
-		"./scripts/check-stress.sh --quick",
-		"./scripts/check-stress.sh --race",
-		"nested-module discovery",
-		"Observability and Lifecycle Tests",
-		"Stats",
-		"Snapshot",
-		"cancellation",
-		"shutdown",
-		"timer cleanup",
-	})
-	testingDocMustDocument(t, filepath.Join(root, "TESTING.zh.md"), []string{
-		"跨平台 smoke",
-		"Windows root smoke",
-		"./scripts/check-scripts.sh",
-		"scripts/check-ci-cache-paths.sh",
-		"single-line `cache-dependency-path`",
-		"./scripts/check-stress.sh --quick",
-		"./scripts/check-stress.sh --race",
-		"nested-module discovery",
-		"观测与生命周期测试",
-		"Stats",
-		"Snapshot",
-		"cancellation",
-		"shutdown",
-		"timer cleanup",
-	})
-}
-
-func TestAgentRoadmapDocsStayConcrete(t *testing.T) {
-	root := repoRoot(t)
-	for _, name := range []string{".agents/ROADMAP.md", ".agents/ROADMAP.zh.md"} {
-		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-
-	roadmapMustDocument(t, filepath.Join(root, ".agents/ROADMAP.md"), []string{
-		"keep/change/remove",
-		"naming decision",
-		"v1.0 Package Audit",
-		"Next Execution Slices",
-		"next 10 to 20 concrete execution slices",
-		"addition criteria",
-	})
-	roadmapMustDocument(t, filepath.Join(root, ".agents/ROADMAP.zh.md"), []string{
-		"keep/change/remove",
-		"命名决策",
-		"v1.0 package audit",
-		"next execution slices",
-		"下一轮 10 到 20 个具体执行切片",
-		"新增准入标准",
-	})
-}
-
-func TestRoadmapPackageAuditCoversPublicPackages(t *testing.T) {
-	root := repoRoot(t)
-	want := publicPackageNames(t, root)
-	for _, path := range []string{".agents/ROADMAP.md", ".agents/ROADMAP.zh.md"} {
-		got := readmeSectionNames(t, filepath.Join(root, path), "## v1.0 Package Audit", "## v1.0 package audit")
-		if strings.Join(got, "\n") != strings.Join(want, "\n") {
-			t.Fatalf("%s package audit mismatch\nroadmap:\n%s\npackages:\n%s",
-				path, strings.Join(got, "\n"), strings.Join(want, "\n"))
-		}
-		roadmapMustDocument(t, filepath.Join(root, path), []string{"| Package | Direction | v1.0 note |", "| Keep |"})
-	}
-}
-
-func TestRoadmapNextExecutionSlicesAreConcrete(t *testing.T) {
-	root := repoRoot(t)
-	for _, path := range []string{".agents/ROADMAP.md", ".agents/ROADMAP.zh.md"} {
-		rows := roadmapExecutionSliceRows(t, filepath.Join(root, path))
-		if len(rows) < 10 || len(rows) > 20 {
-			t.Fatalf("%s has %d next execution slices, want 10-20", path, len(rows))
-		}
-		for _, row := range rows {
-			cols := markdownTableColumns(row)
-			if len(cols) != 4 {
-				t.Fatalf("%s execution slice row has %d columns: %s", path, len(cols), row)
-			}
-			for i, col := range cols {
-				if strings.TrimSpace(col) == "" {
-					t.Fatalf("%s execution slice row column %d is empty: %s", path, i+1, row)
-				}
-			}
-		}
-		roadmapMustDocument(t, filepath.Join(root, path), []string{
-			"| Slice | Surface | Artifact | Validation |",
-			"./scripts/check-release.sh",
-			"./scripts/check-root.sh --quick",
-			"./scripts/check-split-modules.sh --quick --module ./examples",
-		})
-	}
-}
-
-func TestMigrationDocsLinkLocalizedExamples(t *testing.T) {
-	root := repoRoot(t)
-	for _, name := range []string{"MIGRATION_EXAMPLES.md", "MIGRATION_EXAMPLES.zh.md"} {
-		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
-			t.Fatalf("missing %s: %v", name, err)
-		}
-	}
-
-	migration, err := os.ReadFile(filepath.Join(root, "MIGRATION.md"))
-	if err != nil {
-		t.Fatalf("read MIGRATION.md: %v", err)
-	}
-	if !strings.Contains(string(migration), "MIGRATION_EXAMPLES.md") {
-		t.Fatal("MIGRATION.md does not link MIGRATION_EXAMPLES.md")
-	}
-
-	migrationZH, err := os.ReadFile(filepath.Join(root, "MIGRATION.zh.md"))
-	if err != nil {
-		t.Fatalf("read MIGRATION.zh.md: %v", err)
-	}
-	if !strings.Contains(string(migrationZH), "MIGRATION_EXAMPLES.zh.md") {
-		t.Fatal("MIGRATION.zh.md does not link MIGRATION_EXAMPLES.zh.md")
-	}
-
-	migrationExamplesMustDocument(t, filepath.Join(root, "MIGRATION_EXAMPLES.md"), []string{
-		"github.com/liguangsheng/goost/zapctx",
-		"github.com/liguangsheng/goost/zapctx/zapctxgin",
-		"github.com/liguangsheng/goost/zapctx/zapctxgrpc",
-		"go.uber.org/zap",
-		"google.golang.org/grpc",
-		"zapctxgin.PayloadMiddleware",
-		"grpc.NewServer",
-	})
-	migrationExamplesMustDocument(t, filepath.Join(root, "MIGRATION_EXAMPLES.zh.md"), []string{
-		"github.com/liguangsheng/goost/zapctx",
-		"github.com/liguangsheng/goost/zapctx/zapctxgin",
-		"github.com/liguangsheng/goost/zapctx/zapctxgrpc",
-		"go.uber.org/zap",
-		"google.golang.org/grpc",
-		"zapctxgin.PayloadMiddleware",
-		"grpc.NewServer",
-	})
 }
 
 func TestMigrationExampleFixturesCompile(t *testing.T) {
@@ -768,7 +394,7 @@ func TestRootDocReferencesPublicGovernanceDocs(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read doc.go: %v", err)
 	}
-	for _, want := range []string{"README.md", "MIGRATION.md", "SECURITY.md", "PROJECT_POLICY.md", "examples/"} {
+	for _, want := range []string{"README.md", "examples/"} {
 		if !strings.Contains(string(content), want) {
 			t.Fatalf("doc.go does not reference %s", want)
 		}
@@ -806,64 +432,6 @@ func TestCIIncludesWindowsRootSmoke(t *testing.T) {
 	})
 }
 
-func TestReleaseDocHeadingsStayLocalized(t *testing.T) {
-	root := repoRoot(t)
-	for _, pair := range []struct {
-		english string
-		chinese string
-	}{
-		{english: "CHANGELOG.md", chinese: "CHANGELOG.zh.md"},
-		{english: "MIGRATION.md", chinese: "MIGRATION.zh.md"},
-	} {
-		eng := releaseDocHeadings(t, filepath.Join(root, pair.english))
-		zh := releaseDocHeadings(t, filepath.Join(root, pair.chinese))
-		if strings.Join(eng, "\n") != strings.Join(zh, "\n") {
-			t.Fatalf("%s and %s headings differ\n%s:\n%s\n%s:\n%s",
-				pair.english, pair.chinese,
-				pair.english, strings.Join(eng, "\n"),
-				pair.chinese, strings.Join(zh, "\n"))
-		}
-	}
-}
-
-func TestChangelogCoversRecentReleaseReadinessSlices(t *testing.T) {
-	root := repoRoot(t)
-	for _, doc := range []string{"CHANGELOG.md", "CHANGELOG.zh.md"} {
-		markdownMustContain(t, filepath.Join(root, doc), []string{
-			"stable smoke output",
-			"testdata/migration",
-			"check-stress.sh",
-			"single-line",
-			"cache-dependency-path",
-			"body snapshot",
-			"ratelimit.Wait",
-			"pool.Close",
-			"taskgroup",
-			"Cause()",
-		})
-	}
-}
-
-func TestDeprecatedAPIsHaveMigrationAndChangelogCoverage(t *testing.T) {
-	root := repoRoot(t)
-	symbols := deprecatedSymbols(t, root)
-	if len(symbols) == 0 {
-		return
-	}
-
-	for _, doc := range []string{"MIGRATION.md", "MIGRATION.zh.md", "CHANGELOG.md", "CHANGELOG.zh.md"} {
-		content, err := os.ReadFile(filepath.Join(root, doc))
-		if err != nil {
-			t.Fatalf("read %s: %v", doc, err)
-		}
-		for _, symbol := range symbols {
-			if !strings.Contains(string(content), symbol) {
-				t.Fatalf("%s does not document deprecated API %s", doc, symbol)
-			}
-		}
-	}
-}
-
 func TestChineseMarkdownLinksLocalizedReleaseDocs(t *testing.T) {
 	root := repoRoot(t)
 	for _, path := range chineseMarkdownFiles(t, root) {
@@ -879,15 +447,6 @@ func TestChineseMarkdownLinksLocalizedReleaseDocs(t *testing.T) {
 		}
 	}
 
-	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
-	if err != nil {
-		t.Fatalf("read README.zh.md: %v", err)
-	}
-	for _, want := range []string{"CHANGELOG.zh.md", "MIGRATION.zh.md"} {
-		if !strings.Contains(string(readmeZH), want) {
-			t.Fatalf("README.zh.md does not link %s", want)
-		}
-	}
 }
 
 func TestRootDocsStayLocalizedInPairs(t *testing.T) {
@@ -1340,36 +899,6 @@ func runnableExampleNames(t *testing.T, dir string) []string {
 	return names
 }
 
-func contributingMustDocument(t *testing.T, path string, wants []string) {
-	t.Helper()
-	markdownMustContain(t, path, wants)
-}
-
-func apiConventionsMustDocument(t *testing.T, path string, wants []string) {
-	t.Helper()
-	markdownMustContain(t, path, wants)
-}
-
-func projectPolicyMustDocument(t *testing.T, path string, wants []string) {
-	t.Helper()
-	markdownMustContain(t, path, wants)
-}
-
-func roadmapMustDocument(t *testing.T, path string, wants []string) {
-	t.Helper()
-	markdownMustContain(t, path, wants)
-}
-
-func migrationExamplesMustDocument(t *testing.T, path string, wants []string) {
-	t.Helper()
-	markdownMustContain(t, path, wants)
-}
-
-func testingDocMustDocument(t *testing.T, path string, wants []string) {
-	t.Helper()
-	markdownMustContain(t, path, wants)
-}
-
 func markdownMustContain(t *testing.T, path string, wants []string) {
 	t.Helper()
 	content, err := os.ReadFile(path)
@@ -1435,176 +964,6 @@ func readmeSectionNames(t *testing.T, path string, headings ...string) []string 
 	}
 	sort.Strings(names)
 	return names
-}
-
-func roadmapExecutionSliceRows(t *testing.T, path string) []string {
-	t.Helper()
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("open %s: %v", path, err)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			t.Fatalf("close %s: %v", path, err)
-		}
-	}()
-
-	var rows []string
-	inSection := false
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "## ") {
-			inSection = line == "## Next Execution Slices" || line == "## next execution slices"
-			continue
-		}
-		if !inSection || !strings.HasPrefix(line, "|") || strings.Contains(line, "---") || strings.Contains(line, "| Slice |") {
-			continue
-		}
-		rows = append(rows, line)
-	}
-	if err := scanner.Err(); err != nil {
-		t.Fatalf("scan %s: %v", path, err)
-	}
-	return rows
-}
-
-func markdownTableColumns(row string) []string {
-	row = strings.Trim(row, "|")
-	parts := strings.Split(row, "|")
-	for i := range parts {
-		parts[i] = strings.TrimSpace(parts[i])
-	}
-	return parts
-}
-
-func releaseDocHeadings(t *testing.T, path string) []string {
-	t.Helper()
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("open %s: %v", path, err)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			t.Fatalf("close %s: %v", path, err)
-		}
-	}()
-
-	var headings []string
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if !strings.HasPrefix(line, "## ") {
-			continue
-		}
-		line = strings.TrimPrefix(line, "## ")
-		line = strings.TrimSpace(line)
-		line = strings.TrimPrefix(line, "[")
-		line = strings.TrimSuffix(line, "]")
-		if before, _, ok := strings.Cut(line, "]"); ok {
-			line = before
-		}
-		if before, _, ok := strings.Cut(line, " "); ok {
-			line = before
-		}
-		headings = append(headings, line)
-	}
-	if err := scanner.Err(); err != nil {
-		t.Fatalf("scan %s: %v", path, err)
-	}
-	return headings
-}
-
-func deprecatedSymbols(t *testing.T, root string) []string {
-	t.Helper()
-	var symbols []string
-	var walk func(string)
-	walk = func(dir string) {
-		entries, err := os.ReadDir(dir)
-		if err != nil {
-			t.Fatalf("read %s: %v", dir, err)
-		}
-		for _, entry := range entries {
-			path := filepath.Join(dir, entry.Name())
-			if entry.IsDir() {
-				if entry.Name() == ".git" || entry.Name() == ".agents" {
-					continue
-				}
-				walk(path)
-				continue
-			}
-			if !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
-				continue
-			}
-			symbols = append(symbols, deprecatedSymbolsInFile(t, path)...)
-		}
-	}
-	walk(root)
-	sort.Strings(symbols)
-	return symbols
-}
-
-func deprecatedSymbolsInFile(t *testing.T, path string) []string {
-	t.Helper()
-	f, err := os.Open(path)
-	if err != nil {
-		t.Fatalf("open %s: %v", path, err)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			t.Fatalf("close %s: %v", path, err)
-		}
-	}()
-
-	var symbols []string
-	pendingDeprecated := false
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(line, "// Deprecated:") {
-			pendingDeprecated = true
-			continue
-		}
-		if !pendingDeprecated {
-			continue
-		}
-		if strings.HasPrefix(line, "//") || line == "" {
-			continue
-		}
-		if symbol := declaredSymbol(line); symbol != "" {
-			symbols = append(symbols, symbol)
-		}
-		pendingDeprecated = false
-	}
-	if err := scanner.Err(); err != nil {
-		t.Fatalf("scan %s: %v", path, err)
-	}
-	return symbols
-}
-
-func declaredSymbol(line string) string {
-	for _, prefix := range []string{"func ", "type ", "var ", "const "} {
-		if !strings.HasPrefix(line, prefix) {
-			continue
-		}
-		rest := strings.TrimSpace(strings.TrimPrefix(line, prefix))
-		if prefix == "func " {
-			if strings.HasPrefix(rest, "(") {
-				_, afterReceiver, ok := strings.Cut(rest, ")")
-				if !ok {
-					return ""
-				}
-				rest = strings.TrimSpace(afterReceiver)
-			}
-			name, _, _ := strings.Cut(rest, "(")
-			return strings.TrimSpace(name)
-		}
-		fields := strings.Fields(rest)
-		if len(fields) > 0 {
-			return strings.Trim(fields[0], "=")
-		}
-	}
-	return ""
 }
 
 func packageHasCompiledExample(t *testing.T, dir string) bool {

@@ -50,8 +50,6 @@ All packages are independent; depend on what you need.
 ## Stability
 
 The module is still pre-1.0. APIs may change between minor versions.
-See [CHANGELOG.md](./CHANGELOG.md) for release history.
-See [MIGRATION.md](./MIGRATION.md) for minor-version migration notes.
 
 ## Development Checks
 
@@ -68,16 +66,6 @@ split-module gate instead.
 CI installs the required analysis tools through
 `./scripts/install-ci-tools.sh`, with tool versions controlled by the workflow
 environment.
-
-Contribution guidance lives in [CONTRIBUTING.md](./CONTRIBUTING.md).
-Long-lived scope, terminology, and deprecation rules live in
-[PROJECT_POLICY.md](./PROJECT_POLICY.md).
-Security-sensitive logging and file-permission guidance lives in
-[SECURITY.md](./SECURITY.md).
-Public API shape, zero-value, generic, and error conventions live in
-[API_CONVENTIONS.md](./API_CONVENTIONS.md).
-Testing, fuzzing, benchmark, stress, and release-gate guidance lives in
-[TESTING.md](./TESTING.md).
 
 Before publishing a release, run:
 

@@ -24,6 +24,6 @@ context. Payload interceptors are available when bounded request/response body
 logging is needed. Use `GRPCWithBody(true)` to include messages and
 `GRPCWithMaxBody(n)` to cap the formatted request and response strings.
 
-Payload logging can record request and response bodies. See
-[../../SECURITY.md](../../SECURITY.md) before enabling it on RPCs that may carry
-secrets or personal data.
+Payload logging can record request and response bodies. Avoid enabling it on
+RPCs that may carry secrets or personal data unless those fields are redacted
+before logging.

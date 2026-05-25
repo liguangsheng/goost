@@ -8,7 +8,7 @@ usage() {
 Usage: scripts/check-release.sh
 
 Runs the local pre-release gate:
-  1. CHANGELOG format check
+  1. CHANGELOG format check when local .agents docs are present
   2. doc link check
   3. scripts self-check and CI cache path alignment
   4. root full gate
@@ -33,18 +33,22 @@ fi
 cd "$repo_root"
 
 echo "::group::changelog format"
-for f in CHANGELOG.md CHANGELOG.zh.md; do
-  if [[ ! -f "$f" ]]; then
-    echo "missing $f" >&2; exit 1
-  fi
-  if ! grep -q '## \[Unreleased\]\|## \[v[0-9]' "$f"; then
-    echo "$f: missing release heading (## [Unreleased] or ## [vX.Y.Z])" >&2; exit 1
-  fi
-  if ! grep -q '^### ' "$f"; then
-    echo "$f: missing section heading (### Added / ### Changed / etc.)" >&2; exit 1
-  fi
-done
-echo "changelog format ok"
+if [[ -d .agents ]]; then
+  for f in .agents/CHANGELOG.md .agents/CHANGELOG.zh.md; do
+    if [[ ! -f "$f" ]]; then
+      echo "missing $f" >&2; exit 1
+    fi
+    if ! grep -q '## \[Unreleased\]\|## \[v[0-9]' "$f"; then
+      echo "$f: missing release heading (## [Unreleased] or ## [vX.Y.Z])" >&2; exit 1
+    fi
+    if ! grep -q '^### ' "$f"; then
+      echo "$f: missing section heading (### Added / ### Changed / etc.)" >&2; exit 1
+    fi
+  done
+  echo "changelog format ok"
+else
+  echo "skipping changelog format: .agents docs are local-only"
+fi
 echo "::endgroup::"
 
 ./scripts/check-doc-links.sh
