@@ -4,7 +4,6 @@
 项目范围和弃用规则见 [PROJECT_POLICY.zh.md](./PROJECT_POLICY.zh.md)。
 公开 API 约定见 [API_CONVENTIONS.zh.md](./API_CONVENTIONS.zh.md)。
 验证策略见 [TESTING.zh.md](./TESTING.zh.md)。
-长期 readiness 检查点见 [ROADMAP.zh.md](./ROADMAP.zh.md)。
 
 ## 提交变更前
 

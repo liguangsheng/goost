@@ -6,7 +6,6 @@ Project scope and deprecation rules live in
 [PROJECT_POLICY.md](./PROJECT_POLICY.md).
 Public API conventions live in [API_CONVENTIONS.md](./API_CONVENTIONS.md).
 Validation strategy lives in [TESTING.md](./TESTING.md).
-Long-term readiness checkpoints live in [ROADMAP.md](./ROADMAP.md).
 
 ## Before Opening a Change
 

@@ -11,8 +11,11 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-# Local agent planning and scratch files
-.agents/
+# Local agent scratch files. Durable agent docs are tracked explicitly.
+.agents/*
+!.agents/PLAN.md
+!.agents/ROADMAP.md
+!.agents/ROADMAP.zh.md
 .sisyphus/
 
 # Dependency directories (remove the comment below to include it)

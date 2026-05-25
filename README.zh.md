@@ -72,7 +72,6 @@ environment 统一控制。
 安全相关的日志与文件权限说明见 [SECURITY.zh.md](./SECURITY.zh.md)。
 公开 API 形状、zero-value、泛型和错误约定见 [API_CONVENTIONS.zh.md](./API_CONVENTIONS.zh.md)。
 测试、fuzz、benchmark、stress 和发布 gate 说明见 [TESTING.zh.md](./TESTING.zh.md)。
-长期 v1.0 readiness 和维护检查点见 [ROADMAP.zh.md](./ROADMAP.zh.md)。
 
 发布前运行：
 

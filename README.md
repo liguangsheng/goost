@@ -78,8 +78,6 @@ Public API shape, zero-value, generic, and error conventions live in
 [API_CONVENTIONS.md](./API_CONVENTIONS.md).
 Testing, fuzzing, benchmark, stress, and release-gate guidance lives in
 [TESTING.md](./TESTING.md).
-Long-term v1.0 readiness and maintenance checkpoints live in
-[ROADMAP.md](./ROADMAP.md).
 
 Before publishing a release, run:
 

@@ -611,47 +611,15 @@ func TestReadmesLinkLocalizedTestingDocs(t *testing.T) {
 	})
 }
 
-func TestReadmesLinkLocalizedRoadmapDocs(t *testing.T) {
+func TestAgentRoadmapDocsStayConcrete(t *testing.T) {
 	root := repoRoot(t)
-	for _, name := range []string{"ROADMAP.md", "ROADMAP.zh.md"} {
+	for _, name := range []string{".agents/ROADMAP.md", ".agents/ROADMAP.zh.md"} {
 		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
 			t.Fatalf("missing %s: %v", name, err)
 		}
 	}
 
-	readme, err := os.ReadFile(filepath.Join(root, "README.md"))
-	if err != nil {
-		t.Fatalf("read README.md: %v", err)
-	}
-	if !strings.Contains(string(readme), "ROADMAP.md") {
-		t.Fatal("README.md does not link ROADMAP.md")
-	}
-
-	readmeZH, err := os.ReadFile(filepath.Join(root, "README.zh.md"))
-	if err != nil {
-		t.Fatalf("read README.zh.md: %v", err)
-	}
-	if !strings.Contains(string(readmeZH), "ROADMAP.zh.md") {
-		t.Fatal("README.zh.md does not link ROADMAP.zh.md")
-	}
-
-	contributing, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.md: %v", err)
-	}
-	if !strings.Contains(string(contributing), "ROADMAP.md") {
-		t.Fatal("CONTRIBUTING.md does not link ROADMAP.md")
-	}
-
-	contributingZH, err := os.ReadFile(filepath.Join(root, "CONTRIBUTING.zh.md"))
-	if err != nil {
-		t.Fatalf("read CONTRIBUTING.zh.md: %v", err)
-	}
-	if !strings.Contains(string(contributingZH), "ROADMAP.zh.md") {
-		t.Fatal("CONTRIBUTING.zh.md does not link ROADMAP.zh.md")
-	}
-
-	roadmapMustDocument(t, filepath.Join(root, "ROADMAP.md"), []string{
+	roadmapMustDocument(t, filepath.Join(root, ".agents/ROADMAP.md"), []string{
 		"keep/change/remove",
 		"naming decision",
 		"v1.0 Package Audit",
@@ -659,7 +627,7 @@ func TestReadmesLinkLocalizedRoadmapDocs(t *testing.T) {
 		"next 10 to 20 concrete execution slices",
 		"addition criteria",
 	})
-	roadmapMustDocument(t, filepath.Join(root, "ROADMAP.zh.md"), []string{
+	roadmapMustDocument(t, filepath.Join(root, ".agents/ROADMAP.zh.md"), []string{
 		"keep/change/remove",
 		"命名决策",
 		"v1.0 package audit",
@@ -672,7 +640,7 @@ func TestReadmesLinkLocalizedRoadmapDocs(t *testing.T) {
 func TestRoadmapPackageAuditCoversPublicPackages(t *testing.T) {
 	root := repoRoot(t)
 	want := publicPackageNames(t, root)
-	for _, path := range []string{"ROADMAP.md", "ROADMAP.zh.md"} {
+	for _, path := range []string{".agents/ROADMAP.md", ".agents/ROADMAP.zh.md"} {
 		got := readmeSectionNames(t, filepath.Join(root, path), "## v1.0 Package Audit", "## v1.0 package audit")
 		if strings.Join(got, "\n") != strings.Join(want, "\n") {
 			t.Fatalf("%s package audit mismatch\nroadmap:\n%s\npackages:\n%s",
@@ -684,7 +652,7 @@ func TestRoadmapPackageAuditCoversPublicPackages(t *testing.T) {
 
 func TestRoadmapNextExecutionSlicesAreConcrete(t *testing.T) {
 	root := repoRoot(t)
-	for _, path := range []string{"ROADMAP.md", "ROADMAP.zh.md"} {
+	for _, path := range []string{".agents/ROADMAP.md", ".agents/ROADMAP.zh.md"} {
 		rows := roadmapExecutionSliceRows(t, filepath.Join(root, path))
 		if len(rows) < 10 || len(rows) > 20 {
 			t.Fatalf("%s has %d next execution slices, want 10-20", path, len(rows))
